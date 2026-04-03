@@ -51,11 +51,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             val last = workoutDao.getLastSet(exerciseName)
             _lastSet.value = last
-            last?.let {
-                _suggestedWeight.value = getSuggestedWeight(it.weight)
-            } ?: run {
-                _suggestedWeight.value = null
-            }
+            _suggestedWeight.value = last?.let { getSuggestedWeight(it.weight) }
         }
     }
 
@@ -145,6 +141,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     fun insertWorkout(muscle: String, exercise: String, set: Int, reps: Int, weight: Double, support: Boolean) {
         viewModelScope.launch {
             workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, set, reps, weight, support))
+            // Ensure set number updates AFTER insertion to avoid race condition
+            val count = workoutDao.getTodaySetCount(exercise)
+            _currentSet.value = count + 1
         }
     }
 }
