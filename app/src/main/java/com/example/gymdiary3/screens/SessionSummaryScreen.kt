@@ -7,6 +7,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.SessionSummary
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
@@ -24,38 +26,80 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Workout Summary") })
+            TopAppBar(title = { Text("Session Summary", fontWeight = FontWeight.Bold) })
         }
     ) { padding ->
         summary?.let { s ->
-            LazyColumn(modifier = Modifier.padding(padding).padding(16.dp).fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 item {
-                    Text("Total Sets: ${s.totalSets}", style = MaterialTheme.typography.titleLarge)
-                    Text("Total Volume: ${s.totalVolume} kg", style = MaterialTheme.typography.titleMedium)
-                    val minutes = s.duration / 60000
-                    Text("Duration: $minutes min", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(16.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                SummaryStat("Sets", s.totalSets.toString())
+                                SummaryStat("Volume", "${s.totalVolume.toInt()}kg")
+                                SummaryStat("Time", "${s.duration / 60000}m")
+                            }
+                        }
+                    }
                 }
 
                 s.exercises.forEach { (exercise, sets) ->
                     item {
-                        Text(exercise, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(
+                                    exercise,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                sets.forEach { set ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Set ${set.set}", style = MaterialTheme.typography.bodyLarge)
+                                        Text(
+                                            "${set.weight}kg × ${set.reps}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
-                    items(sets) { set ->
-                        Text("Set ${set.set}: ${set.weight}kg x ${set.reps}", modifier = Modifier.padding(start = 8.dp))
-                    }
-                    item { Spacer(Modifier.height(8.dp)) }
                 }
 
                 item {
+                    Spacer(Modifier.height(24.dp))
                     Button(
                         onClick = { nav.navigate("home") { popUpTo("home") { inclusive = true } } },
-                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
-                        Text("Back to Home")
+                        Text("DONE", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SummaryStat(label: String, value: String) {
+    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelMedium)
+        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     }
 }

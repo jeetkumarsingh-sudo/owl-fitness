@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.example.gymdiary3.R
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
@@ -27,78 +29,103 @@ fun HomeScreen(
 ) {
 
     val scope = rememberCoroutineScope()
-    val workouts by viewModel.workouts.collectAsState()
+    val workouts by viewModel.workouts.collectAsState(initial = emptyList())
     val currentSessionId by viewModel.currentSessionId.collectAsState()
 
-    Column(Modifier.padding(20.dp).fillMaxSize()) {
+    Column(
+        Modifier
+            .padding(16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
 
-        Text(stringResource(id = R.string.app_name), style = MaterialTheme.typography.headlineLarge)
+        Text(
+            text = "Owl Fitness",
+            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-        Spacer(Modifier.height(10.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = if (currentSessionId != null) 
+                    MaterialTheme.colorScheme.primaryContainer 
+                else 
+                    MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    text = if (currentSessionId != null) "WORKOUT IN PROGRESS" else "READY FOR GYM?",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (currentSessionId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(Modifier.height(8.dp))
 
-        if (currentSessionId != null) {
-            Text("Workout Active", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
-            Button(
-                onClick = { 
-                    viewModel.endSession { sessionId ->
-                        nav.navigate("summary/$sessionId")
+                if (currentSessionId != null) {
+                    Button(
+                        onClick = { 
+                            viewModel.endSession { sessionId ->
+                                nav.navigate("summary/$sessionId")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) { 
+                        Text("FINISH SESSION", fontWeight = FontWeight.Bold) 
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) { Text("End Workout") }
-        } else {
-            Text("No Active Session", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.titleMedium)
-            Button(
-                onClick = { viewModel.startSession() },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text("Start Workout Session") }
+                } else {
+                    Button(
+                        onClick = { viewModel.startSession() },
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    ) { 
+                        Text("START NEW SESSION", fontWeight = FontWeight.Bold) 
+                    }
+                }
+            }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(8.dp))
 
-        Button(
-            onClick = { nav.navigate("plan") },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Workout Plan") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MenuButton(
+                text = "LOG EXERCISES",
+                modifier = Modifier.weight(1f).height(120.dp),
+                onClick = {
+                    if (currentSessionId != null) {
+                        nav.navigate("muscle")
+                    } else {
+                        Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+            MenuButton(
+                text = "PROGRESS & PRs",
+                modifier = Modifier.weight(1f).height(120.dp),
+                onClick = { nav.navigate("progress") },
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            )
+        }
 
-        Spacer(Modifier.height(10.dp))
-
-        Button(
-            onClick = { 
-                if (currentSessionId != null) {
-                    nav.navigate("muscle") 
-                } else {
-                    Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Log Exercises") }
-
-        Spacer(Modifier.height(10.dp))
-
-        Button(
-            onClick = { nav.navigate("history") },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Workout History") }
-
-        Spacer(Modifier.height(10.dp))
-
-        Button(
-            onClick = { nav.navigate("progress") },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Progress") }
-
-        Spacer(Modifier.height(10.dp))
-
-        Button(
-            onClick = { nav.navigate("weight") },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Body Weight Tracker") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            MenuButton(
+                text = "HISTORY",
+                modifier = Modifier.weight(1f).height(80.dp),
+                onClick = { nav.navigate("history") }
+            )
+            MenuButton(
+                text = "BODY WEIGHT",
+                modifier = Modifier.weight(1f).height(80.dp),
+                onClick = { nav.navigate("weight") }
+            )
+        }
 
         Spacer(Modifier.weight(1f))
 
-        Button(
+        OutlinedButton(
             onClick = {
                 scope.launch {
                     val fileName = "GymDiary_Export_${System.currentTimeMillis()}.csv"
@@ -145,8 +172,30 @@ fun HomeScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-        ) { Text("Export & Share CSV") }
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) { Text("EXPORT DATA (CSV)", style = MaterialTheme.typography.labelLarge) }
+    }
+}
+
+@Composable
+fun MenuButton(
+    text: String, 
+    onClick: () -> Unit, 
+    modifier: Modifier = Modifier,
+    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceVariant
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
     }
 }

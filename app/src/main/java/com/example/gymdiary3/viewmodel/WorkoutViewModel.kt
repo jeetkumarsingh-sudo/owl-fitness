@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.WorkoutSession
-import com.example.gymdiary3.data.WorkoutPlan
-import com.example.gymdiary3.data.PlanExercise
 import com.example.gymdiary3.database.WorkoutDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -27,20 +25,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessions: StateFlow<List<WorkoutSession>> = workoutDao.getAllSessions()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val dayTypes: StateFlow<List<String>> = workoutDao.getAllDayTypes()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val customPlans: StateFlow<List<WorkoutPlan>> = workoutDao.getAllPlans()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    private val _selectedDayType = MutableStateFlow("")
-    val exercisesByDay: StateFlow<List<Exercise>> = _selectedDayType
-        .flatMapLatest { dayType ->
-            if (dayType.isEmpty()) flowOf(emptyList())
-            else workoutDao.getExercisesByDayType(dayType)
-        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _selectedMuscle = MutableStateFlow("")
@@ -66,8 +50,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private val _summary = MutableStateFlow<SessionSummary?>(null)
     val summary: StateFlow<SessionSummary?> = _summary
 
-    private val prCache = mutableMapOf<String, Pair<Double, Int>>()
-
     private var currentStartTime: Long = 0L
 
     private val _timer = MutableStateFlow(0)
@@ -87,7 +69,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     private fun getSuggestedWeight(lastWeight: Double): Double {
         return when {
-            lastWeight < 20 -> lastWeight + 2.5
+            lastWeight < 20 -> lastWeight + 1.25
             lastWeight < 50 -> lastWeight + 2.5
             else -> lastWeight + 5
         }
@@ -98,10 +80,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val count = workoutDao.getTodaySetCount(exerciseName)
             _currentSet.value = count + 1
         }
-    }
-
-    fun selectDayType(dayType: String) {
-        _selectedDayType.value = dayType
     }
 
     fun selectMuscle(muscle: String) {
@@ -115,7 +93,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val totalVolume = workouts.sumOf { it.weight * it.reps }
             val grouped = workouts.groupBy { it.exercise }
             val session = workoutDao.getSessionById(sessionId)
-            val duration = (session.endTime ?: 0) - session.startTime
+            val duration = (session.endTime ?: session.startTime) - session.startTime
             _summary.value = SessionSummary(
                 totalSets = totalSets,
                 totalVolume = totalVolume,
@@ -125,40 +103,11 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    suspend fun getSessionSummary(sessionId: Int): SessionSummary {
-        val workouts = workoutDao.getWorkoutsBySession(sessionId)
-        val totalSets = workouts.size
-        val totalVolume = workouts.sumOf { it.weight * it.reps }
-        val grouped = workouts.groupBy { it.exercise }
-        val session = workoutDao.getSessionById(sessionId)
-        val duration = (session.endTime ?: 0) - session.startTime
-        return SessionSummary(
-            totalSets = totalSets,
-            totalVolume = totalVolume,
-            exercises = grouped,
-            duration = duration
-        )
-    }
+    private var timerJob: kotlinx.coroutines.Job? = null
 
-    suspend fun getPR(exerciseName: String): Pair<Double, Int>? {
-        prCache[exerciseName]?.let { return it }
-        val list = workoutDao.getAllByExercise(exerciseName)
-        if (list.isEmpty()) return null
-        val best = list.maxByOrNull { it.weight * it.reps }
-        val result = best?.let { it.weight to it.reps }
-        if (result != null) {
-            prCache[exerciseName] = result
-        }
-        return result
-    }
-
-    suspend fun getProgress(exercise: String): List<Pair<Long, Double>> {
-        val list = workoutDao.getExerciseHistory(exercise)
-        return list.map { it.date to it.weight }
-    }
-
-    fun startRestTimer(seconds: Int = 60) {
-        viewModelScope.launch {
+    fun startRestTimer(seconds: Int = 90) {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
             for (i in seconds downTo 0) {
                 _timer.value = i
                 delay(1000)
@@ -199,52 +148,47 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val existing = workoutDao.getAllExercisesList()
             if (existing.isEmpty()) {
                 val defaults = listOf(
-                    // DAY 1 – PUSH
-                    Exercise("Pec Deck", "Chest", "Day 1 - Push"),
-                    Exercise("Smith Incline Press", "Chest", "Day 1 - Push"),
-                    Exercise("Smith Flat Bench", "Chest", "Day 1 - Push"),
-                    Exercise("Bench Press", "Chest", "Day 1 - Push"),
-                    Exercise("Fly", "Chest", "Day 1 - Push"),
-                    Exercise("Triceps Pushdown", "Triceps", "Day 1 - Push"),
-                    Exercise("Push-ups", "Chest", "Day 1 - Push"),
-
-                    // DAY 2 – PULL
-                    Exercise("Pull-ups", "Back", "Day 2 - Pull"),
-                    Exercise("Deadlift", "Back", "Day 2 - Pull"),
-                    Exercise("Lat Pulldown", "Back", "Day 2 - Pull"),
-                    Exercise("Seated Row", "Back", "Day 2 - Pull"),
-                    Exercise("Barbell Curl", "Biceps", "Day 2 - Pull"),
-                    Exercise("Dumbbell Curl", "Biceps", "Day 2 - Pull"),
-
-                    // DAY 3 – LEGS
-                    Exercise("Squat", "Legs", "Day 3 - Legs"),
-                    Exercise("Leg Press", "Legs", "Day 3 - Legs"),
-                    Exercise("Leg Extension", "Legs", "Day 3 - Legs"),
-                    Exercise("Leg Curl / RDL", "Legs", "Day 3 - Legs"),
-                    Exercise("Calf Raises", "Legs", "Day 3 - Legs"),
-                    Exercise("Abs", "Abs", "Day 3 - Legs"),
-
-                    // DAY 5 – UPPER
-                    Exercise("Bench Press ", "Chest", "Day 5 - Upper"),
-                    Exercise("Lat Pulldown ", "Back", "Day 5 - Upper"),
-                    Exercise("Overhead Press", "Shoulders", "Day 5 - Upper"),
-                    Exercise("Lateral Raises", "Shoulders", "Day 5 - Upper"),
-                    Exercise("Push-ups ", "Chest", "Day 5 - Upper"),
-                    Exercise("Pull-ups ", "Back", "Day 5 - Upper"),
-
-                    // DAY 6 – LOWER
-                    Exercise("Squat (light)", "Legs", "Day 6 - Lower"),
-                    Exercise("RDL (light)", "Legs", "Day 6 - Lower"),
-                    Exercise("Abs ", "Abs", "Day 6 - Lower")
+                    Exercise("Bench Press", "Chest"),
+                    Exercise("Incline Bench Press", "Chest"),
+                    Exercise("Dumbbell Fly", "Chest"),
+                    Exercise("Push-ups", "Chest"),
+                    
+                    Exercise("Deadlift", "Back"),
+                    Exercise("Pull-ups", "Back"),
+                    Exercise("Lat Pulldown", "Back"),
+                    Exercise("Seated Row", "Back"),
+                    Exercise("One Arm Row", "Back"),
+                    
+                    Exercise("Squat", "Legs"),
+                    Exercise("Leg Press", "Legs"),
+                    Exercise("Leg Extension", "Legs"),
+                    Exercise("Leg Curl", "Legs"),
+                    Exercise("Calf Raise", "Legs"),
+                    
+                    Exercise("Overhead Press", "Shoulders"),
+                    Exercise("Lateral Raise", "Shoulders"),
+                    Exercise("Front Raise", "Shoulders"),
+                    
+                    Exercise("Barbell Curl", "Biceps"),
+                    Exercise("Dumbbell Curl", "Biceps"),
+                    Exercise("Hammer Curl", "Biceps"),
+                    
+                    Exercise("Triceps Pushdown", "Triceps"),
+                    Exercise("Skull Crusher", "Triceps"),
+                    Exercise("Dips", "Triceps"),
+                    
+                    Exercise("Plank", "Abs"),
+                    Exercise("Crunch", "Abs"),
+                    Exercise("Leg Raise", "Abs")
                 )
                 defaults.forEach { workoutDao.insertExercise(it) }
             }
         }
     }
 
-    fun addExercise(name: String, muscle: String, dayType: String = "Custom") {
+    fun addExercise(name: String, muscle: String) {
         viewModelScope.launch {
-            workoutDao.insertExercise(Exercise(name, muscle, dayType, true))
+            workoutDao.insertExercise(Exercise(name, muscle, true))
         }
     }
 
@@ -254,27 +198,10 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    fun createPlan(name: String) {
-        viewModelScope.launch {
-            workoutDao.insertPlan(WorkoutPlan(name = name))
-        }
-    }
-
-    fun addExerciseToPlan(planId: Int, exerciseName: String) {
-        viewModelScope.launch {
-            workoutDao.insertPlanExercise(PlanExercise(planId = planId, exerciseName = exerciseName))
-        }
-    }
-
-    suspend fun getPlanExercises(planId: Int): List<PlanExercise> {
-        return workoutDao.getExercisesForPlan(planId)
-    }
-
     fun insertWorkout(muscle: String, exercise: String, set: Int, reps: Int, weight: Double, support: Boolean) {
-        val sessionId = _currentSessionId.value ?: return // Safety: Do not allow insert if session is null
+        val sessionId = _currentSessionId.value ?: return 
         viewModelScope.launch {
             workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, set, reps, weight, support, sessionId))
-            // Ensure set number updates AFTER insertion to avoid race condition
             val count = workoutDao.getTodaySetCount(exercise)
             _currentSet.value = count + 1
             startRestTimer()

@@ -10,10 +10,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
 
@@ -26,29 +27,27 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     var showAddDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
 
-    Column(Modifier.padding(20.dp).fillMaxSize()) {
-
-        Text("$muscle Exercises", style = MaterialTheme.typography.headlineSmall)
-
-        Spacer(Modifier.height(20.dp))
-
-        Button(
-            onClick = { showAddDialog = true },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Add Exercise") }
-
-        Spacer(Modifier.height(20.dp))
-
-        LazyColumn(Modifier.weight(1f)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(muscle, fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { showAddDialog = true }) {
+                        Text("+", style = MaterialTheme.typography.headlineMedium)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.padding(padding).fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             items(exercises) { exercise ->
                 var showMenu by remember { mutableStateOf(false) }
 
-                var pr by remember { mutableStateOf<Pair<Double, Int>?>(null) }
-                LaunchedEffect(exercise.name) {
-                    pr = viewModel.getPR(exercise.name)
-                }
-
-                Column(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
@@ -56,12 +55,15 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                                 nav.navigate("set/$muscle/${Uri.encode(exercise.name)}")
                             },
                             onLongClick = { showMenu = true }
-                        )
-                        .padding(16.dp)
+                        ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Text(exercise.name, style = MaterialTheme.typography.bodyLarge)
-                    pr?.let {
-                        Text("PR: ${it.first}kg x ${it.second}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            exercise.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
 
@@ -77,7 +79,6 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                         }
                     )
                 }
-                HorizontalDivider()
             }
         }
     }
@@ -92,20 +93,22 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                     }
                     showAddDialog = false
                     newExerciseName = ""
-                }) { Text("Add") }
+                }) { Text("ADD") }
             },
             dismissButton = {
-                Button(onClick = { 
+                TextButton(onClick = { 
                     showAddDialog = false
                     newExerciseName = "" 
-                }) { Text("Cancel") }
+                }) { Text("CANCEL") }
             },
-            title = { Text("Add Exercise") },
+            title = { Text("Add $muscle Exercise") },
             text = {
                 OutlinedTextField(
                     value = newExerciseName,
                     onValueChange = { newExerciseName = it },
-                    label = { Text("Exercise name") }
+                    label = { Text("Exercise Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         )

@@ -15,6 +15,7 @@ import androidx.navigation.compose.*
 import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
+import androidx.compose.ui.graphics.Color
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
 class MainActivity : ComponentActivity() {
@@ -44,9 +45,26 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val customDarkColorScheme = darkColorScheme(
+            background = Color(0xFF121212),
+            surface = Color(0xFF121212),
+            surfaceVariant = Color(0xFF1E1E1E),
+            onBackground = Color.White,
+            onSurface = Color.White,
+            primary = Color(0xFFBB86FC),
+            secondary = Color(0xFF03DAC6),
+            error = Color(0xFFCF6679)
+        )
+
+        val customLightColorScheme = lightColorScheme(
+            background = Color.White,
+            surface = Color.White,
+            surfaceVariant = Color(0xFFF5F5F5)
+        )
+
         setContent {
             val isDarkTheme = isSystemInDarkTheme()
-            MaterialTheme(colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()) {
+            MaterialTheme(colorScheme = if (isDarkTheme) customDarkColorScheme else customLightColorScheme) {
                 val nav = rememberNavController()
 
                 NavHost(navController = nav, startDestination = "home") {
@@ -85,15 +103,6 @@ class MainActivity : ComponentActivity() {
 
                     composable("progress") {
                         ProgressScreen(nav, workoutViewModel)
-                    }
-
-                    composable("plan") {
-                        PlanScreen(nav, workoutViewModel)
-                    }
-
-                    composable("plan_exercises/{dayType}") { back ->
-                        val dayType = back.arguments?.getString("dayType") ?: ""
-                        PlanExerciseScreen(nav, dayType, workoutViewModel)
                     }
                 }
             }
