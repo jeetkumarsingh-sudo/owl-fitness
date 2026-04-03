@@ -35,6 +35,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName")
     suspend fun getAllByExercise(exerciseName: String): List<WorkoutSet>
 
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date ASC")
+    suspend fun getExerciseHistory(exerciseName: String): List<WorkoutSet>
+
     @Query("SELECT * FROM WorkoutSet ORDER BY date DESC")
     fun getWorkouts(): Flow<List<WorkoutSet>>
 
