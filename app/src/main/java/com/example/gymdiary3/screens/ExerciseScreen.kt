@@ -4,23 +4,21 @@ import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.data.Exercise
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
 
-    // Reactive subscription to Room data
     val exercises by viewModel.exercises.collectAsState()
 
-    // Sync ViewModel with current muscle on entry
     LaunchedEffect(muscle) {
         viewModel.selectMuscle(muscle)
     }
@@ -83,12 +81,15 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                     if (newExerciseName.isNotBlank()) {
                         viewModel.addExercise(newExerciseName, muscle)
                     }
-                    newExerciseName = ""
                     showAddDialog = false
+                    newExerciseName = ""
                 }) { Text("Add") }
             },
             dismissButton = {
-                Button(onClick = { showAddDialog = false }) { Text("Cancel") }
+                Button(onClick = { 
+                    showAddDialog = false
+                    newExerciseName = "" 
+                }) { Text("Cancel") }
             },
             title = { Text("Add Exercise") },
             text = {
