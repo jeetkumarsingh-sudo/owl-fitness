@@ -6,10 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.gymdiary3.data.BodyWeight
 import com.example.gymdiary3.data.WorkoutSet
+import com.example.gymdiary3.data.Exercise
 
 @Database(
-    entities = [WorkoutSet::class, BodyWeight::class, com.example.gymdiary3.data.Exercise::class],
-    version = 2,
+    entities = [WorkoutSet::class, BodyWeight::class, Exercise::class],
+    version = 3,
     exportSchema = false
 )
 abstract class WorkoutDatabase : RoomDatabase() {
