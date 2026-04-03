@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
         val workoutViewModel by viewModels<WorkoutViewModel> {
             object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return WorkoutViewModel(workoutDao) as T
                 }
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
 
         val bodyWeightViewModel by viewModels<BodyWeightViewModel> {
             object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     return BodyWeightViewModel(bodyDao) as T
                 }
