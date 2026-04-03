@@ -47,37 +47,39 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
             items(exercises) { exercise ->
                 var showMenu by remember { mutableStateOf(false) }
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
+                Box {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .combinedClickable(
+                                onClick = {
+                                    nav.navigate("set/$muscle/${Uri.encode(exercise.name)}")
+                                },
+                                onLongClick = { showMenu = true }
+                            ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(
+                                exercise.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Delete Exercise") },
                             onClick = {
-                                nav.navigate("set/$muscle/${Uri.encode(exercise.name)}")
-                            },
-                            onLongClick = { showMenu = true }
-                        ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            exercise.name,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                                viewModel.deleteExercise(exercise)
+                                showMenu = false
+                            }
                         )
                     }
-                }
-
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Delete Exercise") },
-                        onClick = {
-                            viewModel.deleteExercise(exercise)
-                            showMenu = false
-                        }
-                    )
                 }
             }
         }
