@@ -10,79 +10,25 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.data.Exercise
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ExerciseScreen(nav: NavHostController, muscle: String) {
+fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
 
-    val exerciseMap = remember {
-        mutableStateMapOf(
+    // Reactive subscription to Room data
+    val exercises by viewModel.exercises.collectAsState()
 
-            "Back" to mutableStateListOf(
-                "Deadlift",
-                "Rack Pull",
-                "Pull Up",
-                "Lat Pulldown",
-                "Barbell Row",
-                "Dumbbell Row",
-                "Face Pull",
-                "T-Bar Row",
-                "Seated Cable Row"
-            ),
-
-            "Chest" to mutableStateListOf(
-                "Bench Press",
-                "Incline Bench Press",
-                "Incline Dumbbell Press",
-                "Cable Fly",
-                "Pec Deck",
-                "Flat Dumbbell Fly",
-                "Machine Chest Press"
-            ),
-
-            "Legs" to mutableStateListOf(
-                "Squat",
-                "Romanian Deadlift",
-                "Leg Press",
-                "Walking Lunges",
-                "Leg Curl",
-                "Calf Raise"
-            ),
-
-            "Shoulders" to mutableStateListOf(
-                "Overhead Press",
-                "Dumbbell Lateral Raise",
-                "Rear Delt Fly",
-                "Upright Row"
-            ),
-
-            "Biceps" to mutableStateListOf(
-                "Barbell Curl",
-                "Hammer Curl",
-                "Alt Dumbbell Curl",
-                "Preacher Curl"
-            ),
-
-            "Triceps" to mutableStateListOf(
-                "Overhead Triceps Extension",
-                "Triceps Pushdown",
-                "Rope Pushdown",
-                "Close Grip Bench Press"
-            ),
-
-            "Abs" to mutableStateListOf(
-                "Hanging Leg Raise",
-                "Cable Crunch"
-            )
-        )
+    // Sync ViewModel with current muscle on entry
+    LaunchedEffect(muscle) {
+        viewModel.selectMuscle(muscle)
     }
 
-    val exercises = exerciseMap[muscle] ?: mutableStateListOf()
-
     var showAddDialog by remember { mutableStateOf(false) }
-    var newExercise by remember { mutableStateOf("") }
+    var newExerciseName by remember { mutableStateOf("") }
 
-    Column(Modifier.padding(20.dp)) {
+    Column(Modifier.padding(20.dp).fillMaxSize()) {
 
         Text("$muscle Exercises", style = MaterialTheme.typography.headlineSmall)
 
@@ -95,71 +41,60 @@ fun ExerciseScreen(nav: NavHostController, muscle: String) {
 
         Spacer(Modifier.height(20.dp))
 
-        LazyColumn {
-
+        LazyColumn(Modifier.weight(1f)) {
             items(exercises) { exercise ->
-
                 var showMenu by remember { mutableStateOf(false) }
 
                 Text(
-                    exercise,
+                    exercise.name,
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
                             onClick = {
-                                nav.navigate("set/$muscle/${Uri.encode(exercise)}")
+                                nav.navigate("set/$muscle/${Uri.encode(exercise.name)}")
                             },
                             onLongClick = { showMenu = true }
                         )
-                        .padding(12.dp)
+                        .padding(16.dp)
                 )
 
                 DropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
-
                     DropdownMenuItem(
                         text = { Text("Delete Exercise") },
                         onClick = {
-                            exercises.remove(exercise)
+                            viewModel.deleteExercise(exercise)
                             showMenu = false
                         }
                     )
                 }
-
-                Divider()
+                HorizontalDivider()
             }
         }
     }
 
     if (showAddDialog) {
-
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-
             confirmButton = {
                 Button(onClick = {
-
-                    if (newExercise.isNotBlank())
-                        exercises.add(newExercise)
-
-                    newExercise = ""
+                    if (newExerciseName.isNotBlank()) {
+                        viewModel.addExercise(newExerciseName, muscle)
+                    }
+                    newExerciseName = ""
                     showAddDialog = false
-
                 }) { Text("Add") }
             },
-
             dismissButton = {
                 Button(onClick = { showAddDialog = false }) { Text("Cancel") }
             },
-
             title = { Text("Add Exercise") },
-
             text = {
                 OutlinedTextField(
-                    value = newExercise,
-                    onValueChange = { newExercise = it },
+                    value = newExerciseName,
+                    onValueChange = { newExerciseName = it },
                     label = { Text("Exercise name") }
                 )
             }
