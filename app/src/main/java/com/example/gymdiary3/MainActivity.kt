@@ -7,6 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.navigation.compose.*
 import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
@@ -41,53 +45,56 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            val nav = rememberNavController()
+            val isDarkTheme = isSystemInDarkTheme()
+            MaterialTheme(colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()) {
+                val nav = rememberNavController()
 
-            NavHost(navController = nav, startDestination = "home") {
+                NavHost(navController = nav, startDestination = "home") {
 
-                composable("home") {
-                    HomeScreen(nav, workoutViewModel, applicationContext)
-                }
+                    composable("home") {
+                        HomeScreen(nav, workoutViewModel, applicationContext)
+                    }
 
-                composable("muscle") {
-                    MuscleScreen(nav)
-                }
+                    composable("muscle") {
+                        MuscleScreen(nav)
+                    }
 
-                composable("exercise/{muscle}") { back ->
-                    val muscle = back.arguments?.getString("muscle") ?: ""
-                    ExerciseScreen(nav, muscle, workoutViewModel)
-                }
+                    composable("exercise/{muscle}") { back ->
+                        val muscle = back.arguments?.getString("muscle") ?: ""
+                        ExerciseScreen(nav, muscle, workoutViewModel)
+                    }
 
-                composable("set/{muscle}/{exercise}") { back ->
-                    val muscle = back.arguments?.getString("muscle") ?: ""
-                    val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
-                    SetScreen(nav, muscle, exercise, workoutViewModel)
-                }
+                    composable("set/{muscle}/{exercise}") { back ->
+                        val muscle = back.arguments?.getString("muscle") ?: ""
+                        val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
+                        SetScreen(nav, muscle, exercise, workoutViewModel)
+                    }
 
-                composable("history") {
-                    SessionHistoryScreen(nav, workoutViewModel)
-                }
+                    composable("history") {
+                        SessionHistoryScreen(nav, workoutViewModel)
+                    }
 
-                composable("summary/{sessionId}") { back ->
-                    val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
-                    SessionSummaryScreen(nav, workoutViewModel, sessionId)
-                }
+                    composable("summary/{sessionId}") { back ->
+                        val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
+                        SessionSummaryScreen(nav, workoutViewModel, sessionId)
+                    }
 
-                composable("weight") {
-                    BodyWeightScreen(nav, bodyWeightViewModel)
-                }
+                    composable("weight") {
+                        BodyWeightScreen(nav, bodyWeightViewModel)
+                    }
 
-                composable("progress") {
-                    ProgressScreen(nav, workoutViewModel)
-                }
+                    composable("progress") {
+                        ProgressScreen(nav, workoutViewModel)
+                    }
 
-                composable("plan") {
-                    PlanScreen(nav, workoutViewModel)
-                }
+                    composable("plan") {
+                        PlanScreen(nav, workoutViewModel)
+                    }
 
-                composable("plan_exercises/{dayType}") { back ->
-                    val dayType = back.arguments?.getString("dayType") ?: ""
-                    PlanExerciseScreen(nav, dayType, workoutViewModel)
+                    composable("plan_exercises/{dayType}") { back ->
+                        val dayType = back.arguments?.getString("dayType") ?: ""
+                        PlanExerciseScreen(nav, dayType, workoutViewModel)
+                    }
                 }
             }
         }

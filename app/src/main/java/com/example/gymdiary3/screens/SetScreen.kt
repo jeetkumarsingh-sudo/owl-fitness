@@ -70,6 +70,12 @@ fun SetScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
+        } else if (timer == 0 && currentSet > 1) {
+            Text(
+                text = "Go!",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
         Spacer(Modifier.height(10.dp))
