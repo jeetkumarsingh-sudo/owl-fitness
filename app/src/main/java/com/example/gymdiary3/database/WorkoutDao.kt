@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSession
-import com.example.gymdiary3.data.WorkoutPlan
-import com.example.gymdiary3.data.PlanExercise
 import androidx.room.Update
 
 @Dao
@@ -40,18 +38,6 @@ interface WorkoutDao {
     @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date ASC")
     suspend fun getExerciseHistory(exerciseName: String): List<WorkoutSet>
 
-    @Insert
-    suspend fun insertPlan(plan: WorkoutPlan): Long
-
-    @Insert
-    suspend fun insertPlanExercise(planExercise: PlanExercise)
-
-    @Query("SELECT * FROM plan")
-    fun getAllPlans(): Flow<List<WorkoutPlan>>
-
-    @Query("SELECT * FROM plan_exercise WHERE planId = :planId")
-    suspend fun getExercisesForPlan(planId: Int): List<PlanExercise>
-
     @Query("SELECT * FROM WorkoutSet ORDER BY date DESC")
     fun getWorkouts(): Flow<List<WorkoutSet>>
 
@@ -72,12 +58,6 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM Exercise")
     suspend fun getAllExercisesList(): List<Exercise>
-
-    @Query("SELECT DISTINCT dayType FROM Exercise")
-    fun getAllDayTypes(): Flow<List<String>>
-
-    @Query("SELECT * FROM Exercise WHERE dayType = :dayType")
-    fun getExercisesByDayType(dayType: String): Flow<List<Exercise>>
 
     @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 1")
     suspend fun getLastSet(exerciseName: String): WorkoutSet?

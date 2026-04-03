@@ -9,6 +9,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
@@ -23,7 +27,8 @@ fun SetScreen(
     var weight by remember { mutableStateOf("") }
     var support by remember { mutableStateOf(false) }
 
-    val focusRequester = remember { FocusRequester() }
+    val repsFocusRequester = remember { FocusRequester() }
+    val weightFocusRequester = remember { FocusRequester() }
 
     val lastSet by viewModel.lastSet.collectAsState()
     val suggestedWeight by viewModel.suggestedWeight.collectAsState()
@@ -35,77 +40,83 @@ fun SetScreen(
         viewModel.updateSetNumber(exercise)
     }
 
-    LaunchedEffect(currentSet) {
-        if (currentSet > 0) {
-            focusRequester.requestFocus()
-        }
+    LaunchedEffect(Unit) {
+        repsFocusRequester.requestFocus()
     }
 
     LaunchedEffect(lastSet) {
         lastSet?.let {
-            weight = it.weight.toString()
-            reps = it.reps.toString()
+            if (weight.isEmpty()) {
+                weight = it.weight.toString()
+            }
             support = it.support
         }
     }
 
-    Column(Modifier.padding(20.dp).fillMaxSize()) {
+    Column(Modifier.padding(16.dp).fillMaxSize()) {
 
         Text(
-            text = "$exercise ($muscle)",
-            style = MaterialTheme.typography.headlineSmall
+            text = exercise,
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            maxLines = 1
         )
 
-        Spacer(Modifier.height(20.dp))
-
-        Text(
-            text = "Set $currentSet",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        if (timer > 0) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
             Text(
-                text = "Rest: $timer sec",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error
+                text = "Set $currentSet",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
             )
-        } else if (timer == 0 && currentSet > 1) {
-            Text(
-                text = "Go!",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+
+            if (timer > 0) {
+                Text(
+                    text = "${timer}s",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Black,
+                        fontSize = 32.sp
+                    ),
+                    color = if (timer < 10) Color.Red else MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
-        Spacer(Modifier.height(10.dp))
-
-        OutlinedTextField(
-            value = reps,
-            onValueChange = { reps = it },
-            label = { Text("Reps") },
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
             value = weight,
             onValueChange = { weight = it },
-            label = { Text("Weight (kg)") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            label = { Text("Weight (kg)", fontSize = 18.sp) },
+            modifier = Modifier.fillMaxWidth().focusRequester(weightFocusRequester),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textStyle = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+            singleLine = true
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = reps,
+            onValueChange = { reps = it },
+            label = { Text("Reps", fontSize = 18.sp) },
+            modifier = Modifier.fillMaxWidth().focusRequester(repsFocusRequester),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textStyle = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+            singleLine = true
         )
 
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             lastSet?.let {
                 Text(
                     text = "Last: ${it.weight}kg × ${it.reps}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.secondary
                 )
             }
@@ -113,29 +124,30 @@ fun SetScreen(
             suggestedWeight?.let { suggestion ->
                 TextButton(
                     onClick = { weight = suggestion.toString() },
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier.height(24.dp)
+                    contentPadding = PaddingValues(0.dp)
                 ) {
                     Text(
-                        text = "Suggested: ${suggestion}kg",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Suggest: ${suggestion}kg",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(16.dp))
 
-        Row {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Checkbox(
                 checked = support,
-                onCheckedChange = { support = it }
+                onCheckedChange = { support = it },
+                modifier = Modifier.size(48.dp)
             )
-            Text("Support used")
+            Text("Support / Assisted", style = MaterialTheme.typography.bodyLarge)
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.weight(1f))
 
         Button(
             onClick = {
@@ -151,18 +163,22 @@ fun SetScreen(
                     support = support
                 )
 
-                // UX Improvement: Clear reps only, keep weight and increment set
                 reps = ""
+                repsFocusRequester.requestFocus()
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().height(64.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Text("Save Set")
+            Text("LOG SET", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold))
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
 
-        Button(onClick = { nav.popBackStack() }) {
-            Text("Back")
+        OutlinedButton(
+            onClick = { nav.popBackStack() },
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            Text("FINISH EXERCISE", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

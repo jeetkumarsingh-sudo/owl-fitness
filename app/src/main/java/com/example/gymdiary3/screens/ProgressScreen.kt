@@ -7,62 +7,109 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
-
-    val workouts by viewModel.workouts.collectAsState()
+    val workouts by viewModel.workouts.collectAsState(initial = emptyList())
     val grouped = workouts.groupBy { it.exercise }
+    val sdf = SimpleDateFormat("MMM dd", Locale.getDefault())
 
     Scaffold(
-        topBar = {
-            @OptIn(ExperimentalMaterial3Api::class)
-            TopAppBar(title = { Text("Progress Tracker") })
-        }
+        topBar = { TopAppBar(title = { Text("Progress & PRs", fontWeight = FontWeight.Bold) }) }
     ) { padding ->
-        Column(Modifier.padding(padding).padding(16.dp).fillMaxSize()) {
-
-            LazyColumn(Modifier.weight(1f)) {
-                grouped.forEach { (exercise, sets) ->
-                    val pr = sets.maxByOrNull { it.weight * it.reps }
-                    
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Column(Modifier.padding(16.dp)) {
+        LazyColumn(
+            modifier = Modifier.padding(padding).fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            grouped.forEach { (exercise, sets) ->
+                val sortedSets = sets.sortedByDescending { it.date }
+                val prSet = sets.maxByOrNull { it.weight }
+                
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(
+                                exercise,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            
+                            Spacer(Modifier.height(8.dp))
+                            
+                            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                Text("Best: ", style = MaterialTheme.typography.bodyMedium)
                                 Text(
-                                    exercise,
-                                    style = MaterialTheme.typography.titleLarge,
+                                    "${prSet?.weight ?: 0} kg",
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.secondary
                                 )
-                                Spacer(Modifier.height(8.dp))
+                            }
+
+                            Spacer(Modifier.height(12.dp))
+                            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                            
+                            // Compare last session with the one before it
+                            val sessionGroups = sortedSets.groupBy { 
+                                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.date)) 
+                            }.values.toList()
+
+                            if (sessionGroups.size >= 2) {
+                                val latestWeight = sessionGroups[0].maxOf { it.weight }
+                                val previousWeight = sessionGroups[1].maxOf { it.weight }
+                                val diff = latestWeight - previousWeight
                                 
-                                pr?.let {
-                                    Text("All-Time PR: ${it.weight}kg x ${it.reps}", style = MaterialTheme.typography.bodyLarge)
+                                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                    Text(
+                                        text = if (diff >= 0) "+${diff}kg" else "${diff}kg",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (diff >= 0) Color(0xFF4CAF50) else Color.Red
+                                    )
+                                    Text(
+                                        " since last session",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.outline
+                                    )
                                 }
-                                
-                                Spacer(Modifier.height(8.dp))
-                                Text("Recent History:", style = MaterialTheme.typography.labelLarge)
-                                
-                                sets.take(5).forEach { set ->
-                                    Text("• ${set.weight}kg x ${set.reps}", style = MaterialTheme.typography.bodySmall)
+                            }
+
+                            Spacer(Modifier.height(8.dp))
+                            
+                            sortedSets.take(3).forEach { set ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall)
+                                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
                     }
                 }
             }
-
-            Button(
-                onClick = { nav.popBackStack() },
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-            ) {
-                Text("Back")
+            
+            item {
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = { nav.popBackStack() },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Text("BACK")
+                }
             }
         }
     }
