@@ -39,7 +39,11 @@ fun HomeScreen(
         if (currentSessionId != null) {
             Text("Workout Active", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
             Button(
-                onClick = { viewModel.endSession() },
+                onClick = { 
+                    viewModel.endSession { sessionId ->
+                        nav.navigate("session_summary/$sessionId")
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) { Text("End Workout") }

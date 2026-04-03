@@ -23,6 +23,18 @@ interface WorkoutDao {
     @Update
     suspend fun updateSession(session: WorkoutSession)
 
+    @Query("SELECT * FROM session WHERE id = :sessionId")
+    suspend fun getSessionById(sessionId: Int): WorkoutSession
+
+    @Query("SELECT * FROM WorkoutSet WHERE sessionId = :sessionId")
+    suspend fun getWorkoutsBySession(sessionId: Int): List<WorkoutSet>
+
+    @Query("SELECT * FROM session ORDER BY startTime DESC")
+    fun getAllSessions(): Flow<List<WorkoutSession>>
+
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName")
+    suspend fun getAllByExercise(exerciseName: String): List<WorkoutSet>
+
     @Query("SELECT * FROM WorkoutSet ORDER BY date DESC")
     fun getWorkouts(): Flow<List<WorkoutSet>>
 

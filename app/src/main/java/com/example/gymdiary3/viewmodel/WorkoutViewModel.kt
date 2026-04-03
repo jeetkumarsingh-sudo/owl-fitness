@@ -10,10 +10,20 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+data class SessionSummary(
+    val totalSets: Int,
+    val totalVolume: Double,
+    val exercises: Map<String, List<WorkoutSet>>,
+    val duration: Long
+)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     val workouts: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val sessions: StateFlow<List<WorkoutSession>> = workoutDao.getAllSessions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val dayTypes: StateFlow<List<String>> = workoutDao.getAllDayTypes()
@@ -84,6 +94,28 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _selectedMuscle.value = muscle
     }
 
+    suspend fun getSessionSummary(sessionId: Int): SessionSummary {
+        val workouts = workoutDao.getWorkoutsBySession(sessionId)
+        val totalSets = workouts.size
+        val totalVolume = workouts.sumOf { it.weight * it.reps }
+        val grouped = workouts.groupBy { it.exercise }
+        val session = workoutDao.getSessionById(sessionId)
+        val duration = (session.endTime ?: 0) - session.startTime
+        return SessionSummary(
+            totalSets = totalSets,
+            totalVolume = totalVolume,
+            exercises = grouped,
+            duration = duration
+        )
+    }
+
+    suspend fun getPR(exerciseName: String): Pair<Double, Int>? {
+        val list = workoutDao.getAllByExercise(exerciseName)
+        if (list.isEmpty()) return null
+        val best = list.maxByOrNull { it.weight }
+        return best?.let { it.weight to it.reps }
+    }
+
     fun startSession() {
         if (_currentSessionId.value != null) return // Already active
         viewModelScope.launch {
@@ -97,7 +129,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    fun endSession() {
+    fun endSession(onComplete: (Int) -> Unit) {
         viewModelScope.launch {
             val id = _currentSessionId.value ?: return@launch
             val session = WorkoutSession(
@@ -108,6 +140,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             workoutDao.updateSession(session)
             _currentSessionId.value = null
             currentStartTime = 0L
+            onComplete(id)
         }
     }
 

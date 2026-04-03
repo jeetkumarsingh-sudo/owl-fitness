@@ -43,8 +43,12 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
             items(exercises) { exercise ->
                 var showMenu by remember { mutableStateOf(false) }
 
-                Text(
-                    exercise.name,
+                var pr by remember { mutableStateOf<Pair<Double, Int>?>(null) }
+                LaunchedEffect(exercise.name) {
+                    pr = viewModel.getPR(exercise.name)
+                }
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
@@ -54,7 +58,12 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                             onLongClick = { showMenu = true }
                         )
                         .padding(16.dp)
-                )
+                ) {
+                    Text(exercise.name, style = MaterialTheme.typography.bodyLarge)
+                    pr?.let {
+                        Text("PR: ${it.first}kg x ${it.second}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    }
+                }
 
                 DropdownMenu(
                     expanded = showMenu,

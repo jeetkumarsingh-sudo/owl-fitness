@@ -65,7 +65,12 @@ class MainActivity : ComponentActivity() {
                 }
 
                 composable("history") {
-                    HistoryScreen(nav, workoutViewModel)
+                    SessionHistoryScreen(nav, workoutViewModel)
+                }
+
+                composable("session_summary/{sessionId}") { back ->
+                    val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
+                    SessionSummaryScreen(nav, workoutViewModel, sessionId)
                 }
 
                 composable("weight") {
