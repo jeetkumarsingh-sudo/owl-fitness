@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
+import androidx.compose.ui.res.stringResource
+import com.example.gymdiary3.R
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -26,10 +28,28 @@ fun HomeScreen(
 
     val scope = rememberCoroutineScope()
     val workouts by viewModel.workouts.collectAsState()
+    val currentSessionId by viewModel.currentSessionId.collectAsState()
 
     Column(Modifier.padding(20.dp).fillMaxSize()) {
 
-        Text("Gym Diary", style = MaterialTheme.typography.headlineLarge)
+        Text(stringResource(id = R.string.app_name), style = MaterialTheme.typography.headlineLarge)
+
+        Spacer(Modifier.height(10.dp))
+
+        if (currentSessionId != null) {
+            Text("Workout Active", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+            Button(
+                onClick = { viewModel.endSession() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) { Text("End Workout") }
+        } else {
+            Text("No Active Session", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.titleMedium)
+            Button(
+                onClick = { viewModel.startSession() },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Start Workout Session") }
+        }
 
         Spacer(Modifier.height(20.dp))
 
@@ -41,9 +61,15 @@ fun HomeScreen(
         Spacer(Modifier.height(10.dp))
 
         Button(
-            onClick = { nav.navigate("muscle") },
+            onClick = { 
+                if (currentSessionId != null) {
+                    nav.navigate("muscle") 
+                } else {
+                    Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
+                }
+            },
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Start Workout") }
+        ) { Text("Log Exercises") }
 
         Spacer(Modifier.height(10.dp))
 
@@ -101,7 +127,7 @@ fun HomeScreen(
 
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/csv"
-                            putExtra(Intent.EXTRA_SUBJECT, "Gym Diary Export")
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.app_name) + " Export")
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
