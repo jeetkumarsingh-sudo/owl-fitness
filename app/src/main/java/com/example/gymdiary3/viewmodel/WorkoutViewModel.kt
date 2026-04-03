@@ -34,8 +34,44 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _lastSet = MutableStateFlow<WorkoutSet?>(null)
+    val lastSet: StateFlow<WorkoutSet?> = _lastSet
+
+    private val _suggestedWeight = MutableStateFlow<Double?>(null)
+    val suggestedWeight: StateFlow<Double?> = _suggestedWeight
+
+    private val _currentSet = MutableStateFlow(1)
+    val currentSet: StateFlow<Int> = _currentSet
+
     init {
         insertDefaultWorkouts()
+    }
+
+    fun loadLastSet(exerciseName: String) {
+        viewModelScope.launch {
+            val last = workoutDao.getLastSet(exerciseName)
+            _lastSet.value = last
+            last?.let {
+                _suggestedWeight.value = getSuggestedWeight(it.weight)
+            } ?: run {
+                _suggestedWeight.value = null
+            }
+        }
+    }
+
+    private fun getSuggestedWeight(lastWeight: Double): Double {
+        return when {
+            lastWeight < 20 -> lastWeight + 2.5
+            lastWeight < 50 -> lastWeight + 2.5
+            else -> lastWeight + 5
+        }
+    }
+
+    fun updateSetNumber(exerciseName: String) {
+        viewModelScope.launch {
+            val count = workoutDao.getTodaySetCount(exerciseName)
+            _currentSet.value = count + 1
+        }
     }
 
     fun selectDayType(dayType: String) {
