@@ -75,6 +75,15 @@ class MainActivity : ComponentActivity() {
                 composable("progress") {
                     ProgressScreen(nav, workoutViewModel)
                 }
+
+                composable("plan") {
+                    PlanScreen(nav, workoutViewModel)
+                }
+
+                composable("plan_exercises/{dayType}") { back ->
+                    val dayType = back.arguments?.getString("dayType") ?: ""
+                    PlanExerciseScreen(nav, dayType, workoutViewModel)
+                }
             }
         }
     }

@@ -34,6 +34,13 @@ fun HomeScreen(
         Spacer(Modifier.height(20.dp))
 
         Button(
+            onClick = { nav.navigate("plan") },
+            modifier = Modifier.fillMaxWidth()
+        ) { Text("Workout Plan") }
+
+        Spacer(Modifier.height(10.dp))
+
+        Button(
             onClick = { nav.navigate("muscle") },
             modifier = Modifier.fillMaxWidth()
         ) { Text("Start Workout") }

@@ -17,7 +17,7 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 @Composable
 fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
 
-    val exercises by viewModel.exercises.collectAsState()
+    val exercises by viewModel.exercisesByMuscle.collectAsState()
 
     LaunchedEffect(muscle) {
         viewModel.selectMuscle(muscle)
