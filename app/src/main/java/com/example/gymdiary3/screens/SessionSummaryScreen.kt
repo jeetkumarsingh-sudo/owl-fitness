@@ -16,10 +16,10 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
-    var summary by remember { mutableStateOf<SessionSummary?>(null) }
+    val summary by viewModel.summary.collectAsState()
 
     LaunchedEffect(sessionId) {
-        summary = viewModel.getSessionSummary(sessionId)
+        viewModel.loadSummary(sessionId)
     }
 
     Scaffold(

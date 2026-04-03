@@ -8,10 +8,12 @@ import com.example.gymdiary3.data.BodyWeight
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSession
+import com.example.gymdiary3.data.WorkoutPlan
+import com.example.gymdiary3.data.PlanExercise
 
 @Database(
-    entities = [WorkoutSet::class, BodyWeight::class, Exercise::class, WorkoutSession::class],
-    version = 4,
+    entities = [WorkoutSet::class, BodyWeight::class, Exercise::class, WorkoutSession::class, WorkoutPlan::class, PlanExercise::class],
+    version = 5,
     exportSchema = false
 )
 abstract class WorkoutDatabase : RoomDatabase() {

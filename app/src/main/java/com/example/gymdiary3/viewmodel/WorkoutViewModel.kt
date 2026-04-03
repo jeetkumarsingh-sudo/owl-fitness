@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.WorkoutSession
+import com.example.gymdiary3.data.WorkoutPlan
+import com.example.gymdiary3.data.PlanExercise
 import com.example.gymdiary3.database.WorkoutDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -28,6 +30,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val dayTypes: StateFlow<List<String>> = workoutDao.getAllDayTypes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val customPlans: StateFlow<List<WorkoutPlan>> = workoutDao.getAllPlans()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _selectedDayType = MutableStateFlow("")
@@ -57,6 +62,11 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     private val _currentSessionId = MutableStateFlow<Int?>(null)
     val currentSessionId: StateFlow<Int?> = _currentSessionId
+
+    private val _summary = MutableStateFlow<SessionSummary?>(null)
+    val summary: StateFlow<SessionSummary?> = _summary
+
+    private val prCache = mutableMapOf<String, Pair<Double, Int>>()
 
     private var currentStartTime: Long = 0L
 
@@ -98,6 +108,23 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _selectedMuscle.value = muscle
     }
 
+    fun loadSummary(sessionId: Int) {
+        viewModelScope.launch {
+            val workouts = workoutDao.getWorkoutsBySession(sessionId)
+            val totalSets = workouts.size
+            val totalVolume = workouts.sumOf { it.weight * it.reps }
+            val grouped = workouts.groupBy { it.exercise }
+            val session = workoutDao.getSessionById(sessionId)
+            val duration = (session.endTime ?: 0) - session.startTime
+            _summary.value = SessionSummary(
+                totalSets = totalSets,
+                totalVolume = totalVolume,
+                exercises = grouped,
+                duration = duration
+            )
+        }
+    }
+
     suspend fun getSessionSummary(sessionId: Int): SessionSummary {
         val workouts = workoutDao.getWorkoutsBySession(sessionId)
         val totalSets = workouts.size
@@ -114,10 +141,15 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     }
 
     suspend fun getPR(exerciseName: String): Pair<Double, Int>? {
+        prCache[exerciseName]?.let { return it }
         val list = workoutDao.getAllByExercise(exerciseName)
         if (list.isEmpty()) return null
         val best = list.maxByOrNull { it.weight * it.reps }
-        return best?.let { it.weight to it.reps }
+        val result = best?.let { it.weight to it.reps }
+        if (result != null) {
+            prCache[exerciseName] = result
+        }
+        return result
     }
 
     suspend fun getProgress(exercise: String): List<Pair<Long, Double>> {
@@ -220,6 +252,22 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             workoutDao.deleteExercise(exercise)
         }
+    }
+
+    fun createPlan(name: String) {
+        viewModelScope.launch {
+            workoutDao.insertPlan(WorkoutPlan(name = name))
+        }
+    }
+
+    fun addExerciseToPlan(planId: Int, exerciseName: String) {
+        viewModelScope.launch {
+            workoutDao.insertPlanExercise(PlanExercise(planId = planId, exerciseName = exerciseName))
+        }
+    }
+
+    suspend fun getPlanExercises(planId: Int): List<PlanExercise> {
+        return workoutDao.getExercisesForPlan(planId)
     }
 
     fun insertWorkout(muscle: String, exercise: String, set: Int, reps: Int, weight: Double, support: Boolean) {
