@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
+import com.example.gymdiary3.data.WorkoutSession
 import com.example.gymdiary3.database.WorkoutDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -43,6 +44,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private val _currentSet = MutableStateFlow(1)
     val currentSet: StateFlow<Int> = _currentSet
 
+    private val _currentSessionId = MutableStateFlow<Int?>(null)
+    val currentSessionId: StateFlow<Int?> = _currentSessionId
+
     init {
         insertDefaultWorkouts()
     }
@@ -76,6 +80,31 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     fun selectMuscle(muscle: String) {
         _selectedMuscle.value = muscle
+    }
+
+    fun startSession() {
+        if (_currentSessionId.value != null) return // Already active
+        viewModelScope.launch {
+            val session = WorkoutSession(
+                startTime = System.currentTimeMillis(),
+                endTime = null
+            )
+            val id = workoutDao.insertSession(session).toInt()
+            _currentSessionId.value = id
+        }
+    }
+
+    fun endSession() {
+        viewModelScope.launch {
+            val id = _currentSessionId.value ?: return@launch
+            val session = WorkoutSession(
+                id = id,
+                startTime = 0, // Placeholder, usually you'd fetch the original session or just update the endTime
+                endTime = System.currentTimeMillis()
+            )
+            workoutDao.updateSession(session)
+            _currentSessionId.value = null
+        }
     }
 
     fun insertDefaultWorkouts() {
@@ -139,8 +168,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     }
 
     fun insertWorkout(muscle: String, exercise: String, set: Int, reps: Int, weight: Double, support: Boolean) {
+        val sessionId = _currentSessionId.value ?: return // Safety: Do not allow insert if session is null
         viewModelScope.launch {
-            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, set, reps, weight, support))
+            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, set, reps, weight, support, sessionId))
             // Ensure set number updates AFTER insertion to avoid race condition
             val count = workoutDao.getTodaySetCount(exercise)
             _currentSet.value = count + 1

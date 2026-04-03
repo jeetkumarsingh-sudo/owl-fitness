@@ -8,12 +8,20 @@ import androidx.room.Delete
 import kotlinx.coroutines.flow.Flow
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.Exercise
+import com.example.gymdiary3.data.WorkoutSession
+import androidx.room.Update
 
 @Dao
 interface WorkoutDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkout(workout: WorkoutSet)
+
+    @Insert
+    suspend fun insertSession(session: WorkoutSession): Long
+
+    @Update
+    suspend fun updateSession(session: WorkoutSession)
 
     @Query("SELECT * FROM WorkoutSet ORDER BY date DESC")
     fun getWorkouts(): Flow<List<WorkoutSet>>

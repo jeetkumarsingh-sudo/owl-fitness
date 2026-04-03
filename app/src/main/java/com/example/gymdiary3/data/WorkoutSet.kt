@@ -16,5 +16,6 @@ data class WorkoutSet(
     val set: Int,
     val reps: Int,
     val weight: Double,
-    val support: Boolean
+    val support: Boolean,
+    val sessionId: Int? = null
 )
