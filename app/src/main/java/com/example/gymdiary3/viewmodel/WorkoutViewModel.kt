@@ -47,6 +47,8 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private val _currentSessionId = MutableStateFlow<Int?>(null)
     val currentSessionId: StateFlow<Int?> = _currentSessionId
 
+    private var currentStartTime: Long = 0L
+
     init {
         insertDefaultWorkouts()
     }
@@ -85,8 +87,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     fun startSession() {
         if (_currentSessionId.value != null) return // Already active
         viewModelScope.launch {
+            currentStartTime = System.currentTimeMillis()
             val session = WorkoutSession(
-                startTime = System.currentTimeMillis(),
+                startTime = currentStartTime,
                 endTime = null
             )
             val id = workoutDao.insertSession(session).toInt()
@@ -99,11 +102,12 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val id = _currentSessionId.value ?: return@launch
             val session = WorkoutSession(
                 id = id,
-                startTime = 0, // Placeholder, usually you'd fetch the original session or just update the endTime
+                startTime = currentStartTime,
                 endTime = System.currentTimeMillis()
             )
             workoutDao.updateSession(session)
             _currentSessionId.value = null
+            currentStartTime = 0L
         }
     }
 
