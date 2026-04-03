@@ -8,5 +8,6 @@ data class Exercise(
     @PrimaryKey
     val name: String,
     val muscle: String,
+    val dayType: String,
     val isCustom: Boolean = false
 )
