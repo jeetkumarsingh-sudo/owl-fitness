@@ -8,6 +8,7 @@ import com.example.gymdiary3.data.WorkoutSession
 import com.example.gymdiary3.database.WorkoutDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class SessionSummary(
@@ -58,6 +59,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     val currentSessionId: StateFlow<Int?> = _currentSessionId
 
     private var currentStartTime: Long = 0L
+
+    private val _timer = MutableStateFlow(0)
+    val timer: StateFlow<Int> = _timer
 
     init {
         insertDefaultWorkouts()
@@ -112,8 +116,22 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     suspend fun getPR(exerciseName: String): Pair<Double, Int>? {
         val list = workoutDao.getAllByExercise(exerciseName)
         if (list.isEmpty()) return null
-        val best = list.maxByOrNull { it.weight }
+        val best = list.maxByOrNull { it.weight * it.reps }
         return best?.let { it.weight to it.reps }
+    }
+
+    suspend fun getProgress(exercise: String): List<Pair<Long, Double>> {
+        val list = workoutDao.getExerciseHistory(exercise)
+        return list.map { it.date to it.weight }
+    }
+
+    fun startRestTimer(seconds: Int = 60) {
+        viewModelScope.launch {
+            for (i in seconds downTo 0) {
+                _timer.value = i
+                delay(1000)
+            }
+        }
     }
 
     fun startSession() {
@@ -211,6 +229,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             // Ensure set number updates AFTER insertion to avoid race condition
             val count = workoutDao.getTodaySetCount(exercise)
             _currentSet.value = count + 1
+            startRestTimer()
         }
     }
 }

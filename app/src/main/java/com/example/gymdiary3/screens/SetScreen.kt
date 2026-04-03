@@ -28,6 +28,7 @@ fun SetScreen(
     val lastSet by viewModel.lastSet.collectAsState()
     val suggestedWeight by viewModel.suggestedWeight.collectAsState()
     val currentSet by viewModel.currentSet.collectAsState()
+    val timer by viewModel.timer.collectAsState()
 
     LaunchedEffect(exercise) {
         viewModel.loadLastSet(exercise)
@@ -62,6 +63,14 @@ fun SetScreen(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
+
+        if (timer > 0) {
+            Text(
+                text = "Rest: $timer sec",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
 
         Spacer(Modifier.height(10.dp))
 

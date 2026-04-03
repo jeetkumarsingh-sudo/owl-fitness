@@ -14,50 +14,56 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
 
     val workouts by viewModel.workouts.collectAsState()
-
     val grouped = workouts.groupBy { it.exercise }
 
-    Column(Modifier.padding(20.dp).fillMaxSize()) {
+    Scaffold(
+        topBar = {
+            @OptIn(ExperimentalMaterial3Api::class)
+            TopAppBar(title = { Text("Progress Tracker") })
+        }
+    ) { padding ->
+        Column(Modifier.padding(padding).padding(16.dp).fillMaxSize()) {
 
-        Text(
-            "Progress Tracker",
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        LazyColumn(Modifier.weight(1f)) {
-            grouped.forEach { (exercise, sets) ->
-                val best = sets.maxOfOrNull { it.weight } ?: 0.0
-                val total = sets.size
-
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(
-                                exercise,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Text("Best Weight: $best kg")
-                            Text("Total Sets Logged: $total")
+            LazyColumn(Modifier.weight(1f)) {
+                grouped.forEach { (exercise, sets) ->
+                    val pr = sets.maxByOrNull { it.weight * it.reps }
+                    
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(
+                                    exercise,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                
+                                pr?.let {
+                                    Text("All-Time PR: ${it.weight}kg x ${it.reps}", style = MaterialTheme.typography.bodyLarge)
+                                }
+                                
+                                Spacer(Modifier.height(8.dp))
+                                Text("Recent History:", style = MaterialTheme.typography.labelLarge)
+                                
+                                sets.take(5).forEach { set ->
+                                    Text("• ${set.weight}kg x ${set.reps}", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Spacer(Modifier.height(20.dp))
-
-        Button(
-            onClick = { nav.popBackStack() },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Back")
+            Button(
+                onClick = { nav.popBackStack() },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            ) {
+                Text("Back")
+            }
         }
     }
 }
