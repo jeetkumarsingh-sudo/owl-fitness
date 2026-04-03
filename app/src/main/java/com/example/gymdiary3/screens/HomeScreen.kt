@@ -41,7 +41,7 @@ fun HomeScreen(
             Button(
                 onClick = { 
                     viewModel.endSession { sessionId ->
-                        nav.navigate("session_summary/$sessionId")
+                        nav.navigate("summary/$sessionId")
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),

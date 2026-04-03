@@ -26,13 +26,15 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             items(sessions) { session ->
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                        .clickable { nav.navigate("session_summary/${session.id}") }
+                        .clickable { nav.navigate("summary/${session.id}") }
                 ) {
                     Column(Modifier.padding(16.dp)) {
                         Text("Session #${session.id}", style = MaterialTheme.typography.titleMedium)
                         Text("Start: ${sdf.format(Date(session.startTime))}")
                         session.endTime?.let {
+                            val duration = (it - session.startTime) / 60000
                             Text("End: ${sdf.format(Date(it))}")
+                            Text("Duration: $duration min", color = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 }
