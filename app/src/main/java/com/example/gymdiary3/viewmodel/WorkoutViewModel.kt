@@ -81,4 +81,8 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             defaults.forEach { workoutDao.insertExercise(it) }
         }
     }
+
+    init {
+        seedExercises()
+    }
 }
