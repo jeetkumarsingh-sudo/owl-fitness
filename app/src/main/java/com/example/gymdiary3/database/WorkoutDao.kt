@@ -41,4 +41,14 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM Exercise WHERE dayType = :dayType")
     fun getExercisesByDayType(dayType: String): Flow<List<Exercise>>
+
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 1")
+    suspend fun getLastSet(exerciseName: String): WorkoutSet?
+
+    @Query("""
+        SELECT COUNT(*) FROM WorkoutSet
+        WHERE exercise = :exerciseName
+        AND date(date / 1000, 'unixepoch', 'localtime') = date('now', 'localtime')
+    """)
+    suspend fun getTodaySetCount(exerciseName: String): Int
 }
