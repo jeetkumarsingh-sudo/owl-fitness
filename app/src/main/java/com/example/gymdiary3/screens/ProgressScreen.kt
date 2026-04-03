@@ -13,7 +13,7 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 @Composable
 fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
 
-    val workouts by viewModel.allWorkouts.collectAsState()
+    val workouts by viewModel.workouts.collectAsState()
 
     val grouped = workouts.groupBy { it.exercise }
 

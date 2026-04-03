@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
                 composable("exercise/{muscle}") { back ->
                     val muscle = back.arguments?.getString("muscle") ?: ""
-                    ExerciseScreen(nav, muscle)
+                    ExerciseScreen(nav, muscle, workoutViewModel)
                 }
 
                 composable("set/{muscle}/{exercise}") { back ->

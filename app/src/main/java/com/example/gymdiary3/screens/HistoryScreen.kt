@@ -12,13 +12,18 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+fun formatDate(timestamp: Long): String {
+    val sdf = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+    return sdf.format(Date(timestamp))
+}
+
 @Composable
 fun HistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
 
-    val workouts by viewModel.allWorkouts.collectAsState()
+    val workouts by viewModel.workouts.collectAsState()
     
-    // Group workouts by exercise name
-    val groupedWorkouts = workouts.groupBy { it.exercise }
+    // Group sets under exercise
+    val grouped = workouts.groupBy { it.exercise }
 
     Column(Modifier.padding(20.dp).fillMaxSize()) {
 
@@ -30,7 +35,7 @@ fun HistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
         Spacer(Modifier.height(20.dp))
 
         LazyColumn(Modifier.weight(1f)) {
-            groupedWorkouts.forEach { (exercise, sets) ->
+            grouped.forEach { (exercise, sets) ->
                 item {
                     Text(
                         text = exercise,
@@ -39,10 +44,7 @@ fun HistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
-                items(sets) { workout ->
-                    val date = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-                        .format(Date(workout.date))
-                    
+                items(sets) { set ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -52,11 +54,11 @@ fun HistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Set ${workout.set}", fontWeight = FontWeight.SemiBold)
-                                Text(date, style = MaterialTheme.typography.bodySmall)
+                                Text("Set ${set.set}", fontWeight = FontWeight.SemiBold)
+                                Text(formatDate(set.date), style = MaterialTheme.typography.bodySmall)
                             }
-                            Text("${workout.weight}kg × ${workout.reps}")
-                            if (workout.support) {
+                            Text("${set.weight}kg x ${set.reps}")
+                            if (set.support) {
                                 Text("Support used", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                             }
                         }
