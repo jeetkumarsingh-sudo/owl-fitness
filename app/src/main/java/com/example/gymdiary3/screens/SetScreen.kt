@@ -93,8 +93,20 @@ fun SetScreen(
             label = { Text("Weight (kg)", fontSize = 18.sp) },
             modifier = Modifier.fillMaxWidth().focusRequester(weightFocusRequester),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
-            singleLine = true
+            textStyle = TextStyle(
+                fontSize = 24.sp, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            )
         )
 
         Spacer(Modifier.height(12.dp))
@@ -105,8 +117,20 @@ fun SetScreen(
             label = { Text("Reps", fontSize = 18.sp) },
             modifier = Modifier.fillMaxWidth().focusRequester(repsFocusRequester),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
-            singleLine = true
+            textStyle = TextStyle(
+                fontSize = 24.sp, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            )
         )
 
         Row(
