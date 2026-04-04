@@ -12,10 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -281,7 +282,7 @@ fun buildShareText(summary: SessionSummary): String {
 
 @Composable
 fun SummaryStat(label: String, value: String) {
-    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelMedium)
         Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     }

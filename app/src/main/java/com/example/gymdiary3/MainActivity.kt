@@ -5,17 +5,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.*
 import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
-import androidx.compose.ui.graphics.Color
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
 class MainActivity : ComponentActivity() {
