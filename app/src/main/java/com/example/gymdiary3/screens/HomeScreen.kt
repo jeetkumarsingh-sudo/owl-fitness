@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileWriter
@@ -38,8 +39,8 @@ fun HomeScreen(
 ) {
 
     val scope = rememberCoroutineScope()
-    val sessionsWithSets by remember(viewModel) { viewModel.sessionsWithSets }.collectAsState()
-    val currentSessionId by remember(viewModel) { viewModel.currentSessionId }.collectAsState()
+    val sessionsWithSets by viewModel.sessionsWithSets.collectAsStateWithLifecycle()
+    val currentSessionId by viewModel.currentSessionId.collectAsStateWithLifecycle()
 
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }

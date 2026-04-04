@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
 @Composable
@@ -35,10 +36,10 @@ fun SetScreen(
     val weightFocusRequester = remember { FocusRequester() }
     val scrollState = rememberScrollState()
 
-    val lastSet by viewModel.lastSet.collectAsState()
-    val suggestedWeight by viewModel.suggestedWeight.collectAsState()
-    val currentSet by viewModel.currentSet.collectAsState()
-    val timer by viewModel.timer.collectAsState()
+    val lastSet by viewModel.lastSet.collectAsStateWithLifecycle()
+    val suggestedWeight by viewModel.suggestedWeight.collectAsStateWithLifecycle()
+    val currentSet by viewModel.currentSet.collectAsStateWithLifecycle()
+    val timer by viewModel.timer.collectAsStateWithLifecycle()
 
     val canLogSet = remember(reps, weight) {
         reps.isNotEmpty() && weight.isNotEmpty() && 
