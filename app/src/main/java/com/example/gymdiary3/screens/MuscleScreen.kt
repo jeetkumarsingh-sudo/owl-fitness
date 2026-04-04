@@ -1,21 +1,18 @@
 package com.example.gymdiary3.screens
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.theme.BackgroundDark
-import com.example.gymdiary3.ui.theme.CardDark
-import com.example.gymdiary3.ui.theme.PrimaryText
-import com.example.gymdiary3.ui.theme.Accent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,13 +23,13 @@ fun MuscleScreen(nav: NavHostController) {
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(BackgroundDark),
+        modifier = Modifier.fillMaxSize(),
         topBar = { 
             TopAppBar(
                 title = { Text("SELECT MUSCLE", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
-                    titleContentColor = PrimaryText
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             ) 
         }
@@ -42,7 +39,7 @@ fun MuscleScreen(nav: NavHostController) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(BackgroundDark),
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -52,16 +49,16 @@ fun MuscleScreen(nav: NavHostController) {
                     onClick = { nav.navigate("exercise/$muscle") },
                     modifier = Modifier.height(110.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = CardDark
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
                             muscle.uppercase(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Accent
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

@@ -24,11 +24,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.theme.Accent
-import com.example.gymdiary3.ui.theme.BackgroundDark
-import com.example.gymdiary3.ui.theme.CardDark
-import com.example.gymdiary3.ui.theme.PrimaryText
-import com.example.gymdiary3.ui.theme.SecondaryText
 import com.example.gymdiary3.viewmodel.SessionSummary
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.io.File
@@ -48,13 +43,13 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(BackgroundDark),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         topBar = {
             TopAppBar(
                 title = { Text("SESSION SUMMARY", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
-                    titleContentColor = PrimaryText
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 ),
                 actions = {
                     summary?.let { s ->
@@ -62,7 +57,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             val text = buildShareText(s)
                             shareText(context, text)
                         }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Text", tint = PrimaryText)
+                            Icon(Icons.Default.Share, contentDescription = "Share Text", tint = MaterialTheme.colorScheme.onBackground)
                         }
                     }
                     TextButton(onClick = {
@@ -73,7 +68,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             }
                         }
                     }) {
-                        Text("SHARE IMAGE", color = Accent, fontWeight = FontWeight.Bold)
+                        Text("SHARE IMAGE", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -83,7 +78,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(BackgroundDark)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             Box(modifier = Modifier.weight(1f)) {
                 summary?.let { s ->
@@ -96,9 +91,9 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = CardDark
+                                    containerColor = MaterialTheme.colorScheme.surface
                                 ),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Accent.copy(alpha = 0.3f))
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                             ) {
                                 Column(Modifier.padding(16.dp)) {
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -116,7 +111,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = CardDark
+                                    containerColor = MaterialTheme.colorScheme.surface
                                 ),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
@@ -125,7 +120,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                         exercise.uppercase(),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = Accent
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                     Spacer(Modifier.height(8.dp))
                                     sets.forEach { set ->
@@ -133,12 +128,12 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                             horizontalArrangement = Arrangement.SpaceBetween
                                         ) {
-                                            Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = SecondaryText)
+                                            Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                             Text(
                                                 "${set.weight}kg × ${set.reps}",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 fontWeight = FontWeight.Bold,
-                                                color = PrimaryText
+                                                color = MaterialTheme.colorScheme.onSurface
                                             )
                                         }
                                     }
@@ -151,9 +146,9 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             Button(
                                 onClick = { nav.navigate("home") { popUpTo("home") { inclusive = true } } },
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Accent)
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
-                                Text("DONE", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color.White))
+                                Text("DONE", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary))
                             }
                         }
                     }
@@ -307,7 +302,7 @@ fun buildShareText(summary: SessionSummary): String {
 @Composable
 fun SummaryStat(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Accent)
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = PrimaryText)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
     }
 }

@@ -3,22 +3,19 @@ package com.example.gymdiary3.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Accent,
     background = BackgroundDark,
-    surface = CardDark,
-    onPrimary = PrimaryText,
+    surface = SurfaceDark,
+    primary = Accent,
+    onPrimary = Color.White,
     onBackground = PrimaryText,
-    onSurface = PrimaryText,
-    secondary = SecondaryText,
-    onSurfaceVariant = SecondaryText
+    onSurface = PrimaryText
 )
 
 @Composable
-fun GymDiaryTheme(
-    content: @Composable () -> Unit
-) {
+fun OwlFitnessTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = DarkColorScheme,
         typography = Typography,

@@ -11,11 +11,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.theme.Accent
-import com.example.gymdiary3.ui.theme.BackgroundDark
-import com.example.gymdiary3.ui.theme.CardDark
-import com.example.gymdiary3.ui.theme.PrimaryText
-import com.example.gymdiary3.ui.theme.SecondaryText
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,13 +23,13 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     val sdf = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(BackgroundDark),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         topBar = {
             TopAppBar(
                 title = { Text("PROGRESS & PRS", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
-                    titleContentColor = PrimaryText
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -43,7 +38,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(BackgroundDark),
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -54,7 +49,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 item(key = exercise) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = CardDark),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
                         Column(Modifier.padding(16.dp)) {
@@ -62,23 +57,23 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 exercise,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Accent
+                                color = MaterialTheme.colorScheme.primary
                             )
                             
                             Spacer(Modifier.height(8.dp))
                             
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Best: ", style = MaterialTheme.typography.bodyMedium, color = PrimaryText)
+                                Text("Best: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                                 Text(
                                     "${prSet?.weight ?: 0} kg",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = SecondaryText
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
                             Spacer(Modifier.height(12.dp))
-                            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = SecondaryText)
+                            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             
                             // Compare last session with the one before it
                             val sessionGroups = sortedSets.groupBy { 
@@ -100,7 +95,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                     Text(
                                         " since last session",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = SecondaryText
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -112,8 +107,8 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = SecondaryText)
-                                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = PrimaryText)
+                                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
                         }
@@ -126,9 +121,9 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 Button(
                     onClick = { nav.popBackStack() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = CardDark)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Text("BACK", fontWeight = FontWeight.Bold, color = PrimaryText)
+                    Text("BACK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
