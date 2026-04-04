@@ -11,6 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.ui.theme.Accent
+import com.example.gymdiary3.ui.theme.BackgroundDark
+import com.example.gymdiary3.ui.theme.CardDark
+import com.example.gymdiary3.ui.theme.PrimaryText
+import com.example.gymdiary3.ui.theme.SecondaryText
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,13 +28,13 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     val sdf = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
 
     Scaffold(
-        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize().background(BackgroundDark),
         topBar = {
             TopAppBar(
                 title = { Text("PROGRESS & PRS", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = BackgroundDark,
+                    titleContentColor = PrimaryText
                 )
             )
         }
@@ -38,7 +43,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(BackgroundDark),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -49,7 +54,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 item(key = exercise) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        colors = CardDefaults.cardColors(containerColor = CardDark),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
                         Column(Modifier.padding(16.dp)) {
@@ -57,23 +62,23 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 exercise,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Accent
                             )
                             
                             Spacer(Modifier.height(8.dp))
                             
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Best: ", style = MaterialTheme.typography.bodyMedium)
+                                Text("Best: ", style = MaterialTheme.typography.bodyMedium, color = PrimaryText)
                                 Text(
                                     "${prSet?.weight ?: 0} kg",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = SecondaryText
                                 )
                             }
 
                             Spacer(Modifier.height(12.dp))
-                            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = SecondaryText)
                             
                             // Compare last session with the one before it
                             val sessionGroups = sortedSets.groupBy { 
@@ -90,12 +95,12 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                         text = if (diff >= 0) "+${diff}kg" else "${diff}kg",
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (diff >= 0) Color(0xFF4CAF50) else Color.Red
+                                        color = if (diff >= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
                                     )
                                     Text(
                                         " since last session",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.outline
+                                        color = SecondaryText
                                     )
                                 }
                             }
@@ -107,8 +112,8 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall)
-                                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = SecondaryText)
+                                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = PrimaryText)
                                 }
                             }
                         }
@@ -120,9 +125,10 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = { nav.popBackStack() },
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CardDark)
                 ) {
-                    Text("BACK", fontWeight = FontWeight.Bold)
+                    Text("BACK", fontWeight = FontWeight.Bold, color = PrimaryText)
                 }
             }
         }
