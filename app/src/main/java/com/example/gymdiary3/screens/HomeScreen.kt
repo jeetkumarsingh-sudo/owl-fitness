@@ -18,6 +18,8 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileWriter
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun HomeScreen(
@@ -126,47 +128,36 @@ fun HomeScreen(
         OutlinedButton(
             onClick = {
                 scope.launch {
-                    val fileName = "GymDiary_Export_${System.currentTimeMillis()}.csv"
-                    val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
-
                     try {
+                        val file = File(context.cacheDir, "workout_data_export.csv")
                         val writer = FileWriter(file)
                         writer.append("Date,Muscle,Exercise,Set,Reps,Weight,Support\n")
 
                         workouts.forEach { workout ->
-                            writer.append(
-                                "${workout.date}," +
-                                        "${workout.muscle}," +
-                                        "${workout.exercise}," +
-                                        "${workout.setNumber}," +
-                                        "${workout.reps}," +
-                                        "${workout.weight}," +
-                                        "${workout.support}\n"
-                            )
+                            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                            val dateStr = sdf.format(Date(workout.date))
+                            writer.append("$dateStr,${workout.muscle},${workout.exercise},${workout.setNumber},${workout.reps},${workout.weight},${workout.support}\n")
                         }
 
                         writer.flush()
                         writer.close()
 
-                        val uri: Uri = FileProvider.getUriForFile(
+                        val uri = FileProvider.getUriForFile(
                             context,
-                            "${context.packageName}.fileprovider",
+                            "${context.packageName}.provider",
                             file
                         )
 
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/csv"
-                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.app_name) + " Export")
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        
-                        val chooser = Intent.createChooser(intent, "Share CSV")
-                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(chooser)
 
+                        context.startActivity(Intent.createChooser(intent, "Export CSV"))
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        android.util.Log.e("CSV_EXPORT", "Error: ${e.message}")
+                        Toast.makeText(context, "Export data failed", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
