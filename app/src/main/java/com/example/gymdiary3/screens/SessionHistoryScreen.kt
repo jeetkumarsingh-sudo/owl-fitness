@@ -19,7 +19,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
-    val sessions by viewModel.sessions.collectAsState(initial = emptyList())
+    val sessionsWithSets by viewModel.sessionsWithSets.collectAsState()
     val sdf = SimpleDateFormat("EEEE, MMM dd", Locale.getDefault())
     val timeSdf = SimpleDateFormat("HH:mm", Locale.getDefault())
 
@@ -53,20 +53,15 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     Scaffold(
         topBar = { TopAppBar(title = { Text("Session History", fontWeight = FontWeight.Bold) }) }
     ) { padding ->
-        val filteredSessions = sessions.filter { session ->
-            val duration = session.endTime?.let { (it - session.startTime) / 60000 } ?: 0
-            // We can't easily check volume here without loading sets, but we can rely on duration
-            // or better, rely on the fact that deleteEmptySessions() runs and endSession avoids empty ones.
-            // For now, let's filter out sessions with 0 duration if they are finished.
-            session.endTime == null || duration > 0
-        }
+        val filteredSessions = sessionsWithSets.filter { it.totalVolume > 0 }
 
         LazyColumn(
             modifier = Modifier.padding(padding).fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(filteredSessions) { session ->
+            items(filteredSessions) { sessionWithSets ->
+                val session = sessionWithSets.session
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -84,8 +79,8 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 fontWeight = FontWeight.Bold
                             )
                             
-                            session.endTime?.let {
-                                val duration = (it - session.startTime) / 60000
+                            val duration = sessionWithSets.duration / 60000
+                            if (duration > 0) {
                                 Text(
                                     text = "$duration min",
                                     style = MaterialTheme.typography.bodyMedium,
@@ -100,6 +95,12 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                             text = timeSdf.format(Date(session.startTime)),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.secondary
+                        )
+                        
+                        Text(
+                            text = "${sessionWithSets.totalVolume.toInt()} kg total",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
                         )
                     }
                 }

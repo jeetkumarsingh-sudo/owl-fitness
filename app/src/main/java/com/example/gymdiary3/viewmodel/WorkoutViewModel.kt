@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.WorkoutSession
+import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.database.WorkoutDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -27,6 +28,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessions: StateFlow<List<WorkoutSession>> = workoutDao.getAllSessions()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val sessionsWithSets: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _selectedMuscle = MutableStateFlow("")
@@ -93,12 +97,12 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     fun loadSummary(sessionId: Int) {
         viewModelScope.launch {
-            val workouts = workoutDao.getWorkoutsBySession(sessionId)
+            val sessionWithSets = workoutDao.getSessionWithSetsById(sessionId) ?: return@launch
+            val workouts = sessionWithSets.sets
             val totalSets = workouts.size
-            val totalVolume = workouts.sumOf { it.weight * it.reps }
-            val grouped = workouts.groupBy { it.exercise }
-            val session = workoutDao.getSessionById(sessionId)
-            val duration = (session.endTime ?: session.startTime) - session.startTime
+            val totalVolume = sessionWithSets.totalVolume
+            val grouped = sessionWithSets.exercises
+            val duration = sessionWithSets.duration
             
             val latestBodyWeight = workoutDao.getLatestBodyWeight()?.weight
             
@@ -108,7 +112,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                 exercises = grouped,
                 duration = duration,
                 bodyWeight = latestBodyWeight,
-                date = session.startTime
+                date = sessionWithSets.date
             )
         }
     }
@@ -142,15 +146,15 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             val id = _currentSessionId.value ?: return@launch
             
-            // Check if session has any sets
-            val setCount = workoutDao.getSessionSetCount(id)
-            if (setCount == 0) {
-                // Delete the empty session instead of finishing it
-                val session = workoutDao.getSessionById(id)
+            val sessionWithSets = workoutDao.getSessionWithSetsById(id)
+            val sets = sessionWithSets?.sets ?: emptyList()
+            val totalVolume = calculateVolume(sets)
+
+            if (totalVolume <= 0) {
+                val session = sessionWithSets?.session ?: workoutDao.getSessionById(id)
                 workoutDao.deleteSession(session)
                 _currentSessionId.value = null
                 currentStartTime = 0L
-                // We don't call onComplete because there's no summary to show
                 return@launch
             }
 
@@ -225,6 +229,10 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             workoutDao.insertExercise(Exercise(name, muscle, true))
         }
+    }
+
+    fun calculateVolume(sets: List<WorkoutSet>): Double {
+        return sets.sumOf { it.weight * it.reps }
     }
 
     fun deleteExercise(exercise: Exercise) {
