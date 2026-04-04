@@ -4,10 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
@@ -47,7 +48,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                             
                             Spacer(Modifier.height(8.dp))
                             
-                            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Best: ", style = MaterialTheme.typography.bodyMedium)
                                 Text(
                                     "${prSet?.weight ?: 0} kg",
@@ -70,7 +71,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 val previousWeight = sessionGroups[1].maxOf { it.weight }
                                 val diff = latestWeight - previousWeight
                                 
-                                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = if (diff >= 0) "+${diff}kg" else "${diff}kg",
                                         style = MaterialTheme.typography.bodyLarge,

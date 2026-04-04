@@ -2,18 +2,18 @@ package com.example.gymdiary3.screens
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
-import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
-import androidx.compose.ui.text.font.FontWeight
-import com.example.gymdiary3.R
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -128,8 +128,15 @@ fun HomeScreen(
         OutlinedButton(
             onClick = {
                 scope.launch {
+                    Log.d("CSV_EXPORT", "Export started")
+                    if (workouts.isEmpty()) {
+                        Log.d("CSV_EXPORT", "No data to export")
+                        Toast.makeText(context, "No data to export", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
                     try {
-                        val file = File(context.cacheDir, "workout_data_export.csv")
+                        val file = File(context.cacheDir, "workout_data.csv")
                         val writer = FileWriter(file)
                         writer.append("Date,Muscle,Exercise,Set,Reps,Weight,Support\n")
 
@@ -155,8 +162,10 @@ fun HomeScreen(
                         }
 
                         context.startActivity(Intent.createChooser(intent, "Export CSV"))
+                        Log.d("CSV_EXPORT", "Export success")
                     } catch (e: Exception) {
-                        android.util.Log.e("CSV_EXPORT", "Error: ${e.message}")
+                        Log.e("CSV_EXPORT", "Export failed: ${e.message}")
+                        e.printStackTrace()
                         Toast.makeText(context, "Export data failed", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -179,11 +188,11 @@ fun MenuButton(
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = Alignment.Center) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
     }
