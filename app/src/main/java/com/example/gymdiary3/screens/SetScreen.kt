@@ -1,7 +1,9 @@
 package com.example.gymdiary3.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,6 +18,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
+val PrimaryText = Color(0xFF2E2E2E)   // clean dark text
+val Accent = Color(0xFF7B61FF)        // purple accent
+
 @Composable
 fun SetScreen(
     nav: NavHostController,
@@ -29,6 +34,7 @@ fun SetScreen(
 
     val repsFocusRequester = remember { FocusRequester() }
     val weightFocusRequester = remember { FocusRequester() }
+    val scrollState = rememberScrollState()
 
     val lastSet by viewModel.lastSet.collectAsState()
     val suggestedWeight by viewModel.suggestedWeight.collectAsState()
@@ -42,6 +48,7 @@ fun SetScreen(
 
     LaunchedEffect(Unit) {
         repsFocusRequester.requestFocus()
+        scrollState.animateScrollTo(scrollState.maxValue)
     }
 
     LaunchedEffect(lastSet) {
@@ -53,11 +60,18 @@ fun SetScreen(
         }
     }
 
-    Column(Modifier.padding(16.dp).fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .imePadding()
+            .padding(16.dp)
+    ) {
 
         Text(
             text = exercise,
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = PrimaryText,
             maxLines = 1
         )
 
@@ -69,7 +83,7 @@ fun SetScreen(
             Text(
                 text = "Set $currentSet",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = Accent,
                 fontWeight = FontWeight.Bold
             )
 
@@ -80,57 +94,67 @@ fun SetScreen(
                         fontWeight = FontWeight.Black,
                         fontSize = 32.sp
                     ),
-                    color = if (timer < 10) Color.Red else MaterialTheme.colorScheme.onSurface
+                    color = if (timer < 10) Color.Red else PrimaryText
                 )
             }
         }
 
         Spacer(Modifier.height(16.dp))
 
-        OutlinedTextField(
+        TextField(
             value = weight,
             onValueChange = { weight = it },
-            label = { Text("Weight (kg)", fontSize = 18.sp) },
+            textStyle = TextStyle(
+                color = PrimaryText,
+                fontSize = 18.sp
+            ),
+            label = {
+                Text(
+                    "Weight (kg)",
+                    color = Accent
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = PrimaryText,
+                unfocusedTextColor = PrimaryText,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedIndicatorColor = Accent,
+                unfocusedIndicatorColor = Color.Gray,
+                cursorColor = Accent
+            ),
             modifier = Modifier.fillMaxWidth().focusRequester(weightFocusRequester),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(
-                fontSize = 24.sp, 
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            )
+            singleLine = true
         )
 
         Spacer(Modifier.height(12.dp))
 
-        OutlinedTextField(
+        TextField(
             value = reps,
             onValueChange = { reps = it },
-            label = { Text("Reps", fontSize = 18.sp) },
+            textStyle = TextStyle(
+                color = PrimaryText,
+                fontSize = 18.sp
+            ),
+            label = {
+                Text(
+                    "Reps",
+                    color = Accent
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = PrimaryText,
+                unfocusedTextColor = PrimaryText,
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedIndicatorColor = Accent,
+                unfocusedIndicatorColor = Color.Gray,
+                cursorColor = Accent
+            ),
             modifier = Modifier.fillMaxWidth().focusRequester(repsFocusRequester),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            textStyle = TextStyle(
-                fontSize = 24.sp, 
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            )
+            singleLine = true
         )
 
         Row(
@@ -141,7 +165,7 @@ fun SetScreen(
                 Text(
                     text = "Last: ${it.weight}kg × ${it.reps}",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                    color = PrimaryText.copy(alpha = 0.7f)
                 )
             }
 
@@ -153,7 +177,7 @@ fun SetScreen(
                     Text(
                         text = "Suggest: ${suggestion}kg",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = Accent,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -166,43 +190,63 @@ fun SetScreen(
             Checkbox(
                 checked = support,
                 onCheckedChange = { support = it },
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
+                colors = CheckboxDefaults.colors(checkedColor = Accent)
             )
-            Text("Support / Assisted", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Support / Assisted", 
+                style = MaterialTheme.typography.bodyLarge,
+                color = PrimaryText
+            )
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
-            onClick = {
-                val r = reps.toIntOrNull() ?: return@Button
-                val w = weight.toDoubleOrNull() ?: return@Button
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = {
+                    val r = reps.toIntOrNull() ?: return@Button
+                    val w = weight.toDoubleOrNull() ?: return@Button
 
-                viewModel.insertWorkout(
-                    muscle = muscle,
-                    exercise = exercise,
-                    setNumber = currentSet,
-                    reps = r,
-                    weight = w,
-                    support = support
+                    viewModel.insertWorkout(
+                        muscle = muscle,
+                        exercise = exercise,
+                        setNumber = currentSet,
+                        reps = r,
+                        weight = w,
+                        support = support
+                    )
+
+                    reps = ""
+                    repsFocusRequester.requestFocus()
+                },
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Accent
+                ),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    "LOG SET",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold)
                 )
+            }
 
-                reps = ""
-                repsFocusRequester.requestFocus()
-            },
-            modifier = Modifier.fillMaxWidth().height(64.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text("LOG SET", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold))
-        }
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Spacer(Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = { nav.popBackStack() },
-            modifier = Modifier.fillMaxWidth().height(56.dp)
-        ) {
-            Text("FINISH EXERCISE", style = MaterialTheme.typography.bodyLarge)
+            OutlinedButton(
+                onClick = { nav.popBackStack() },
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text(
+                    "FINISH EXERCISE",
+                    color = PrimaryText,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }

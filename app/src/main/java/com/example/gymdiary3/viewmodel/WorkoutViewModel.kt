@@ -166,6 +166,18 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
+    fun deleteSession(id: Int) {
+        viewModelScope.launch {
+            workoutDao.deleteSessionById(id)
+        }
+    }
+
+    fun deleteEmptySessions() {
+        viewModelScope.launch {
+            workoutDao.deleteEmptySessions()
+        }
+    }
+
     fun insertDefaultWorkouts() {
         viewModelScope.launch {
             val existing = workoutDao.getAllExercisesList()
