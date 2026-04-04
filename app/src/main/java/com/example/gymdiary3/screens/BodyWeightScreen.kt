@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -16,6 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
+import com.example.gymdiary3.ui.theme.BackgroundDark
+import com.example.gymdiary3.ui.theme.CardDark
+import com.example.gymdiary3.ui.theme.PrimaryText
+import com.example.gymdiary3.ui.theme.SecondaryText
+import com.example.gymdiary3.ui.theme.Accent
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,13 +34,13 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
 
     Scaffold(
-        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize().background(BackgroundDark),
         topBar = { 
             TopAppBar(
                 title = { Text("BODY WEIGHT", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = BackgroundDark,
+                    titleContentColor = PrimaryText
                 )
             ) 
         }
@@ -42,35 +48,37 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(BackgroundDark)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = CardDark)
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = weightInput,
                         onValueChange = { weightInput = it },
-                        label = { Text("Current Weight (kg)", fontSize = 18.sp) },
+                        label = { Text("Current Weight (kg)", fontSize = 18.sp, color = SecondaryText) },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         textStyle = TextStyle(
                             fontSize = 24.sp, 
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = PrimaryText
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedLabelColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            focusedTextColor = PrimaryText,
+                            unfocusedTextColor = PrimaryText,
+                            focusedLabelColor = Accent,
+                            unfocusedLabelColor = SecondaryText,
+                            focusedBorderColor = Accent,
+                            unfocusedBorderColor = Color.Gray,
+                            focusedContainerColor = CardDark,
+                            unfocusedContainerColor = CardDark
                         )
                     )
 
@@ -80,14 +88,15 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                             viewModel.insertWeight(w)
                             weightInput = ""
                         },
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Accent)
                     ) {
-                        Text("LOG WEIGHT", fontWeight = FontWeight.Bold)
+                        Text("LOG WEIGHT", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
 
-            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold)
+            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = Accent, fontWeight = FontWeight.ExtraBold)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -96,7 +105,7 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                 items(weights, key = { it.id }) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        colors = CardDefaults.cardColors(containerColor = CardDark),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Row(
@@ -104,12 +113,12 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(sdf.format(Date(item.date)), style = MaterialTheme.typography.bodyLarge)
+                            Text(sdf.format(Date(item.date)), style = MaterialTheme.typography.bodyLarge, color = SecondaryText)
                             Text(
                                 "${item.weight} kg",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Accent
                             )
                         }
                     }
@@ -118,9 +127,10 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
 
             Button(
                 onClick = { nav.popBackStack() },
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CardDark)
             ) {
-                Text("BACK", fontWeight = FontWeight.Bold)
+                Text("BACK", fontWeight = FontWeight.Bold, color = PrimaryText)
             }
         }
     }
