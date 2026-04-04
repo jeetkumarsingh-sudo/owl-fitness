@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
@@ -47,7 +49,14 @@ class MainActivity : ComponentActivity() {
             OwlFitnessTheme {
                 val nav = rememberNavController()
 
-                NavHost(navController = nav, startDestination = "home") {
+                NavHost(
+                    navController = nav,
+                    startDestination = "home",
+                    enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(300)) { it } },
+                    exitTransition = { fadeOut(tween(250)) + slideOutHorizontally(tween(300)) { -it } },
+                    popEnterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(300)) { -it } },
+                    popExitTransition = { fadeOut(tween(250)) + slideOutHorizontally(tween(300)) { it } }
+                ) {
 
                     composable("home") {
                         HomeScreen(nav, workoutViewModel, applicationContext)
