@@ -49,6 +49,24 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (exercisesList.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 64.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No exercise data available.\nStart a workout to track your progress!",
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+
             items(
                 items = exercisesList,
                 key = { it }
@@ -121,17 +139,26 @@ fun ExerciseProgressCard(exercise: String, sets: List<WorkoutSet>, sdf: SimpleDa
             
             trendInfo?.let { diff ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = if (diff >= 0) "+${diff}kg" else "${diff}kg",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (diff >= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
-                    )
-                    Text(
-                        " since last session",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    when {
+                        diff > 0.0 -> Text(
+                            text = "+${diff}kg since last session",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4CAF50)
+                        )
+                        diff < 0.0 -> Text(
+                            text = "${diff}kg since last session",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFFF5252)
+                        )
+                        else -> Text(
+                            text = "Same weight as last session",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray
+                        )
+                    }
                 }
             } ?: Text("Not enough data for trend", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 

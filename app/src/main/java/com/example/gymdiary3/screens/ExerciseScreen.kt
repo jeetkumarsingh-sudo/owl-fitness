@@ -52,8 +52,13 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             if (exercises.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No exercises yet", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        "No exercises found for this category.\nTap '+' to add your first $muscle exercise!",
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             } else {
                 LazyColumn(

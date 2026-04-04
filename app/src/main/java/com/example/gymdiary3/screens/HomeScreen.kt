@@ -189,49 +189,19 @@ fun HomeScreen(
                 scope.launch {
                     exportScale.animateTo(0.95f, tween(100))
                     exportScale.animateTo(1f, tween(100))
-                    Log.d("CSV_EXPORT", "Export started. Sessions: ${sessionsWithSets.size}")
-                    if (sessionsWithSets.isEmpty()) {
-                        Log.d("CSV_EXPORT", "No data to export")
-                        Toast.makeText(context, "No data to export", Toast.LENGTH_SHORT).show()
-                        return@launch
-                    }
-
-                    try {
-                        val file = File(context.cacheDir, "workout_data.csv")
-                        val writer = FileWriter(file)
-                        writer.append("Date,Muscle,Exercise,Set,Reps,Weight,Support\n")
-
-                        sessionsWithSets.forEach { sessionWithSets ->
-                            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                            val dateStr = sdf.format(Date(sessionWithSets.date))
-                            
-                            sessionWithSets.sets.forEach { workout ->
-                                val supportStr = if (workout.support) "Yes" else "No"
-                                writer.append("$dateStr,${workout.muscle},${workout.exercise},${workout.setNumber},${workout.reps},${workout.weight},$supportStr\n")
-                            }
-                        }
-
-                        writer.flush()
-                        writer.close()
-
-                        val uri = FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.provider",
-                            file
-                        )
-
+                    
+                    val uri = viewModel.exportAllDataToCsv(context)
+                    if (uri != null) {
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/csv"
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-
                         context.startActivity(Intent.createChooser(intent, "Export CSV"))
                         Log.d("CSV_EXPORT", "Export success")
-                    } catch (e: Exception) {
-                        Log.e("CSV_EXPORT", "Export failed: ${e.message}")
-                        e.printStackTrace()
-                        Toast.makeText(context, "Export data failed", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Log.d("CSV_EXPORT", "No data to export or export failed")
+                        Toast.makeText(context, "No data to export", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
