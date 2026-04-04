@@ -52,10 +52,10 @@ class MainActivity : ComponentActivity() {
                 NavHost(
                     navController = nav,
                     startDestination = "home",
-                    enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(300)) { it } },
-                    exitTransition = { fadeOut(tween(250)) + slideOutHorizontally(tween(300)) { -it } },
-                    popEnterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(300)) { -it } },
-                    popExitTransition = { fadeOut(tween(250)) + slideOutHorizontally(tween(300)) { it } }
+                    enterTransition = { slideInHorizontally(tween(250)) { it / 4 } },
+                    exitTransition = { slideOutHorizontally(tween(250)) { -it / 4 } },
+                    popEnterTransition = { slideInHorizontally(tween(250)) { -it / 4 } },
+                    popExitTransition = { slideOutHorizontally(tween(250)) { it / 4 } }
                 ) {
 
                     composable("home") {
