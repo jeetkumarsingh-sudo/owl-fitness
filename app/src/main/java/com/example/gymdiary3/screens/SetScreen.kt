@@ -42,6 +42,11 @@ fun SetScreen(
     val currentSet by viewModel.currentSet.collectAsState()
     val timer by viewModel.timer.collectAsState()
 
+    val canLogSet = remember(reps, weight) {
+        reps.isNotEmpty() && weight.isNotEmpty() && 
+        reps.toIntOrNull() != null && weight.toDoubleOrNull() != null
+    }
+
     LaunchedEffect(exercise) {
         viewModel.loadLastSet(exercise)
         viewModel.updateSetNumber(exercise)
@@ -49,7 +54,6 @@ fun SetScreen(
 
     LaunchedEffect(Unit) {
         repsFocusRequester.requestFocus()
-        scrollState.animateScrollTo(scrollState.maxValue)
     }
 
     LaunchedEffect(lastSet) {
@@ -224,8 +228,10 @@ fun SetScreen(
                     repsFocusRequester.requestFocus()
                 },
                 modifier = Modifier.fillMaxWidth().height(64.dp),
+                enabled = canLogSet,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Accent
+                    containerColor = Accent,
+                    disabledContainerColor = Color.Gray
                 ),
                 shape = MaterialTheme.shapes.medium
             ) {

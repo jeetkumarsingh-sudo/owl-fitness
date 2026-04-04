@@ -1,5 +1,6 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -17,15 +18,27 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
-    val workouts by viewModel.workouts.collectAsState(initial = emptyList())
-    val grouped = workouts.groupBy { it.exercise }
-    val sdf = SimpleDateFormat("MMM dd", Locale.getDefault())
+    val workouts by remember(viewModel) { viewModel.workouts }.collectAsState()
+    val grouped = remember(workouts) { workouts.groupBy { it.exercise } }
+    val sdf = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Progress & PRs", fontWeight = FontWeight.Bold) }) }
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        topBar = {
+            TopAppBar(
+                title = { Text("PROGRESS & PRS", fontWeight = FontWeight.ExtraBold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -33,9 +46,10 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 val sortedSets = sets.sortedByDescending { it.date }
                 val prSet = sets.maxByOrNull { it.weight }
                 
-                item {
+                item(key = exercise) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
                         Column(Modifier.padding(16.dp)) {
@@ -102,13 +116,13 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 }
             }
             
-            item {
+            item(key = "back_button") {
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = { nav.popBackStack() },
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
-                    Text("BACK")
+                    Text("BACK", fontWeight = FontWeight.Bold)
                 }
             }
         }
