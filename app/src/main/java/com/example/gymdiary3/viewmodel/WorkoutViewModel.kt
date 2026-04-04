@@ -27,9 +27,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     val workouts: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val sessions: StateFlow<List<WorkoutSession>> = workoutDao.getAllSessions()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     val sessionsWithSets: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -98,19 +95,14 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     fun loadSummary(sessionId: Int) {
         viewModelScope.launch {
             val sessionWithSets = workoutDao.getSessionWithSetsById(sessionId) ?: return@launch
-            val workouts = sessionWithSets.sets
-            val totalSets = workouts.size
-            val totalVolume = sessionWithSets.totalVolume
-            val grouped = sessionWithSets.exercises
-            val duration = sessionWithSets.duration
             
             val latestBodyWeight = workoutDao.getLatestBodyWeight()?.weight
             
             _summary.value = SessionSummary(
-                totalSets = totalSets,
-                totalVolume = totalVolume,
-                exercises = grouped,
-                duration = duration,
+                totalSets = sessionWithSets.sets.size,
+                totalVolume = sessionWithSets.totalVolume,
+                exercises = sessionWithSets.exercises,
+                duration = sessionWithSets.duration,
                 bodyWeight = latestBodyWeight,
                 date = sessionWithSets.date
             )
