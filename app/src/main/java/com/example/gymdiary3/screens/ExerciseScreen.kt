@@ -16,13 +16,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
 
-    val exercises by remember(viewModel) { viewModel.exercisesByMuscle }.collectAsState()
+    val exercises by viewModel.exercisesByMuscle.collectAsStateWithLifecycle()
 
     LaunchedEffect(muscle) {
         viewModel.selectMuscle(muscle)

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -29,7 +30,7 @@ import java.util.*
 fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
 
     var weightInput by remember { mutableStateOf("") }
-    val weights by remember(viewModel) { viewModel.allWeights }.collectAsState(initial = emptyList())
+    val weights by viewModel.allWeights.collectAsStateWithLifecycle()
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val scope = rememberCoroutineScope()
 
@@ -115,30 +116,15 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(weights, key = { it.id }) { item ->
+                items(
+                    items = weights,
+                    key = { it.id }
+                ) { item ->
                     AnimatedVisibility(
                         visible = isVisible,
                         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
                     ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(sdf.format(Date(item.date)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(
-                                    "${item.weight} kg",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
+                        WeightCard(item, sdf)
                     }
                 }
             }
@@ -157,6 +143,29 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
             ) {
                 Text("BACK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             }
+        }
+    }
+}
+
+@Composable
+fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateFormat) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(sdf.format(Date(item.date)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                "${item.weight} kg",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.gymdiary3.screens
 
+import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import android.content.Context
@@ -26,7 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.viewmodel.SessionSummary
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
@@ -38,7 +42,8 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
-    val sessions by remember(viewModel) { viewModel.sessions }.collectAsState()
+    Log.d("PERF", "SessionSummaryScreen recomposing")
+    val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val sessionWithSets = remember(sessions, sessionId) {
         sessions.find { it.session.id == sessionId }
     }
@@ -95,67 +100,11 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         item(key = "stats") {
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = isVisible,
-                                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
-                            ) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surface
-                                    ),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-                                ) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            SummaryStat("SETS", s.sets.size.toString())
-                                            SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
-                                            SummaryStat("TIME", "${s.duration / 60000}m")
-                                        }
-                                    }
-                                }
-                            }
+                            SummaryStatsCard(isVisible, s)
                         }
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
-                            val exercise = entry.first
-                            val sets = entry.second
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = isVisible,
-                                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
-                            ) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surface
-                                    ),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                ) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text(
-                                            exercise.uppercase(),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Spacer(Modifier.height(8.dp))
-                                        sets.forEach { set ->
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                Text(
-                                                    "${set.weight}kg × ${set.reps}",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            ExerciseSummaryCard(isVisible, entry.first, entry.second)
                         }
 
                         item(key = "done_button") {
@@ -200,7 +149,73 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 }
 
 @Composable
-fun ShareableSummary(sessionWithSets: com.example.gymdiary3.data.SessionWithSets) {
+fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
+    Log.d("PERF", "SummaryStatsCard recomposing")
+    androidx.compose.animation.AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    SummaryStat("SETS", s.sets.size.toString())
+                    SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
+                    SummaryStat("TIME", "${s.duration / 60000}m")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<WorkoutSet>) {
+    Log.d("PERF", "ExerciseSummaryCard recomposing: $exercise")
+    androidx.compose.animation.AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    exercise.uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                sets.forEach { set ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "${set.weight}kg × ${set.reps}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShareableSummary(sessionWithSets: SessionWithSets) {
     Column(
         modifier = Modifier
             .width(400.dp) // Fixed width for consistent image size
@@ -293,7 +308,7 @@ fun shareText(context: Context, text: String) {
     context.startActivity(Intent.createChooser(intent, "Share Workout Text"))
 }
 
-fun buildShareText(sessionWithSets: com.example.gymdiary3.data.SessionWithSets): String {
+fun buildShareText(sessionWithSets: SessionWithSets): String {
     val sb = StringBuilder()
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 

@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,7 +25,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
-    val sessionsWithSets by remember(viewModel) { viewModel.sessionsWithSets }.collectAsState()
+    val sessionsWithSets by viewModel.sessionsWithSets.collectAsStateWithLifecycle()
     val sdf = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()) }
     val timeSdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
