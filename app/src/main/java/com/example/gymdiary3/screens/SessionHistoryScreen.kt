@@ -1,6 +1,7 @@
 package com.example.gymdiary3.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.ui.theme.BackgroundDark
+import com.example.gymdiary3.ui.theme.CardDark
+import com.example.gymdiary3.ui.theme.PrimaryText
+import com.example.gymdiary3.ui.theme.SecondaryText
+import com.example.gymdiary3.ui.theme.Accent
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,8 +35,9 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     if (showDeleteDialog != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
-            title = { Text("Delete Session") },
-            text = { Text("Are you sure you want to delete this workout session?") },
+            containerColor = CardDark,
+            title = { Text("Delete Session", color = PrimaryText) },
+            text = { Text("Are you sure you want to delete this workout session?", color = SecondaryText) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog?.let { viewModel.deleteSession(it) }
@@ -41,7 +48,7 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("CANCEL")
+                    Text("CANCEL", color = SecondaryText)
                 }
             }
         )
@@ -52,28 +59,39 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Session History", fontWeight = FontWeight.Bold) }) }
+        modifier = Modifier.fillMaxSize().background(BackgroundDark),
+        topBar = { 
+            TopAppBar(
+                title = { Text("SESSION HISTORY", fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BackgroundDark,
+                    titleContentColor = PrimaryText
+                )
+            ) 
+        }
     ) { padding ->
         val filteredSessions = remember(sessionsWithSets) {
             sessionsWithSets.filter { it.totalVolume > 0 }
         }
 
-        if (filteredSessions.isEmpty()) {
-            Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No workouts yet", color = Color.Gray)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(padding).fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = filteredSessions,
-                    key = { it.session.id }
-                ) { sessionWithSets ->
-                    SessionCard(sessionWithSets, nav, sdf, timeSdf) {
-                        showDeleteDialog = it
+        Column(modifier = Modifier.padding(padding).fillMaxSize().background(BackgroundDark)) {
+            if (filteredSessions.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No workouts yet", color = SecondaryText)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = filteredSessions,
+                        key = { it.session.id }
+                    ) { sessionWithSets ->
+                        SessionCard(sessionWithSets, nav, sdf, timeSdf) {
+                            showDeleteDialog = it
+                        }
                     }
                 }
             }
@@ -98,6 +116,7 @@ fun SessionCard(
                 onClick = { nav.navigate("summary/${session.id}") },
                 onLongClick = { onLongClick(session.id) }
             ),
+        colors = CardDefaults.cardColors(containerColor = CardDark),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -105,7 +124,8 @@ fun SessionCard(
                 Text(
                     text = sdf.format(Date(session.startTime)),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryText
                 )
                 
                 val duration = sessionWithSets.duration / 60000
@@ -113,7 +133,7 @@ fun SessionCard(
                     Text(
                         text = "$duration min",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = SecondaryText
                     )
                 }
             }
@@ -123,15 +143,14 @@ fun SessionCard(
             Text(
                 text = timeSdf.format(Date(session.startTime)),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary
+                color = Accent
             )
             
             Text(
                 text = "${sessionWithSets.totalVolume.toInt()} kg total",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = SecondaryText
             )
         }
     }
 }
-

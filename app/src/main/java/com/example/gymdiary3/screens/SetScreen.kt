@@ -1,5 +1,6 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,9 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-
-val PrimaryText = Color(0xFF2E2E2E)   // clean dark text
-val Accent = Color(0xFF7B61FF)        // purple accent
+import com.example.gymdiary3.ui.theme.BackgroundDark
+import com.example.gymdiary3.ui.theme.CardDark
+import com.example.gymdiary3.ui.theme.PrimaryText
+import com.example.gymdiary3.ui.theme.SecondaryText
+import com.example.gymdiary3.ui.theme.Accent
 
 @Composable
 fun SetScreen(
@@ -68,6 +71,7 @@ fun SetScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(BackgroundDark)
             .verticalScroll(scrollState)
             .imePadding()
             .padding(16.dp)
@@ -122,8 +126,8 @@ fun SetScreen(
             colors = TextFieldDefaults.colors(
                 focusedTextColor = PrimaryText,
                 unfocusedTextColor = PrimaryText,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
+                focusedContainerColor = CardDark,
+                unfocusedContainerColor = CardDark,
                 focusedIndicatorColor = Accent,
                 unfocusedIndicatorColor = Color.Gray,
                 cursorColor = Accent
@@ -151,8 +155,8 @@ fun SetScreen(
             colors = TextFieldDefaults.colors(
                 focusedTextColor = PrimaryText,
                 unfocusedTextColor = PrimaryText,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
+                focusedContainerColor = CardDark,
+                unfocusedContainerColor = CardDark,
                 focusedIndicatorColor = Accent,
                 unfocusedIndicatorColor = Color.Gray,
                 cursorColor = Accent
@@ -170,7 +174,7 @@ fun SetScreen(
                 Text(
                     text = "Last: ${it.weight}kg × ${it.reps}",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = PrimaryText.copy(alpha = 0.7f)
+                    color = SecondaryText
                 )
             }
 
@@ -246,11 +250,12 @@ fun SetScreen(
 
             OutlinedButton(
                 onClick = { nav.popBackStack() },
-                modifier = Modifier.fillMaxWidth().height(56.dp)
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryText),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray)
             ) {
                 Text(
                     "FINISH EXERCISE",
-                    color = PrimaryText,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

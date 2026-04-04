@@ -5,10 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -17,6 +14,7 @@ import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.ui.theme.GymDiaryTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -45,26 +43,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val customDarkColorScheme = darkColorScheme(
-            background = Color(0xFF121212),
-            surface = Color(0xFF121212),
-            surfaceVariant = Color(0xFF1E1E1E),
-            onBackground = Color.White,
-            onSurface = Color.White,
-            primary = Color(0xFFBB86FC),
-            secondary = Color(0xFF03DAC6),
-            error = Color(0xFFCF6679)
-        )
-
-        val customLightColorScheme = lightColorScheme(
-            background = Color.White,
-            surface = Color.White,
-            surfaceVariant = Color(0xFFF5F5F5)
-        )
-
         setContent {
-            val isDarkTheme = isSystemInDarkTheme()
-            MaterialTheme(colorScheme = if (isDarkTheme) customDarkColorScheme else customLightColorScheme) {
+            GymDiaryTheme {
                 val nav = rememberNavController()
 
                 NavHost(navController = nav, startDestination = "home") {
