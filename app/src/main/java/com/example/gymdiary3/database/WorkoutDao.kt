@@ -62,6 +62,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 1")
     suspend fun getLastSet(exerciseName: String): WorkoutSet?
 
+    @Query("SELECT * FROM BodyWeight ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestBodyWeight(): com.example.gymdiary3.data.BodyWeight?
+
     @Query("""
         SELECT COUNT(*) FROM WorkoutSet
         WHERE exercise = :exerciseName

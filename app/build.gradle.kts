@@ -1,8 +1,10 @@
+import com.android.build.api.dsl.ApplicationExtension
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    kotlin("kapt")
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -29,11 +31,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -55,7 +57,7 @@ dependencies {
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    kapt(libs.room.compiler)
+    ksp(libs.room.compiler)
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
@@ -67,8 +69,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-}
-
-kapt {
-    correctErrorTypes = true
 }
