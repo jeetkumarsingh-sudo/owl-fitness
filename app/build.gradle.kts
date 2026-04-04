@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material-icons-extended")
     
@@ -65,7 +66,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     // Charts
-    implementation("io.github.tehras:charts:0.2.4-alpha")
+    implementation(libs.tehras.charts)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
