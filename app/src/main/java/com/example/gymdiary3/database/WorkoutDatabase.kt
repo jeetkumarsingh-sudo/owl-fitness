@@ -11,7 +11,7 @@ import com.example.gymdiary3.data.WorkoutSession
 
 @Database(
     entities = [WorkoutSet::class, BodyWeight::class, Exercise::class, WorkoutSession::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class WorkoutDatabase : RoomDatabase() {

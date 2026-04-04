@@ -38,6 +38,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM WorkoutSet WHERE sessionId = :sessionId")
     suspend fun getWorkoutsBySession(sessionId: Int): List<WorkoutSet>
 
+    @Query("DELETE FROM session WHERE id = :id")
+    suspend fun deleteSessionById(id: Int)
+
     @Query("SELECT * FROM session ORDER BY startTime DESC")
     fun getAllSessions(): Flow<List<WorkoutSession>>
 
