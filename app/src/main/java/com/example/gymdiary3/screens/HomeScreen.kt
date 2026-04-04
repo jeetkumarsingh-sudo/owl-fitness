@@ -157,6 +157,15 @@ fun HomeScreen(
             item {
                 AnimatedVisibility(visible = isVisible, enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }) {
                     MenuButton(
+                        text = "VOLUME GRAPH",
+                        modifier = Modifier.height(80.dp),
+                        onClick = { nav.navigate("graph") }
+                    )
+                }
+            }
+            item {
+                AnimatedVisibility(visible = isVisible, enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }) {
+                    MenuButton(
                         text = "HISTORY",
                         modifier = Modifier.height(80.dp),
                         onClick = { nav.navigate("history") }
