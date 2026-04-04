@@ -1,5 +1,6 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,14 +24,27 @@ import java.util.*
 fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
 
     var weightInput by remember { mutableStateOf("") }
-    val weights by viewModel.allWeights.collectAsState(initial = emptyList())
-    val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    val weights by remember(viewModel) { viewModel.allWeights }.collectAsState(initial = emptyList())
+    val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Body Weight", fontWeight = FontWeight.Bold) }) }
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        topBar = { 
+            TopAppBar(
+                title = { Text("BODY WEIGHT", fontWeight = FontWeight.ExtraBold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) 
+        }
     ) { padding ->
         Column(
-            modifier = Modifier.padding(padding).padding(16.dp).fillMaxSize(),
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
@@ -73,15 +87,16 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                 }
             }
 
-            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.outline)
+            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(weights) { item ->
+                items(weights, key = { it.id }) { item ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Row(
@@ -103,10 +118,9 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
 
             Button(
                 onClick = { nav.popBackStack() },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
-                Text("BACK")
+                Text("BACK", fontWeight = FontWeight.Bold)
             }
         }
     }

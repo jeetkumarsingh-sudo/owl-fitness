@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,13 +30,14 @@ fun HomeScreen(
 ) {
 
     val scope = rememberCoroutineScope()
-    val sessionsWithSets by viewModel.sessionsWithSets.collectAsState()
-    val currentSessionId by viewModel.currentSessionId.collectAsState()
+    val sessionsWithSets by remember(viewModel) { viewModel.sessionsWithSets }.collectAsState()
+    val currentSessionId by remember(viewModel) { viewModel.currentSessionId }.collectAsState()
 
     Column(
         Modifier
-            .padding(16.dp)
-            .fillMaxSize(),
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 

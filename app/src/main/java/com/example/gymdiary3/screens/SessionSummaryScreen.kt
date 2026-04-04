@@ -8,6 +8,7 @@ import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -33,7 +34,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
-    val summary by viewModel.summary.collectAsState()
+    val summary by remember(viewModel) { viewModel.summary }.collectAsState()
     val context = LocalContext.current
     var summaryView by remember { mutableStateOf<View?>(null) }
 
@@ -42,9 +43,14 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
     }
 
     Scaffold(
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
         topBar = {
             TopAppBar(
-                title = { Text("Session Summary", fontWeight = FontWeight.Bold) },
+                title = { Text("SESSION SUMMARY", fontWeight = FontWeight.ExtraBold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                ),
                 actions = {
                     summary?.let { s ->
                         IconButton(onClick = {
@@ -68,7 +74,12 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
             Box(modifier = Modifier.weight(1f)) {
                 summary?.let { s ->
                     LazyColumn(
@@ -76,55 +87,62 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        item {
+                        item(key = "stats") {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
                             ) {
                                 Column(Modifier.padding(16.dp)) {
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        SummaryStat("Sets", s.totalSets.toString())
-                                        SummaryStat("Volume", "${s.totalVolume.toInt()}kg")
-                                        SummaryStat("Time", "${s.duration / 60000}m")
+                                        SummaryStat("SETS", s.totalSets.toString())
+                                        SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
+                                        SummaryStat("TIME", "${s.duration / 60000}m")
                                     }
                                 }
                             }
                         }
 
-                        s.exercises.forEach { (exercise, sets) ->
-                            item {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                ) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text(
-                                            exercise,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Spacer(Modifier.height(8.dp))
-                                        sets.forEach { set ->
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge)
-                                                Text(
-                                                    "${set.weight}kg × ${set.reps}",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    fontWeight = FontWeight.Medium
-                                                )
-                                            }
+                        items(s.exercises.toList(), key = { it.first }) { entry ->
+                            val exercise = entry.first
+                            val sets = entry.second
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(
+                                        exercise.uppercase(),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    sets.forEach { set ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(
+                                                "${set.weight}kg × ${set.reps}",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
                                         }
                                     }
                                 }
                             }
                         }
 
-                        item {
-                            Spacer(Modifier.height(24.dp))
+                        item(key = "done_button") {
+                            Spacer(Modifier.height(12.dp))
                             Button(
                                 onClick = { nav.navigate("home") { popUpTo("home") { inclusive = true } } },
                                 modifier = Modifier.fillMaxWidth().height(56.dp)
@@ -283,7 +301,7 @@ fun buildShareText(summary: SessionSummary): String {
 @Composable
 fun SummaryStat(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelMedium)
-        Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
     }
 }

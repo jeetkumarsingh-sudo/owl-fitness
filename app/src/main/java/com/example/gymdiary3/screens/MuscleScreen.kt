@@ -1,6 +1,8 @@
 package com.example.gymdiary3.screens
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
@@ -15,31 +17,47 @@ import androidx.navigation.NavHostController
 @Composable
 fun MuscleScreen(nav: NavHostController) {
 
-    val muscles = listOf(
-        "Chest", "Back", "Legs", "Shoulders", "Biceps", "Triceps", "Abs"
-    )
+    val muscles = remember {
+        listOf("Chest", "Back", "Legs", "Shoulders", "Biceps", "Triceps", "Abs")
+    }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Select Muscle", fontWeight = FontWeight.Bold) }) }
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        topBar = { 
+            TopAppBar(
+                title = { Text("SELECT MUSCLE", fontWeight = FontWeight.ExtraBold) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            ) 
+        }
     ) { padding ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.padding(padding).fillMaxSize(),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(muscles) { muscle ->
+            items(muscles, key = { it }) { muscle ->
                 Card(
                     onClick = { nav.navigate("exercise/$muscle") },
-                    modifier = Modifier.height(100.dp),
+                    modifier = Modifier.height(110.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
                         Text(
-                            muscle,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            muscle.uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

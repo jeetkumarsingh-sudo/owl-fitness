@@ -18,7 +18,7 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 @Composable
 fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
 
-    val exercises by viewModel.exercisesByMuscle.collectAsState()
+    val exercises by remember(viewModel) { viewModel.exercisesByMuscle }.collectAsState()
 
     LaunchedEffect(muscle) {
         viewModel.selectMuscle(muscle)
@@ -39,12 +39,20 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(exercises) { exercise ->
+        if (exercises.isEmpty()) {
+            Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("No exercises yet", color = androidx.compose.ui.graphics.Color.Gray)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(padding).fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = exercises,
+                    key = { it.name }
+                ) { exercise ->
                 var showMenu by remember { mutableStateOf(false) }
 
                 Box {
@@ -84,6 +92,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
             }
         }
     }
+}
 
     if (showAddDialog) {
         AlertDialog(
