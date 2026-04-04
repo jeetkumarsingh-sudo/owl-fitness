@@ -4,14 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.net.Uri
 import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -47,8 +45,10 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                 actions = {
                     TextButton(onClick = {
                         summaryView?.let { view ->
-                            val bitmap = captureView(view)
-                            shareImage(context, bitmap)
+                            view.post {
+                                val bitmap = captureView(view)
+                                shareImage(context, bitmap)
+                            }
                         }
                     }) {
                         Text("SHARE")
@@ -153,8 +153,18 @@ fun ShareableSummary(summary: SessionSummary) {
             .background(Color.White)
             .padding(24.dp)
     ) {
-        Text("Gym Diary Summary", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-        Text("Owl Fitness", fontSize = 16.sp, color = Color.Gray)
+        Text(
+            "Gym Diary Summary",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+        Text(
+            "Owl Fitness",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
 
         Spacer(Modifier.height(16.dp))
 
@@ -167,15 +177,20 @@ fun ShareableSummary(summary: SessionSummary) {
         summary.exercises.forEach { (exercise, sets) ->
             Text(exercise, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
             sets.forEach {
-                Text("Set ${it.set}: ${it.weight}kg x ${it.reps}", color = Color.DarkGray)
+                Text("Set ${it.set}: ${it.weight}kg x ${it.reps}", color = Color.Black)
             }
             Spacer(Modifier.height(12.dp))
         }
 
         Spacer(Modifier.height(16.dp))
-        Divider(color = Color.LightGray)
+        HorizontalDivider(color = Color.LightGray)
         Spacer(Modifier.height(8.dp))
-        Text("Total Volume: ${summary.totalVolume.toInt()} kg", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.Black)
+        Text(
+            "Total Volume: ${summary.totalVolume.toInt()} kg",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = Color.Black
+        )
     }
 }
 
@@ -204,7 +219,7 @@ fun shareImage(context: Context, bitmap: Bitmap) {
 
     val uri = FileProvider.getUriForFile(
         context,
-        "${context.packageName}.fileprovider",
+        "${context.packageName}.provider",
         file
     )
 
