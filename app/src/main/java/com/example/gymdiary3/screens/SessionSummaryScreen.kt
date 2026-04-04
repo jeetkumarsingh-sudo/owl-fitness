@@ -8,6 +8,8 @@ import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -43,6 +45,14 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
             TopAppBar(
                 title = { Text("Session Summary", fontWeight = FontWeight.Bold) },
                 actions = {
+                    summary?.let { s ->
+                        IconButton(onClick = {
+                            val text = buildShareText(s)
+                            shareText(context, text)
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share Text")
+                        }
+                    }
                     TextButton(onClick = {
                         summaryView?.let { view ->
                             view.post {
@@ -51,7 +61,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             }
                         }
                     }) {
-                        Text("SHARE")
+                        Text("SHARE IMAGE")
                     }
                 }
             )
@@ -99,7 +109,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                Text("Set ${set.set}", style = MaterialTheme.typography.bodyLarge)
+                                                Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge)
                                                 Text(
                                                     "${set.weight}kg × ${set.reps}",
                                                     style = MaterialTheme.typography.bodyLarge,
@@ -169,7 +179,7 @@ fun ShareableSummary(summary: SessionSummary) {
         Spacer(Modifier.height(16.dp))
 
         val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-        Text("Date: ${sdf.format(Date(summary.startTime))}", color = Color.Black)
+        Text("Date: ${sdf.format(Date(summary.date))}", color = Color.Black)
         Text("Body Weight: ${summary.bodyWeight ?: "-"} kg", color = Color.Black)
 
         Spacer(Modifier.height(16.dp))
@@ -177,7 +187,7 @@ fun ShareableSummary(summary: SessionSummary) {
         summary.exercises.forEach { (exercise, sets) ->
             Text(exercise, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
             sets.forEach {
-                Text("Set ${it.set}: ${it.weight}kg x ${it.reps}", color = Color.Black)
+                Text("Set ${it.setNumber}: ${it.weight}kg x ${it.reps}", color = Color.Black)
             }
             Spacer(Modifier.height(12.dp))
         }
@@ -229,7 +239,44 @@ fun shareImage(context: Context, bitmap: Bitmap) {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    context.startActivity(Intent.createChooser(intent, "Share Workout"))
+    context.startActivity(Intent.createChooser(intent, "Share Workout Image"))
+}
+
+fun shareText(context: Context, text: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share Workout Text"))
+}
+
+fun buildShareText(summary: SessionSummary): String {
+    val sb = StringBuilder()
+    val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+
+    sb.append("Owl Fitness Workout Summary\n")
+    sb.append("---------------------------\n")
+    sb.append("Date: ${sdf.format(Date(summary.date))}\n")
+    
+    summary.bodyWeight?.let {
+        sb.append("Body Weight: $it kg\n")
+    }
+    
+    sb.append("Duration: ${summary.duration / 60000} min\n\n")
+
+    summary.exercises.forEach { (exercise, sets) ->
+        sb.append("$exercise\n")
+        sets.forEach {
+            sb.append("- Set ${it.setNumber}: ${it.weight}kg x ${it.reps}\n")
+        }
+        sb.append("\n")
+    }
+
+    sb.append("---------------------------\n")
+    sb.append("Total Volume: ${summary.totalVolume.toInt()} kg\n")
+    sb.append("Total Sets: ${summary.totalSets}\n")
+    
+    return sb.toString()
 }
 
 @Composable

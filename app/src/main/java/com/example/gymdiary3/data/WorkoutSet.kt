@@ -13,7 +13,7 @@ data class WorkoutSet(
 
     val muscle: String,
     val exercise: String,
-    val set: Int,
+    val setNumber: Int,
     val reps: Int,
     val weight: Double,
     val support: Boolean,

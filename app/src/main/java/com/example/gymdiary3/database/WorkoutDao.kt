@@ -23,6 +23,15 @@ interface WorkoutDao {
     @Update
     suspend fun updateSession(session: WorkoutSession)
 
+    @Delete
+    suspend fun deleteSession(session: WorkoutSession)
+
+    @Query("DELETE FROM session WHERE id NOT IN (SELECT DISTINCT sessionId FROM WorkoutSet WHERE sessionId IS NOT NULL)")
+    suspend fun deleteEmptySessions()
+
+    @Query("SELECT COUNT(*) FROM WorkoutSet WHERE sessionId = :sessionId")
+    suspend fun getSessionSetCount(sessionId: Int): Int
+
     @Query("SELECT * FROM session WHERE id = :sessionId")
     suspend fun getSessionById(sessionId: Int): WorkoutSession
 

@@ -181,7 +181,7 @@ fun SetScreen(
                 viewModel.insertWorkout(
                     muscle = muscle,
                     exercise = exercise,
-                    set = currentSet,
+                    setNumber = currentSet,
                     reps = r,
                     weight = w,
                     support = support
