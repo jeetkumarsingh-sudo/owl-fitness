@@ -1,34 +1,20 @@
 package com.example.gymdiary3.screens
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
@@ -40,25 +26,32 @@ import com.github.tehras.charts.line.renderer.point.FilledCircularPointDrawer
 import com.github.tehras.charts.line.renderer.xaxis.SimpleXAxisDrawer
 import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     Log.d("PERF", "ProgressGraphScreen recomposing")
-    val sessions: List<SessionWithSets> by viewModel.sessions.collectAsStateWithLifecycle()
+    val allSessions by viewModel.sessions.collectAsStateWithLifecycle()
     
-    val volumeData = remember(sessions) {
+    val exercises = remember(allSessions) {
+        allSessions
+            .flatMap { it.sets }
+            .map { it.exercise }
+            .distinct()
+            .sorted()
+    }
+    
+    var selectedExercise by remember { mutableStateOf(exercises.firstOrNull() ?: "") }
+    var showExerciseDropdown by remember { mutableStateOf(false) }
+
+    val volumeData = remember(allSessions) {
         val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
         
-        sessions.sortedBy { it.session.startTime }
+        allSessions.sortedBy { it.session.startTime }
             .groupBy { dateFormat.format(Date(it.session.startTime)) }
             .map { (date, sessionList) ->
                 val totalVolume = sessionList.sumOf { it.totalVolume }
-                // Use the first session's time for actual chronological sorting if needed, 
-                // but grouping by formatted date and then mapping to Point is what's requested.
-                // Re-parsing date to ensure chronological order after grouping if they were out of order (though already sorted).
                 val sortTime = sessionList.first().session.startTime
                 Triple(date, totalVolume.toFloat(), sortTime)
             }
@@ -66,104 +59,248 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             .map { LineChartData.Point(it.second, it.first) }
     }
 
-    val maxVolume = remember(volumeData) { volumeData.maxByOrNull { it.value } }
-    val minVolume = remember(volumeData) { volumeData.minByOrNull { it.value } }
+    val plateauStatus = remember(allSessions) {
+        val exList = allSessions.flatMap { it.sets }.map { it.exercise }.distinct()
+        exList.map { exercise ->
+            val bestSets = allSessions
+                .sortedBy { it.session.startTime }
+                .mapNotNull { session ->
+                    session.sets.filter { it.exercise == exercise }
+                        .maxByOrNull { it.weight * it.reps }
+                }
+            val last3 = bestSets.takeLast(3)
+            val isPlateau = last3.size == 3 &&
+                    last3[0].weight == last3[1].weight && last3[1].weight == last3[2].weight &&
+                    last3[0].reps == last3[1].reps && last3[1].reps == last3[2].reps
+            
+            val isImproving = last3.size >= 2 && 
+                    (last3.last().weight * last3.last().reps > last3[last3.size - 2].weight * last3[last3.size - 2].reps)
+            
+            Triple(exercise, isPlateau, isImproving)
+        }
+    }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0D0D1A)),
         topBar = {
             TopAppBar(
-                title = { Text("VOLUME PROGRESS", fontWeight = FontWeight.ExtraBold) },
+                title = { Text("PROGRESS ANALYTICS", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = Color(0xFF0D0D1A),
+                    titleContentColor = Color.White
                 )
             )
         }
-    ) { paddingValues ->
+    ) { padding ->
         LazyColumn(
             modifier = Modifier
-                .padding(paddingValues)
+                .padding(padding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .background(Color(0xFF0D0D1A)),
+            contentPadding = PaddingValues(16.dp)
         ) {
             item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(350.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            "Total Volume (kg)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                Text(
+                    "TOTAL VOLUME",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                if (volumeData.size >= 2) {
+                    LineChart(
+                        linesChartData = listOf(
+                            LineChartData(
+                                points = volumeData,
+                                lineDrawer = SolidLineDrawer(color = Color(0xFF7B68EE), thickness = 3.dp)
+                            )
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        pointDrawer = FilledCircularPointDrawer(color = Color(0xFF7B68EE), diameter = 8.dp),
+                        xAxisDrawer = SimpleXAxisDrawer(labelTextColor = Color.Gray),
+                        yAxisDrawer = SimpleYAxisDrawer(
+                            labelTextColor = Color.Gray,
+                            labelValueFormatter = { value -> 
+                                if (value >= 1000f) "${(value / 1000).toInt()}k" else value.toInt().toString()
+                            }
                         )
-                        Spacer(Modifier.height(16.dp))
-                        
-                        // Using .isEmpty() and .size explicitly to avoid ambiguity with Modifier.size
-                        if (volumeData.isNotEmpty() && volumeData.size >= 2) {
-                            Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 16.dp)) {
-                                LineChart(
-                                    linesChartData = listOf(
-                                        LineChartData(
-                                            points = volumeData,
-                                            lineDrawer = SolidLineDrawer(
-                                                color = MaterialTheme.colorScheme.primary,
-                                                thickness = 3.dp
-                                            )
-                                        )
-                                    ),
-                                    pointDrawer = FilledCircularPointDrawer(
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        diameter = 8.dp
-                                    ),
-                                    xAxisDrawer = SimpleXAxisDrawer(
-                                        labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        axisLineColor = MaterialTheme.colorScheme.outline
-                                    ),
-                                    yAxisDrawer = SimpleYAxisDrawer(
-                                        labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        axisLineColor = MaterialTheme.colorScheme.outline
-                                    )
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(150.dp).background(Color(0xFF1C1C2E), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Add more sessions to see trend", color = Color.Gray)
+                    }
+                }
+                
+                Spacer(Modifier.height(32.dp))
+            }
+
+            item {
+                Text(
+                    "STRENGTH PROGRESS (1RM)",
+                    color = Color(0xFF7B68EE),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { showExerciseDropdown = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, Color(0xFF7B68EE))
+                    ) {
+                        Text(selectedExercise.ifEmpty { "Select exercise" }, color = Color.White)
+                        Spacer(Modifier.weight(1f))
+                        Text("▾", color = Color(0xFF7B68EE))
+                    }
+                    DropdownMenu(
+                        expanded = showExerciseDropdown,
+                        onDismissRequest = { showExerciseDropdown = false },
+                        modifier = Modifier.background(Color(0xFF1C1C2E))
+                    ) {
+                        exercises.forEach { exercise ->
+                            DropdownMenuItem(
+                                text = { Text(exercise, color = Color.White) },
+                                onClick = {
+                                    selectedExercise = exercise
+                                    showExerciseDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(Modifier.height(16.dp))
+                
+                if (selectedExercise.isNotEmpty()) {
+                    val exerciseData = allSessions
+                        .sortedBy { it.session.startTime }
+                        .mapNotNull { sessionWithSets ->
+                            val setsForExercise = sessionWithSets.sets.filter { it.exercise == selectedExercise }
+                            if (setsForExercise.isEmpty()) return@mapNotNull null
+                            val best1rm = setsForExercise.maxOf { set ->
+                                if (set.weight > 0) set.weight * (1 + set.reps / 30.0) else 0.0
+                            }
+                            Pair(sessionWithSets.session.startTime, best1rm)
+                        }
+                    
+                    if (exerciseData.size >= 2) {
+                        val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+                        LineChart(
+                            linesChartData = listOf(
+                                LineChartData(
+                                    points = exerciseData.map { (date, rm) ->
+                                        LineChartData.Point(rm.toFloat(), dateFormat.format(Date(date)))
+                                    },
+                                    lineDrawer = SolidLineDrawer(color = Color(0xFF7B68EE), thickness = 2.dp)
                                 )
-                            }
-                            
-                            Spacer(Modifier.height(8.dp))
-                            
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                maxVolume?.let {
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp),
+                            pointDrawer = FilledCircularPointDrawer(color = Color(0xFF7B68EE)),
+                            xAxisDrawer = SimpleXAxisDrawer(labelTextColor = Color.Gray),
+                            yAxisDrawer = SimpleYAxisDrawer(
+                                labelTextColor = Color.Gray,
+                                labelValueFormatter = { v -> "${v.toInt()}kg" }
+                            )
+                        )
+                        
+                        val best = exerciseData.maxOf { it.second }
+                        val latest = exerciseData.last().second
+                        Row(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text("Best 1RM: ${"%.1f".format(best)}kg", color = Color.Gray, fontSize = 13.sp)
+                            Text("Latest: ${"%.1f".format(latest)}kg", color = Color.Gray, fontSize = 13.sp)
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp)
+                                .background(Color(0xFF1C1C2E), RoundedCornerShape(12.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Log $selectedExercise in at least 2 sessions to see progress",
+                                color = Color.Gray,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(Modifier.height(32.dp))
+            }
+
+            if (plateauStatus.isNotEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1C2E)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                "PROGRESS FLAGS",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF7B68EE)
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            for ((exercise, isPlateau, isImproving) in plateauStatus) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text(
-                                        "Highest: ${it.value.toInt()} kg (${it.label})",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        exercise,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White
                                     )
+                                    when {
+                                        isPlateau -> {
+                                            Text(
+                                                "⚠ No progress in last 3 sessions",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color.Red,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        isImproving -> {
+                                            Text(
+                                                "📈 Progressing well",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFF4CAF50),
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        else -> {
+                                            Text(
+                                                "Steady",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
                                 }
-                                minVolume?.let {
-                                    Text(
-                                        "Lowest: ${it.value.toInt()} kg (${it.label})",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        } else {
-                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Add more sessions to see trend", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
+                    Spacer(Modifier.height(16.dp))
                 }
             }
 
@@ -171,9 +308,9 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 Button(
                     onClick = { nav.popBackStack() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1C1C2E))
                 ) {
-                    Text("BACK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("BACK", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

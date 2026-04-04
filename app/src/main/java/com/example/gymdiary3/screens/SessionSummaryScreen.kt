@@ -33,11 +33,13 @@ import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.viewmodel.SessionSummary
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.data.calculate1RM
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +109,27 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             ExerciseSummaryCard(isVisible, entry.first, entry.second)
                         }
 
+                        item(key = "muscle_volume") {
+                            MuscleVolumeCard(isVisible, s.volumePerMuscle)
+                        }
+
+                        if (s.sets.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 48.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "No exercises were logged in this session.",
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
+
                         item(key = "done_button") {
                             val doneScale = remember { Animatable(1f) }
                             Spacer(Modifier.height(12.dp))
@@ -151,10 +174,13 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 @Composable
 fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
     Log.d("PERF", "SummaryStatsCard recomposing")
-    androidx.compose.animation.AnimatedVisibility(
+        androidx.compose.animation.AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
+        val sdf = remember { SimpleDateFormat("EEEE, MMM dd, yyyy 'at' HH:mm", Locale.getDefault()) }
+        val dateStr = remember(s.date) { sdf.format(Date(s.date)) }
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -163,6 +189,14 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
         ) {
             Column(Modifier.padding(16.dp)) {
+                Text(
+                    text = dateStr,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     SummaryStat("SETS", s.sets.size.toString())
                     SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
@@ -176,6 +210,11 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
 @Composable
 fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<WorkoutSet>) {
     Log.d("PERF", "ExerciseSummaryCard recomposing: $exercise")
+    
+    val best1RM = remember(sets) {
+        sets.maxOfOrNull { calculate1RM(it.weight, it.reps) } ?: 0.0
+    }
+
     androidx.compose.animation.AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
@@ -188,12 +227,33 @@ fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<Workout
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(Modifier.padding(16.dp)) {
-                Text(
-                    exercise.uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        exercise.uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    if (best1RM > 0.0) {
+                        Text(
+                            "Best 1RM: ${best1RM.roundToInt()} kg",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    } else {
+                        Text(
+                            "Bodyweight",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF9E9E9E)
+                        )
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
                 sets.forEach { set ->
                     Row(
@@ -331,6 +391,40 @@ fun buildShareText(sessionWithSets: SessionWithSets): String {
     sb.append("Total Sets: ${sessionWithSets.sets.size}\n")
     
     return sb.toString()
+}
+
+@Composable
+fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>) {
+    androidx.compose.animation.AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    "VOLUME BY MUSCLE",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                muscleVolume.filter { it.value > 0 }.forEach { (muscle, volume) ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(muscle, style = MaterialTheme.typography.bodyMedium)
+                        Text("${volume.toInt()} kg", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

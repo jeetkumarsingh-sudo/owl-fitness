@@ -1,16 +1,25 @@
 package com.example.gymdiary3.viewmodel
 
+import android.content.Context
+import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.WorkoutSession
 import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.data.BodyWeight
 import com.example.gymdiary3.database.WorkoutDao
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 data class SessionSummary(
     val totalSets: Int,
@@ -31,6 +40,8 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessionsWithSets: StateFlow<List<SessionWithSets>> = sessions
+
+    private val _allBodyWeights = MutableStateFlow<List<BodyWeight>>(emptyList())
 
     private val _selectedMuscle = MutableStateFlow("")
     val exercisesByMuscle: StateFlow<List<Exercise>> = _selectedMuscle
@@ -57,8 +68,13 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     private var currentStartTime: Long = 0L
 
-    private val _timer = MutableStateFlow(0)
-    val timer: StateFlow<Int> = _timer
+    private val _restTimerSeconds = MutableStateFlow(0)
+    val restTimerSeconds: StateFlow<Int> = _restTimerSeconds.asStateFlow()
+
+    private val _isRestTimerRunning = MutableStateFlow(false)
+    val isRestTimerRunning: StateFlow<Boolean> = _isRestTimerRunning.asStateFlow()
+
+    private var restTimerJob: kotlinx.coroutines.Job? = null
 
     init {
         insertDefaultWorkouts()
@@ -111,16 +127,23 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    private var timerJob: kotlinx.coroutines.Job? = null
-
     fun startRestTimer(seconds: Int = 90) {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            for (i in seconds downTo 0) {
-                _timer.value = i
-                delay(1000)
+        restTimerJob?.cancel()
+        _restTimerSeconds.value = seconds
+        _isRestTimerRunning.value = true
+        restTimerJob = viewModelScope.launch {
+            while (_restTimerSeconds.value > 0) {
+                delay(1000L)
+                _restTimerSeconds.value -= 1
             }
+            _isRestTimerRunning.value = false
         }
+    }
+
+    fun skipRestTimer() {
+        restTimerJob?.cancel()
+        _restTimerSeconds.value = 0
+        _isRestTimerRunning.value = false
     }
 
     fun startSession() {
@@ -191,6 +214,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                     Exercise("Lat Pulldown", "Back"),
                     Exercise("Seated Row", "Back"),
                     Exercise("One Arm Row", "Back"),
+                    Exercise("Straight Arm Pulldown", "Back"),
                     
                     Exercise("Squat", "Legs"),
                     Exercise("Leg Press", "Legs"),
@@ -242,6 +266,82 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val count = workoutDao.getTodaySetCount(exercise)
             _currentSet.value = count + 1
             startRestTimer()
+        }
+    }
+
+    suspend fun exportAllDataToCsv(context: Context): Uri? = withContext(Dispatchers.IO) {
+        try {
+            val sessionsVal = sessions.value
+            if (sessionsVal.isEmpty()) return@withContext null
+
+            val sb = StringBuilder()
+
+            // Section 1: Workout Sessions
+            sb.appendLine("=== WORKOUT SESSIONS ===")
+            sb.appendLine("Session ID,Date,Duration (min),Total Sets,Total Volume (kg)")
+
+            val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+
+            for (sessionWithSets in sessionsVal.sortedByDescending { it.session.startTime }) {
+                val session = sessionWithSets.session
+                val sets = sessionWithSets.sets
+                val totalVolume = sets.sumOf { it.weight * it.reps }
+                val durationMin = ((session.endTime ?: session.startTime) - session.startTime) / 60_000
+                sb.appendLine(
+                    "${session.id}," +
+                    "\"${dateFormat.format(Date(session.startTime))}\"," +
+                    "$durationMin," +
+                    "${sets.size}," +
+                    "%.1f".format(totalVolume)
+                )
+            }
+
+            sb.appendLine()
+
+            // Section 2: All Sets
+            sb.appendLine("=== ALL SETS ===")
+            sb.appendLine("Date,Session ID,Exercise,Muscle Group,Set Number,Weight (kg),Reps,Volume (kg),Est. 1RM (kg)")
+
+            for (sessionWithSets in sessionsVal.sortedByDescending { it.session.startTime }) {
+                val dateStr = dateFormat.format(Date(sessionWithSets.session.startTime))
+                for (set in sessionWithSets.sets.sortedBy { it.setNumber }) {
+                    val est1rm = if (set.weight > 0) "%.1f".format(set.weight * (1 + set.reps / 30.0)) else "N/A"
+                    sb.appendLine(
+                        "\"$dateStr\"," +
+                        "${set.sessionId}," +
+                        "\"${set.exercise}\"," +
+                        "\"${set.muscle}\"," +
+                        "${set.setNumber}," +
+                        "${set.weight}," +
+                        "${set.reps}," +
+                        "%.1f".format(set.weight * set.reps) + "," +
+                        est1rm
+                    )
+                }
+            }
+
+            sb.appendLine()
+
+            // Section 3: Body Weight History
+            sb.appendLine("=== BODY WEIGHT HISTORY ===")
+            sb.appendLine("Date,Weight (kg)")
+            
+            val bodyWeights = workoutDao.getAllBodyWeightsList()
+            for (bw in bodyWeights.sortedByDescending { it.date }) {
+                sb.appendLine("\"${dateFormat.format(Date(bw.date))}\",${bw.weight}")
+            }
+
+            // Write to cache file
+            val fileName = "owl_fitness_export_${System.currentTimeMillis()}.csv"
+            val file = File(context.cacheDir, fileName)
+            file.writeText(sb.toString())
+
+            // Return FileProvider URI
+            FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -39,7 +41,9 @@ fun SetScreen(
     val lastSet by viewModel.lastSet.collectAsStateWithLifecycle()
     val suggestedWeight by viewModel.suggestedWeight.collectAsStateWithLifecycle()
     val currentSet by viewModel.currentSet.collectAsStateWithLifecycle()
-    val timer by viewModel.timer.collectAsStateWithLifecycle()
+    
+    val isTimerRunning by viewModel.isRestTimerRunning.collectAsStateWithLifecycle()
+    val timerSeconds by viewModel.restTimerSeconds.collectAsStateWithLifecycle()
 
     val canLogSet = remember(reps, weight) {
         reps.isNotEmpty() && weight.isNotEmpty() && 
@@ -80,29 +84,12 @@ fun SetScreen(
             maxLines = 1
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Set $currentSet",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (timer > 0) {
-                Text(
-                    text = "${timer}s",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Black,
-                        fontSize = 32.sp
-                    ),
-                    color = if (timer < 10) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
-                )
-            }
-        }
+        Text(
+            text = "Set $currentSet",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
 
         Spacer(Modifier.height(16.dp))
 
@@ -207,6 +194,59 @@ fun SetScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        AnimatedVisibility(visible = isTimerRunning) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
+                border = BorderStroke(1.dp, Color(0xFF7B68EE))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "REST TIMER",
+                        color = Color(0xFF7B68EE),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = "%d:%02d".format(timerSeconds / 60, timerSeconds % 60),
+                        color = Color.White,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    val progress = timerSeconds / 90f
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFF7B68EE),
+                        trackColor = Color(0xFF333350)
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.skipRestTimer() },
+                        border = BorderStroke(1.dp, Color(0xFF7B68EE))
+                    ) {
+                        Text("SKIP", color = Color(0xFF7B68EE), fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -248,7 +288,7 @@ fun SetScreen(
                 onClick = { nav.popBackStack() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Text(
                     "FINISH EXERCISE",

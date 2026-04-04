@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,11 +17,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.gymdiary3.data.BodyWeight
+import com.github.tehras.charts.line.LineChart
+import com.github.tehras.charts.line.LineChartData
+import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
+import com.github.tehras.charts.line.renderer.point.FilledCircularPointDrawer
+import com.github.tehras.charts.line.renderer.xaxis.SimpleXAxisDrawer
+import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -110,6 +119,8 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                 }
             }
 
+            BodyWeightChart(weights)
+
             Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold)
 
             LazyColumn(
@@ -120,9 +131,28 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                     items = weights,
                     key = { it.id }
                 ) { item ->
-                    AnimatedVisibility(
-                        visible = isVisible,
-                        enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { value ->
+                            if (value == SwipeToDismissBoxValue.EndToStart) {
+                                viewModel.deleteWeight(item)
+                                true
+                            } else false
+                        }
+                    )
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFFB71C1C), RoundedCornerShape(12.dp))
+                                    .padding(end = 16.dp),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Text("DELETE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
                     ) {
                         WeightCard(item, sdf)
                     }
@@ -144,6 +174,83 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                 Text("BACK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             }
         }
+    }
+}
+
+@Composable
+fun BodyWeightChart(weights: List<BodyWeight>) {
+    if (weights.size < 2) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .background(Color(0xFF1C1C2E), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "Log at least 2 entries to see your trend",
+                color = Color.Gray,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+
+    val sortedWeights = weights.sortedBy { it.date }
+    val latestWeight = sortedWeights.last().weight
+    val firstWeight = sortedWeights.first().weight
+    val change = latestWeight - firstWeight
+    val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("CURRENT", color = Color.Gray, fontSize = 10.sp)
+                Text("${latestWeight}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("CHANGE", color = Color.Gray, fontSize = 10.sp)
+                val changeColor = if (change <= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
+                Text(
+                    "${if (change >= 0) "+" else ""}${"%.1f".format(change)}kg",
+                    color = changeColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("LOWEST", color = Color.Gray, fontSize = 10.sp)
+                Text("${sortedWeights.minOf { it.weight }}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        LineChart(
+            linesChartData = listOf(
+                LineChartData(
+                    points = sortedWeights.map { bw ->
+                        LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.date)))
+                    },
+                    lineDrawer = SolidLineDrawer(color = Color(0xFF7B68EE), thickness = 2.dp)
+                )
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            pointDrawer = FilledCircularPointDrawer(color = Color(0xFF7B68EE), diameter = 6.dp),
+            xAxisDrawer = SimpleXAxisDrawer(labelTextColor = Color.Gray, axisLineColor = Color.Gray),
+            yAxisDrawer = SimpleYAxisDrawer(
+                labelTextColor = Color.Gray,
+                axisLineColor = Color.Gray,
+                labelValueFormatter = { value -> "%.1f".format(value) }
+            ),
+            horizontalOffset = 5f
+        )
     }
 }
 
