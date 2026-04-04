@@ -20,9 +20,9 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
-    val sessionsWithSets by viewModel.sessionsWithSets.collectAsState()
-    val sdf = SimpleDateFormat("EEEE, MMM dd", Locale.getDefault())
-    val timeSdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val sessionsWithSets by remember(viewModel) { viewModel.sessionsWithSets }.collectAsState()
+    val sdf = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()) }
+    val timeSdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     var showDeleteDialog by remember { mutableStateOf<Int?>(null) }
 

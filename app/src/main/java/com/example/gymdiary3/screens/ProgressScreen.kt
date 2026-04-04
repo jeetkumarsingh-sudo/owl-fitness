@@ -3,6 +3,7 @@ package com.example.gymdiary3.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,81 +43,84 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            grouped.forEach { (exercise, sets) ->
+            val exercisesList = grouped.keys.toList()
+            items(
+                items = exercisesList,
+                key = { it }
+            ) { exercise ->
+                val sets = grouped[exercise] ?: emptyList()
                 val sortedSets = sets.sortedByDescending { it.date }
                 val prSet = sets.maxByOrNull { it.weight }
                 
-                item(key = exercise) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            exercise,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Best: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                             Text(
-                                exercise,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary
+                                "${prSet?.weight ?: 0} kg",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            
-                            Spacer(Modifier.height(8.dp))
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+                        Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        
+                        // Compare last session with the one before it
+                        val sessionGroups = sortedSets.groupBy { 
+                            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.date)) 
+                        }.values.toList()
+
+                        if (sessionGroups.size >= 2) {
+                            val latestWeight = sessionGroups[0].maxOf { it.weight }
+                            val previousWeight = sessionGroups[1].maxOf { it.weight }
+                            val diff = latestWeight - previousWeight
                             
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Best: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                                 Text(
-                                    "${prSet?.weight ?: 0} kg",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = if (diff >= 0) "+${diff}kg" else "${diff}kg",
+                                    style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Bold,
+                                    color = if (diff >= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
+                                )
+                                Text(
+                                    " since last session",
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
 
-                            Spacer(Modifier.height(12.dp))
-                            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            
-                            // Compare last session with the one before it
-                            val sessionGroups = sortedSets.groupBy { 
-                                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.date)) 
-                            }.values.toList()
-
-                            if (sessionGroups.size >= 2) {
-                                val latestWeight = sessionGroups[0].maxOf { it.weight }
-                                val previousWeight = sessionGroups[1].maxOf { it.weight }
-                                val diff = latestWeight - previousWeight
-                                
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = if (diff >= 0) "+${diff}kg" else "${diff}kg",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (diff >= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
-                                    )
-                                    Text(
-                                        " since last session",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            Spacer(Modifier.height(8.dp))
-                            
-                            sortedSets.take(3).forEach { set ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                }
+                        Spacer(Modifier.height(8.dp))
+                        
+                        sortedSets.take(3).forEach { set ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
                 }
             }
             
-            item(key = "back_button") {
+            item {
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = { nav.popBackStack() },
