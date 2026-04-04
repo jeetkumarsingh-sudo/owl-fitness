@@ -10,6 +10,8 @@ import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSession
 import androidx.room.Update
+import androidx.room.Transaction
+import com.example.gymdiary3.data.SessionWithSets
 
 @Dao
 interface WorkoutDao {
@@ -28,6 +30,14 @@ interface WorkoutDao {
 
     @Query("DELETE FROM session WHERE id NOT IN (SELECT DISTINCT sessionId FROM WorkoutSet WHERE sessionId IS NOT NULL)")
     suspend fun deleteEmptySessions()
+
+    @Transaction
+    @Query("SELECT * FROM session ORDER BY startTime DESC")
+    fun getSessionsWithSets(): Flow<List<SessionWithSets>>
+
+    @Transaction
+    @Query("SELECT * FROM session WHERE id = :sessionId")
+    suspend fun getSessionWithSetsById(sessionId: Int): SessionWithSets?
 
     @Query("SELECT COUNT(*) FROM WorkoutSet WHERE sessionId = :sessionId")
     suspend fun getSessionSetCount(sessionId: Int): Int

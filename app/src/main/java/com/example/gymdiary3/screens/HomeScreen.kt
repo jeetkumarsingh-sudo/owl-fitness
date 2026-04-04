@@ -29,7 +29,7 @@ fun HomeScreen(
 ) {
 
     val scope = rememberCoroutineScope()
-    val workouts by viewModel.workouts.collectAsState(initial = emptyList())
+    val sessionsWithSets by viewModel.sessionsWithSets.collectAsState()
     val currentSessionId by viewModel.currentSessionId.collectAsState()
 
     Column(
@@ -128,8 +128,8 @@ fun HomeScreen(
         OutlinedButton(
             onClick = {
                 scope.launch {
-                    Log.d("CSV_EXPORT", "Export started")
-                    if (workouts.isEmpty()) {
+                    Log.d("CSV_EXPORT", "Export started. Sessions: ${sessionsWithSets.size}")
+                    if (sessionsWithSets.isEmpty()) {
                         Log.d("CSV_EXPORT", "No data to export")
                         Toast.makeText(context, "No data to export", Toast.LENGTH_SHORT).show()
                         return@launch
@@ -140,10 +140,13 @@ fun HomeScreen(
                         val writer = FileWriter(file)
                         writer.append("Date,Muscle,Exercise,Set,Reps,Weight,Support\n")
 
-                        workouts.forEach { workout ->
+                        sessionsWithSets.forEach { sessionWithSets ->
                             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                            val dateStr = sdf.format(Date(workout.date))
-                            writer.append("$dateStr,${workout.muscle},${workout.exercise},${workout.setNumber},${workout.reps},${workout.weight},${workout.support}\n")
+                            val dateStr = sdf.format(Date(sessionWithSets.date))
+                            
+                            sessionWithSets.sets.forEach { workout ->
+                                writer.append("$dateStr,${workout.muscle},${workout.exercise},${workout.setNumber},${workout.reps},${workout.weight},${workout.support}\n")
+                            }
                         }
 
                         writer.flush()
