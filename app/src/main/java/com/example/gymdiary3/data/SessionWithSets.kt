@@ -17,8 +17,12 @@ data class SessionWithSets(
         get() = sets.groupBy { it.exercise }
         
     val totalVolume: Double 
-        get() = sets.sumOf { it.weight * it.reps }
+        get() = calculateVolume(sets)
         
     val duration: Long
         get() = (session.endTime ?: session.startTime) - session.startTime
+}
+
+fun calculateVolume(sets: List<WorkoutSet>): Double {
+    return sets.sumOf { it.weight * it.reps }
 }

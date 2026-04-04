@@ -196,7 +196,8 @@ fun HomeScreen(
                             val dateStr = sdf.format(Date(sessionWithSets.date))
                             
                             sessionWithSets.sets.forEach { workout ->
-                                writer.append("$dateStr,${workout.muscle},${workout.exercise},${workout.setNumber},${workout.reps},${workout.weight},${workout.support}\n")
+                                val supportStr = if (workout.support) "Yes" else "No"
+                                writer.append("$dateStr,${workout.muscle},${workout.exercise},${workout.setNumber},${workout.reps},${workout.weight},$supportStr\n")
                             }
                         }
 

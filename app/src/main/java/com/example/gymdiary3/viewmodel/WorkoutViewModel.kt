@@ -27,8 +27,10 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     val workouts: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val sessionsWithSets: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
+    val sessions: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val sessionsWithSets: StateFlow<List<SessionWithSets>> = sessions
 
     private val _selectedMuscle = MutableStateFlow("")
     val exercisesByMuscle: StateFlow<List<Exercise>> = _selectedMuscle
@@ -140,7 +142,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             
             val sessionWithSets = workoutDao.getSessionWithSetsById(id)
             val sets = sessionWithSets?.sets ?: emptyList()
-            val totalVolume = calculateVolume(sets)
+            val totalVolume = com.example.gymdiary3.data.calculateVolume(sets)
 
             if (totalVolume <= 0) {
                 val session = sessionWithSets?.session ?: workoutDao.getSessionById(id)

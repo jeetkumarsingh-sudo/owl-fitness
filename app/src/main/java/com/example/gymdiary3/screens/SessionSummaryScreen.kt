@@ -1,5 +1,7 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -15,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +29,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.SessionSummary
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -34,13 +38,16 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
-    val summary by remember(viewModel) { viewModel.summary }.collectAsState()
+    val sessions by remember(viewModel) { viewModel.sessions }.collectAsState()
+    val sessionWithSets = remember(sessions, sessionId) {
+        sessions.find { it.session.id == sessionId }
+    }
     val context = LocalContext.current
     var summaryView by remember { mutableStateOf<View?>(null) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(sessionId) {
-        viewModel.loadSummary(sessionId)
-    }
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { isVisible = true }
 
     Scaffold(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -52,7 +59,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                     titleContentColor = MaterialTheme.colorScheme.onBackground
                 ),
                 actions = {
-                    summary?.let { s ->
+                    sessionWithSets?.let { s ->
                         IconButton(onClick = {
                             val text = buildShareText(s)
                             shareText(context, text)
@@ -81,25 +88,30 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                 .background(MaterialTheme.colorScheme.background)
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                summary?.let { s ->
+                sessionWithSets?.let { s ->
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         item(key = "stats") {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface
-                                ),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = isVisible,
+                                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
                             ) {
-                                Column(Modifier.padding(16.dp)) {
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        SummaryStat("SETS", s.totalSets.toString())
-                                        SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
-                                        SummaryStat("TIME", "${s.duration / 60000}m")
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            SummaryStat("SETS", s.sets.size.toString())
+                                            SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
+                                            SummaryStat("TIME", "${s.duration / 60000}m")
+                                        }
                                     }
                                 }
                             }
@@ -108,33 +120,38 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         items(s.exercises.toList(), key = { it.first }) { entry ->
                             val exercise = entry.first
                             val sets = entry.second
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = isVisible,
+                                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
                             ) {
-                                Column(Modifier.padding(16.dp)) {
-                                    Text(
-                                        exercise.uppercase(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Spacer(Modifier.height(8.dp))
-                                    sets.forEach { set ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(
-                                                "${set.weight}kg × ${set.reps}",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(
+                                            exercise.uppercase(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Spacer(Modifier.height(8.dp))
+                                        sets.forEach { set ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                Text(
+                                                    "${set.weight}kg × ${set.reps}",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -142,10 +159,17 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         }
 
                         item(key = "done_button") {
+                            val doneScale = remember { Animatable(1f) }
                             Spacer(Modifier.height(12.dp))
                             Button(
-                                onClick = { nav.navigate("home") { popUpTo("home") { inclusive = true } } },
-                                modifier = Modifier.fillMaxWidth().height(56.dp),
+                                onClick = { 
+                                    scope.launch {
+                                        doneScale.animateTo(0.95f, tween(100))
+                                        doneScale.animateTo(1f, tween(100))
+                                    }
+                                    nav.navigate("home") { popUpTo("home") { inclusive = true } } 
+                                },
+                                modifier = Modifier.fillMaxWidth().height(56.dp).scale(doneScale.value),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                             ) {
                                 Text("DONE", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary))
@@ -156,7 +180,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
             }
 
             // Hidden view for capturing
-            summary?.let { s ->
+            sessionWithSets?.let { s ->
                 AndroidView(
                     factory = { ctx ->
                         ComposeView(ctx).apply {
@@ -176,7 +200,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 }
 
 @Composable
-fun ShareableSummary(summary: SessionSummary) {
+fun ShareableSummary(sessionWithSets: com.example.gymdiary3.data.SessionWithSets) {
     Column(
         modifier = Modifier
             .width(400.dp) // Fixed width for consistent image size
@@ -199,12 +223,11 @@ fun ShareableSummary(summary: SessionSummary) {
         Spacer(Modifier.height(16.dp))
 
         val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-        Text("Date: ${sdf.format(Date(summary.date))}", color = Color.Black)
-        Text("Body Weight: ${summary.bodyWeight ?: "-"} kg", color = Color.Black)
-
+        Text("Date: ${sdf.format(Date(sessionWithSets.date))}", color = Color.Black)
+        
         Spacer(Modifier.height(16.dp))
 
-        summary.exercises.forEach { (exercise, sets) ->
+        sessionWithSets.exercises.forEach { (exercise, sets) ->
             Text(exercise, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
             sets.forEach {
                 Text("Set ${it.setNumber}: ${it.weight}kg x ${it.reps}", color = Color.Black)
@@ -216,7 +239,7 @@ fun ShareableSummary(summary: SessionSummary) {
         HorizontalDivider(color = Color.LightGray)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Total Volume: ${summary.totalVolume.toInt()} kg",
+            "Total Volume: ${sessionWithSets.totalVolume.toInt()} kg",
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp,
             color = Color.Black
@@ -270,21 +293,17 @@ fun shareText(context: Context, text: String) {
     context.startActivity(Intent.createChooser(intent, "Share Workout Text"))
 }
 
-fun buildShareText(summary: SessionSummary): String {
+fun buildShareText(sessionWithSets: com.example.gymdiary3.data.SessionWithSets): String {
     val sb = StringBuilder()
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
     sb.append("Owl Fitness Workout Summary\n")
     sb.append("---------------------------\n")
-    sb.append("Date: ${sdf.format(Date(summary.date))}\n")
+    sb.append("Date: ${sdf.format(Date(sessionWithSets.date))}\n")
     
-    summary.bodyWeight?.let {
-        sb.append("Body Weight: $it kg\n")
-    }
-    
-    sb.append("Duration: ${summary.duration / 60000} min\n\n")
+    sb.append("Duration: ${sessionWithSets.duration / 60000} min\n\n")
 
-    summary.exercises.forEach { (exercise, sets) ->
+    sessionWithSets.exercises.forEach { (exercise, sets) ->
         sb.append("$exercise\n")
         sets.forEach {
             sb.append("- Set ${it.setNumber}: ${it.weight}kg x ${it.reps}\n")
@@ -293,8 +312,8 @@ fun buildShareText(summary: SessionSummary): String {
     }
 
     sb.append("---------------------------\n")
-    sb.append("Total Volume: ${summary.totalVolume.toInt()} kg\n")
-    sb.append("Total Sets: ${summary.totalSets}\n")
+    sb.append("Total Volume: ${sessionWithSets.totalVolume.toInt()} kg\n")
+    sb.append("Total Sets: ${sessionWithSets.sets.size}\n")
     
     return sb.toString()
 }
