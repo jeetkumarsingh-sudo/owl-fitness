@@ -50,12 +50,24 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     val sessions: List<SessionWithSets> by viewModel.sessions.collectAsStateWithLifecycle()
     
     val volumeData = remember(sessions) {
-        sessions.sortedBy { it.session.startTime }.map { session: SessionWithSets ->
-            val volume = session.totalVolume.toFloat()
-            val dateLabel = SimpleDateFormat("MM/dd", Locale.getDefault()).format(Date(session.session.startTime))
-            LineChartData.Point(volume, dateLabel)
-        }
+        val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+        
+        sessions.sortedBy { it.session.startTime }
+            .groupBy { dateFormat.format(Date(it.session.startTime)) }
+            .map { (date, sessionList) ->
+                val totalVolume = sessionList.sumOf { it.totalVolume }
+                // Use the first session's time for actual chronological sorting if needed, 
+                // but grouping by formatted date and then mapping to Point is what's requested.
+                // Re-parsing date to ensure chronological order after grouping if they were out of order (though already sorted).
+                val sortTime = sessionList.first().session.startTime
+                Triple(date, totalVolume.toFloat(), sortTime)
+            }
+            .sortedBy { it.third }
+            .map { LineChartData.Point(it.second, it.first) }
     }
+
+    val maxVolume = remember(volumeData) { volumeData.maxByOrNull { it.value } }
+    val minVolume = remember(volumeData) { volumeData.minByOrNull { it.value } }
 
     Scaffold(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
@@ -99,7 +111,7 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                         
                         // Using .isEmpty() and .size explicitly to avoid ambiguity with Modifier.size
                         if (volumeData.isNotEmpty() && volumeData.size >= 2) {
-                            Box(modifier = Modifier.fillMaxSize().padding(bottom = 16.dp)) {
+                            Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 16.dp)) {
                                 LineChart(
                                     linesChartData = listOf(
                                         LineChartData(
@@ -123,6 +135,28 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                         axisLineColor = MaterialTheme.colorScheme.outline
                                     )
                                 )
+                            }
+                            
+                            Spacer(Modifier.height(8.dp))
+                            
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                maxVolume?.let {
+                                    Text(
+                                        "Highest: ${it.value.toInt()} kg (${it.label})",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                minVolume?.let {
+                                    Text(
+                                        "Lowest: ${it.value.toInt()} kg (${it.label})",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         } else {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
