@@ -90,6 +90,10 @@ class MainActivity : ComponentActivity() {
                     composable("progress") {
                         ProgressScreen(nav, workoutViewModel)
                     }
+
+                    composable("graph") {
+                        ProgressGraphScreen(nav, workoutViewModel)
+                    }
                 }
             }
         }
