@@ -15,7 +15,9 @@ data class SessionSummary(
     val totalSets: Int,
     val totalVolume: Double,
     val exercises: Map<String, List<WorkoutSet>>,
-    val duration: Long
+    val duration: Long,
+    val bodyWeight: Double? = null,
+    val startTime: Long
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -94,11 +96,16 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val grouped = workouts.groupBy { it.exercise }
             val session = workoutDao.getSessionById(sessionId)
             val duration = (session.endTime ?: session.startTime) - session.startTime
+            
+            val latestBodyWeight = workoutDao.getLatestBodyWeight()?.weight
+            
             _summary.value = SessionSummary(
                 totalSets = totalSets,
                 totalVolume = totalVolume,
                 exercises = grouped,
-                duration = duration
+                duration = duration,
+                bodyWeight = latestBodyWeight,
+                startTime = session.startTime
             )
         }
     }
