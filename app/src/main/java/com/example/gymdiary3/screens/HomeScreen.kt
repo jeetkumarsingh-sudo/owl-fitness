@@ -8,8 +8,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +41,9 @@ fun HomeScreen(
     val sessionsWithSets by remember(viewModel) { viewModel.sessionsWithSets }.collectAsState()
     val currentSessionId by remember(viewModel) { viewModel.currentSessionId }.collectAsState()
 
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { isVisible = true }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -50,44 +57,63 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.onBackground,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .alpha(animateFloatAsState(if (isVisible) 1f else 0f, animationSpec = tween(200)).value)
         )
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
         ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(
-                    text = if (currentSessionId != null) "WORKOUT IN PROGRESS" else "READY FOR GYM?",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (currentSessionId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
-                
-                Spacer(Modifier.height(8.dp))
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        text = if (currentSessionId != null) "WORKOUT IN PROGRESS" else "READY FOR GYM?",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (currentSessionId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                    )
+                    
+                    Spacer(Modifier.height(8.dp))
 
-                if (currentSessionId != null) {
-                    Button(
-                        onClick = { 
-                            viewModel.endSession { sessionId ->
-                                nav.navigate("summary/$sessionId")
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) { 
-                        Text("FINISH SESSION", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onError) 
-                    }
-                } else {
-                    Button(
-                        onClick = { viewModel.startSession() },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) { 
-                        Text("START NEW SESSION", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                    if (currentSessionId != null) {
+                        val finishScale = remember { Animatable(1f) }
+                        Button(
+                            onClick = { 
+                                scope.launch {
+                                    finishScale.animateTo(0.95f, tween(100))
+                                    finishScale.animateTo(1f, tween(100))
+                                }
+                                viewModel.endSession { sessionId ->
+                                    nav.navigate("summary/$sessionId")
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(56.dp).scale(finishScale.value),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) { 
+                            Text("FINISH SESSION", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onError) 
+                        }
+                    } else {
+                        val startScale = remember { Animatable(1f) }
+                        Button(
+                            onClick = { 
+                                scope.launch {
+                                    startScale.animateTo(0.95f, tween(100))
+                                    startScale.animateTo(1f, tween(100))
+                                }
+                                viewModel.startSession() 
+                            },
+                            modifier = Modifier.fillMaxWidth().height(56.dp).scale(startScale.value),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) { 
+                            Text("START NEW SESSION", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                        }
                     }
                 }
             }
@@ -102,46 +128,57 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                MenuButton(
-                    text = "LOG EXERCISES",
-                    modifier = Modifier.height(120.dp),
-                    onClick = {
-                        if (currentSessionId != null) {
-                            nav.navigate("muscle")
-                        } else {
-                            Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+                AnimatedVisibility(visible = isVisible, enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }) {
+                    MenuButton(
+                        text = "LOG EXERCISES",
+                        modifier = Modifier.height(120.dp),
+                        onClick = {
+                            if (currentSessionId != null) {
+                                nav.navigate("muscle")
+                            } else {
+                                Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                }
             }
             item {
-                MenuButton(
-                    text = "PROGRESS & PRs",
-                    modifier = Modifier.height(120.dp),
-                    onClick = { nav.navigate("progress") },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                )
+                AnimatedVisibility(visible = isVisible, enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }) {
+                    MenuButton(
+                        text = "PROGRESS & PRs",
+                        modifier = Modifier.height(120.dp),
+                        onClick = { nav.navigate("progress") },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                }
             }
             item {
-                MenuButton(
-                    text = "HISTORY",
-                    modifier = Modifier.height(80.dp),
-                    onClick = { nav.navigate("history") }
-                )
+                AnimatedVisibility(visible = isVisible, enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }) {
+                    MenuButton(
+                        text = "HISTORY",
+                        modifier = Modifier.height(80.dp),
+                        onClick = { nav.navigate("history") }
+                    )
+                }
             }
             item {
-                MenuButton(
-                    text = "BODY WEIGHT",
-                    modifier = Modifier.height(80.dp),
-                    onClick = { nav.navigate("weight") }
-                )
+                AnimatedVisibility(visible = isVisible, enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }) {
+                    MenuButton(
+                        text = "BODY WEIGHT",
+                        modifier = Modifier.height(80.dp),
+                        onClick = { nav.navigate("weight") }
+                    )
+                }
             }
         }
 
+        val exportScale = remember { Animatable(1f) }
         OutlinedButton(
             onClick = {
                 scope.launch {
+                    exportScale.animateTo(0.95f, tween(100))
+                    exportScale.animateTo(1f, tween(100))
                     Log.d("CSV_EXPORT", "Export started. Sessions: ${sessionsWithSets.size}")
                     if (sessionsWithSets.isEmpty()) {
                         Log.d("CSV_EXPORT", "No data to export")
@@ -187,7 +224,7 @@ fun HomeScreen(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            modifier = Modifier.fillMaxWidth().height(48.dp).scale(exportScale.value)
         ) { Text("EXPORT DATA (CSV)", style = MaterialTheme.typography.labelLarge) }
     }
 }
@@ -199,9 +236,18 @@ fun MenuButton(
     modifier: Modifier = Modifier,
     containerColor: Color? = null
 ) {
+    val scale = remember { Animatable(1f) }
+    val scope = rememberCoroutineScope()
+
     Card(
-        onClick = onClick,
-        modifier = modifier,
+        onClick = {
+            scope.launch {
+                scale.animateTo(0.95f, tween(100))
+                scale.animateTo(1f, tween(100))
+            }
+            onClick()
+        },
+        modifier = modifier.scale(scale.value),
         colors = CardDefaults.cardColors(containerColor = containerColor ?: MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
