@@ -39,32 +39,14 @@ interface WorkoutDao {
     @Query("SELECT * FROM session WHERE id = :sessionId")
     suspend fun getSessionWithSetsById(sessionId: Int): SessionWithSets?
 
-    @Query("SELECT COUNT(*) FROM WorkoutSet WHERE sessionId = :sessionId")
-    suspend fun getSessionSetCount(sessionId: Int): Int
-
     @Query("SELECT * FROM session WHERE id = :sessionId")
     suspend fun getSessionById(sessionId: Int): WorkoutSession
-
-    @Query("SELECT * FROM WorkoutSet WHERE sessionId = :sessionId")
-    suspend fun getWorkoutsBySession(sessionId: Int): List<WorkoutSet>
 
     @Query("DELETE FROM session WHERE id = :id")
     suspend fun deleteSessionById(id: Int)
 
-    @Query("SELECT * FROM session ORDER BY startTime DESC")
-    fun getAllSessions(): Flow<List<WorkoutSession>>
-
-    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName")
-    suspend fun getAllByExercise(exerciseName: String): List<WorkoutSet>
-
-    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date ASC")
-    suspend fun getExerciseHistory(exerciseName: String): List<WorkoutSet>
-
     @Query("SELECT * FROM WorkoutSet ORDER BY date DESC")
     fun getWorkouts(): Flow<List<WorkoutSet>>
-
-    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exercise ORDER BY date DESC")
-    fun getWorkoutsForExercise(exercise: String): Flow<List<WorkoutSet>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertExercise(exercise: Exercise)
@@ -74,9 +56,6 @@ interface WorkoutDao {
 
     @Delete
     suspend fun deleteExercise(exercise: Exercise)
-
-    @Query("SELECT * FROM WorkoutSet")
-    suspend fun getAllWorkoutsList(): List<WorkoutSet>
 
     @Query("SELECT * FROM Exercise")
     suspend fun getAllExercisesList(): List<Exercise>
