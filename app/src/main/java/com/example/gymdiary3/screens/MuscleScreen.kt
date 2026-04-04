@@ -12,6 +12,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.ui.theme.BackgroundDark
+import com.example.gymdiary3.ui.theme.CardDark
+import com.example.gymdiary3.ui.theme.PrimaryText
+import com.example.gymdiary3.ui.theme.Accent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,13 +26,13 @@ fun MuscleScreen(nav: NavHostController) {
     }
 
     Scaffold(
-        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize().background(BackgroundDark),
         topBar = { 
             TopAppBar(
                 title = { Text("SELECT MUSCLE", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = BackgroundDark,
+                    titleContentColor = PrimaryText
                 )
             ) 
         }
@@ -38,7 +42,7 @@ fun MuscleScreen(nav: NavHostController) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(BackgroundDark),
             contentPadding = PaddingValues(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -48,7 +52,7 @@ fun MuscleScreen(nav: NavHostController) {
                     onClick = { nav.navigate("exercise/$muscle") },
                     modifier = Modifier.height(110.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = CardDark
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
@@ -57,7 +61,7 @@ fun MuscleScreen(nav: NavHostController) {
                             muscle.uppercase(),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Accent
                         )
                     }
                 }

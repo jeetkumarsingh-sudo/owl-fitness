@@ -4,6 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import com.example.gymdiary3.ui.theme.BackgroundDark
+import com.example.gymdiary3.ui.theme.CardDark
+import com.example.gymdiary3.ui.theme.PrimaryText
+import com.example.gymdiary3.ui.theme.SecondaryText
+import com.example.gymdiary3.ui.theme.Accent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,7 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
@@ -36,24 +43,23 @@ fun HomeScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(BackgroundDark)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
         Text(
             text = "Owl Fitness",
-            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold),
+            color = PrimaryText,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = if (currentSessionId != null) 
-                    MaterialTheme.colorScheme.primaryContainer 
-                else 
-                    MaterialTheme.colorScheme.surfaceVariant
+                containerColor = CardDark
             )
         ) {
             Column(Modifier.padding(16.dp)) {
@@ -61,7 +67,7 @@ fun HomeScreen(
                     text = if (currentSessionId != null) "WORKOUT IN PROGRESS" else "READY FOR GYM?",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (currentSessionId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (currentSessionId != null) Accent else SecondaryText
                 )
                 
                 Spacer(Modifier.height(8.dp))
@@ -76,14 +82,15 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) { 
-                        Text("FINISH SESSION", fontWeight = FontWeight.Bold) 
+                        Text("FINISH SESSION", fontWeight = FontWeight.Bold, color = Color.White) 
                     }
                 } else {
                     Button(
                         onClick = { viewModel.startSession() },
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Accent)
                     ) { 
-                        Text("START NEW SESSION", fontWeight = FontWeight.Bold) 
+                        Text("START NEW SESSION", fontWeight = FontWeight.Bold, color = Color.White) 
                     }
                 }
             }
@@ -185,7 +192,7 @@ fun MenuButton(
     text: String, 
     onClick: () -> Unit, 
     modifier: Modifier = Modifier,
-    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceVariant
+    containerColor: androidx.compose.ui.graphics.Color = CardDark
 ) {
     Card(
         onClick = onClick,
@@ -197,7 +204,8 @@ fun MenuButton(
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = PrimaryText
             )
         }
     }
