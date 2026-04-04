@@ -1,5 +1,7 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -10,10 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,6 +27,9 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     val sessionsWithSets by remember(viewModel) { viewModel.sessionsWithSets }.collectAsState()
     val sdf = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()) }
     val timeSdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { isVisible = true }
 
     var showDeleteDialog by remember { mutableStateOf<Int?>(null) }
 
@@ -83,8 +90,13 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                         items = filteredSessions,
                         key = { it.session.id }
                     ) { sessionWithSets ->
-                        SessionCard(sessionWithSets, nav, sdf, timeSdf) {
-                            showDeleteDialog = it
+                        AnimatedVisibility(
+                            visible = isVisible,
+                            enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
+                        ) {
+                            SessionCard(sessionWithSets, nav, sdf, timeSdf) {
+                                showDeleteDialog = it
+                            }
                         }
                     }
                 }
@@ -103,11 +115,21 @@ fun SessionCard(
     onLongClick: (Int) -> Unit
 ) {
     val session = sessionWithSets.session
+    val scale = remember { Animatable(1f) }
+    val scope = rememberCoroutineScope()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(scale.value)
             .combinedClickable(
-                onClick = { nav.navigate("summary/${session.id}") },
+                onClick = { 
+                    scope.launch {
+                        scale.animateTo(0.95f, tween(100))
+                        scale.animateTo(1f, tween(100))
+                    }
+                    nav.navigate("summary/${session.id}") 
+                },
                 onLongClick = { onLongClick(session.id) }
             ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
