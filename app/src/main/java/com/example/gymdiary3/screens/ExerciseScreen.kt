@@ -9,18 +9,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.ui.theme.BackgroundDark
-import com.example.gymdiary3.ui.theme.CardDark
-import com.example.gymdiary3.ui.theme.PrimaryText
-import com.example.gymdiary3.ui.theme.SecondaryText
-import com.example.gymdiary3.ui.theme.Accent
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -36,27 +32,27 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     var newExerciseName by remember { mutableStateOf("") }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(BackgroundDark),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = { Text(muscle.uppercase(), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundDark,
-                    titleContentColor = PrimaryText,
-                    actionIconContentColor = Accent
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary
                 ),
                 actions = {
                     IconButton(onClick = { showAddDialog = true }) {
-                        Text("+", style = MaterialTheme.typography.headlineMedium, color = Accent)
+                        Text("+", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().background(BackgroundDark)) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             if (exercises.isEmpty()) {
-                Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                    Text("No exercises yet", color = SecondaryText)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No exercises yet", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                 }
             } else {
                 LazyColumn(
@@ -80,7 +76,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                                         },
                                         onLongClick = { showMenu = true }
                                     ),
-                                colors = CardDefaults.cardColors(containerColor = CardDark),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
                                 Column(Modifier.padding(16.dp)) {
@@ -88,7 +84,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                                         exercise.name,
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold,
-                                        color = PrimaryText
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -96,7 +92,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                             DropdownMenu(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false },
-                                modifier = Modifier.background(CardDark)
+                                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Delete Exercise", color = Color.Red) },
@@ -116,7 +112,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            containerColor = CardDark,
+            containerColor = MaterialTheme.colorScheme.surface,
             confirmButton = {
                 Button(
                     onClick = {
@@ -126,31 +122,31 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                         showAddDialog = false
                         newExerciseName = ""
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Accent)
-                ) { Text("ADD", color = Color.White) }
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) { Text("ADD", color = MaterialTheme.colorScheme.onPrimary) }
             },
             dismissButton = {
                 TextButton(onClick = { 
                     showAddDialog = false
                     newExerciseName = "" 
-                }) { Text("CANCEL", color = SecondaryText) }
+                }) { Text("CANCEL", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) }
             },
-            title = { Text("Add $muscle Exercise", color = PrimaryText) },
+            title = { Text("Add $muscle Exercise", color = MaterialTheme.colorScheme.onSurface) },
             text = {
                 OutlinedTextField(
                     value = newExerciseName,
                     onValueChange = { newExerciseName = it },
-                    label = { Text("Exercise Name", color = SecondaryText) },
+                    label = { Text("Exercise Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(color = PrimaryText),
+                    textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = PrimaryText,
-                        unfocusedTextColor = PrimaryText,
-                        focusedBorderColor = Accent,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Accent,
-                        unfocusedLabelColor = SecondaryText
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 )
             }

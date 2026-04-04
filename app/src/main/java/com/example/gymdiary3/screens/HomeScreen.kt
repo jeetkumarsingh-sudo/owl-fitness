@@ -4,11 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
-import com.example.gymdiary3.ui.theme.BackgroundDark
-import com.example.gymdiary3.ui.theme.CardDark
-import com.example.gymdiary3.ui.theme.PrimaryText
-import com.example.gymdiary3.ui.theme.SecondaryText
-import com.example.gymdiary3.ui.theme.Accent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -43,14 +38,14 @@ fun HomeScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
         Text(
             text = "Owl Fitness",
-            color = PrimaryText,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -59,7 +54,7 @@ fun HomeScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = CardDark
+                containerColor = MaterialTheme.colorScheme.surface
             )
         ) {
             Column(Modifier.padding(16.dp)) {
@@ -67,7 +62,7 @@ fun HomeScreen(
                     text = if (currentSessionId != null) "WORKOUT IN PROGRESS" else "READY FOR GYM?",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (currentSessionId != null) Accent else SecondaryText
+                    color = if (currentSessionId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                 )
                 
                 Spacer(Modifier.height(8.dp))
@@ -82,15 +77,15 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) { 
-                        Text("FINISH SESSION", fontWeight = FontWeight.Bold, color = Color.White) 
+                        Text("FINISH SESSION", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onError) 
                     }
                 } else {
                     Button(
                         onClick = { viewModel.startSession() },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Accent)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) { 
-                        Text("START NEW SESSION", fontWeight = FontWeight.Bold, color = Color.White) 
+                        Text("START NEW SESSION", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -192,12 +187,12 @@ fun MenuButton(
     text: String, 
     onClick: () -> Unit, 
     modifier: Modifier = Modifier,
-    containerColor: androidx.compose.ui.graphics.Color = CardDark
+    containerColor: Color? = null
 ) {
     Card(
         onClick = onClick,
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(containerColor = containerColor ?: MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = Alignment.Center) {
@@ -205,7 +200,7 @@ fun MenuButton(
                 text = text,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 textAlign = TextAlign.Center,
-                color = PrimaryText
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

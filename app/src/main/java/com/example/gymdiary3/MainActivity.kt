@@ -14,7 +14,7 @@ import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.ui.theme.GymDiaryTheme
+import com.example.gymdiary3.ui.theme.OwlFitnessTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            GymDiaryTheme {
+            OwlFitnessTheme {
                 val nav = rememberNavController()
 
                 NavHost(navController = nav, startDestination = "home") {

@@ -19,11 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.ui.theme.BackgroundDark
-import com.example.gymdiary3.ui.theme.CardDark
-import com.example.gymdiary3.ui.theme.PrimaryText
-import com.example.gymdiary3.ui.theme.SecondaryText
-import com.example.gymdiary3.ui.theme.Accent
 
 @Composable
 fun SetScreen(
@@ -71,7 +66,7 @@ fun SetScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .imePadding()
             .padding(16.dp)
@@ -80,7 +75,7 @@ fun SetScreen(
         Text(
             text = exercise,
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = PrimaryText,
+            color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1
         )
 
@@ -92,7 +87,7 @@ fun SetScreen(
             Text(
                 text = "Set $currentSet",
                 style = MaterialTheme.typography.headlineSmall,
-                color = Accent,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
 
@@ -103,7 +98,7 @@ fun SetScreen(
                         fontWeight = FontWeight.Black,
                         fontSize = 32.sp
                     ),
-                    color = if (timer < 10) Color.Red else PrimaryText
+                    color = if (timer < 10) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
                 )
             }
         }
@@ -114,23 +109,23 @@ fun SetScreen(
             value = weight,
             onValueChange = { weight = it },
             textStyle = TextStyle(
-                color = PrimaryText,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 18.sp
             ),
             label = {
                 Text(
                     "Weight (kg)",
-                    color = Accent
+                    color = MaterialTheme.colorScheme.primary
                 )
             },
             colors = TextFieldDefaults.colors(
-                focusedTextColor = PrimaryText,
-                unfocusedTextColor = PrimaryText,
-                focusedContainerColor = CardDark,
-                unfocusedContainerColor = CardDark,
-                focusedIndicatorColor = Accent,
-                unfocusedIndicatorColor = Color.Gray,
-                cursorColor = Accent
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline,
+                cursorColor = MaterialTheme.colorScheme.primary
             ),
             modifier = Modifier.fillMaxWidth().focusRequester(weightFocusRequester),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -143,23 +138,23 @@ fun SetScreen(
             value = reps,
             onValueChange = { reps = it },
             textStyle = TextStyle(
-                color = PrimaryText,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 18.sp
             ),
             label = {
                 Text(
                     "Reps",
-                    color = Accent
+                    color = MaterialTheme.colorScheme.primary
                 )
             },
             colors = TextFieldDefaults.colors(
-                focusedTextColor = PrimaryText,
-                unfocusedTextColor = PrimaryText,
-                focusedContainerColor = CardDark,
-                unfocusedContainerColor = CardDark,
-                focusedIndicatorColor = Accent,
-                unfocusedIndicatorColor = Color.Gray,
-                cursorColor = Accent
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline,
+                cursorColor = MaterialTheme.colorScheme.primary
             ),
             modifier = Modifier.fillMaxWidth().focusRequester(repsFocusRequester),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -174,7 +169,7 @@ fun SetScreen(
                 Text(
                     text = "Last: ${it.weight}kg × ${it.reps}",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = SecondaryText
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
 
@@ -186,7 +181,7 @@ fun SetScreen(
                     Text(
                         text = "Suggest: ${suggestion}kg",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Accent,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -200,12 +195,12 @@ fun SetScreen(
                 checked = support,
                 onCheckedChange = { support = it },
                 modifier = Modifier.size(48.dp),
-                colors = CheckboxDefaults.colors(checkedColor = Accent)
+                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
             )
             Text(
                 "Support / Assisted", 
                 style = MaterialTheme.typography.bodyLarge,
-                color = PrimaryText
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
 
@@ -234,14 +229,14 @@ fun SetScreen(
                 modifier = Modifier.fillMaxWidth().height(64.dp),
                 enabled = canLogSet,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Accent,
-                    disabledContainerColor = Color.Gray
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                 ),
                 shape = MaterialTheme.shapes.medium
             ) {
                 Text(
                     "LOG SET",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold)
                 )
             }
@@ -251,8 +246,8 @@ fun SetScreen(
             OutlinedButton(
                 onClick = { nav.popBackStack() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryText),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Text(
                     "FINISH EXERCISE",
