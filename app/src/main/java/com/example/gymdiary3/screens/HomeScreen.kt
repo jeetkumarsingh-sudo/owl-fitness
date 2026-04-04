@@ -138,7 +138,7 @@ fun HomeScreen(
                                 "${workout.date}," +
                                         "${workout.muscle}," +
                                         "${workout.exercise}," +
-                                        "${workout.set}," +
+                                        "${workout.setNumber}," +
                                         "${workout.reps}," +
                                         "${workout.weight}," +
                                         "${workout.support}\n"

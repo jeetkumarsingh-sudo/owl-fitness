@@ -17,7 +17,7 @@ data class SessionSummary(
     val exercises: Map<String, List<WorkoutSet>>,
     val duration: Long,
     val bodyWeight: Double? = null,
-    val startTime: Long
+    val date: Long
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -59,6 +59,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     init {
         insertDefaultWorkouts()
+        viewModelScope.launch {
+            workoutDao.deleteEmptySessions()
+        }
     }
 
     fun loadLastSet(exerciseName: String) {
@@ -105,7 +108,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                 exercises = grouped,
                 duration = duration,
                 bodyWeight = latestBodyWeight,
-                startTime = session.startTime
+                date = session.startTime
             )
         }
     }
@@ -138,6 +141,19 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     fun endSession(onComplete: (Int) -> Unit) {
         viewModelScope.launch {
             val id = _currentSessionId.value ?: return@launch
+            
+            // Check if session has any sets
+            val setCount = workoutDao.getSessionSetCount(id)
+            if (setCount == 0) {
+                // Delete the empty session instead of finishing it
+                val session = workoutDao.getSessionById(id)
+                workoutDao.deleteSession(session)
+                _currentSessionId.value = null
+                currentStartTime = 0L
+                // We don't call onComplete because there's no summary to show
+                return@launch
+            }
+
             val session = WorkoutSession(
                 id = id,
                 startTime = currentStartTime,
@@ -205,10 +221,10 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    fun insertWorkout(muscle: String, exercise: String, set: Int, reps: Int, weight: Double, support: Boolean) {
+    fun insertWorkout(muscle: String, exercise: String, setNumber: Int, reps: Int, weight: Double, support: Boolean) {
         val sessionId = _currentSessionId.value ?: return 
         viewModelScope.launch {
-            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, set, reps, weight, support, sessionId))
+            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, support, sessionId))
             val count = workoutDao.getTodaySetCount(exercise)
             _currentSet.value = count + 1
             startRestTimer()

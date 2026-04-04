@@ -54,7 +54,7 @@ fun HistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Set ${set.set}", fontWeight = FontWeight.SemiBold)
+                                Text("Set ${set.setNumber}", fontWeight = FontWeight.SemiBold)
                                 Text(formatDate(set.date), style = MaterialTheme.typography.bodySmall)
                             }
                             Text("${set.weight}kg x ${set.reps}")
