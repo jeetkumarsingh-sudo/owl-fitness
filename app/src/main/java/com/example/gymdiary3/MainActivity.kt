@@ -2,11 +2,11 @@ package com.example.gymdiary3
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.runtime.SideEffect
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
@@ -46,16 +46,13 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            Log.d("PERF", "Root Recompose")
             OwlFitnessTheme {
                 val nav = rememberNavController()
 
                 NavHost(
                     navController = nav,
-                    startDestination = "home",
-                    enterTransition = { slideInHorizontally(tween(250)) { it / 4 } },
-                    exitTransition = { slideOutHorizontally(tween(250)) { -it / 4 } },
-                    popEnterTransition = { slideInHorizontally(tween(250)) { -it / 4 } },
-                    popExitTransition = { slideOutHorizontally(tween(250)) { it / 4 } }
+                    startDestination = "home"
                 ) {
 
                     composable("home") {

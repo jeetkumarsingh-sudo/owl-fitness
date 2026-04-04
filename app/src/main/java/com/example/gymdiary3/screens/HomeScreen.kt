@@ -6,6 +6,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.item
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -93,41 +96,49 @@ fun HomeScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MenuButton(
-                text = "LOG EXERCISES",
-                modifier = Modifier.weight(1f).height(120.dp),
-                onClick = {
-                    if (currentSessionId != null) {
-                        nav.navigate("muscle")
-                    } else {
-                        Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
-            MenuButton(
-                text = "PROGRESS & PRs",
-                modifier = Modifier.weight(1f).height(120.dp),
-                onClick = { nav.navigate("progress") },
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-            )
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                MenuButton(
+                    text = "LOG EXERCISES",
+                    modifier = Modifier.height(120.dp),
+                    onClick = {
+                        if (currentSessionId != null) {
+                            nav.navigate("muscle")
+                        } else {
+                            Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            }
+            item {
+                MenuButton(
+                    text = "PROGRESS & PRs",
+                    modifier = Modifier.height(120.dp),
+                    onClick = { nav.navigate("progress") },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                )
+            }
+            item {
+                MenuButton(
+                    text = "HISTORY",
+                    modifier = Modifier.height(80.dp),
+                    onClick = { nav.navigate("history") }
+                )
+            }
+            item {
+                MenuButton(
+                    text = "BODY WEIGHT",
+                    modifier = Modifier.height(80.dp),
+                    onClick = { nav.navigate("weight") }
+                )
+            }
         }
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MenuButton(
-                text = "HISTORY",
-                modifier = Modifier.weight(1f).height(80.dp),
-                onClick = { nav.navigate("history") }
-            )
-            MenuButton(
-                text = "BODY WEIGHT",
-                modifier = Modifier.weight(1f).height(80.dp),
-                onClick = { nav.navigate("weight") }
-            )
-        }
-
-        Spacer(Modifier.weight(1f))
 
         OutlinedButton(
             onClick = {
