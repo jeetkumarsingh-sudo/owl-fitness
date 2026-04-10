@@ -72,12 +72,8 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             ) 
         }
     ) { padding ->
-        val filteredSessions = remember(sessionsWithSets) {
-            sessionsWithSets.filter { it.totalVolume > 0 }
-        }
-
         Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            if (filteredSessions.isEmpty()) {
+            if (sessionsWithSets.isEmpty()) {
                 Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                     Text(
                         "No workout history found.\nYour completed sessions will appear here.",
@@ -93,7 +89,7 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(
-                        items = filteredSessions,
+                        items = sessionsWithSets,
                         key = { it.session.id }
                     ) { sessionWithSets ->
                         AnimatedVisibility(

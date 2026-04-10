@@ -197,10 +197,7 @@ fun BodyWeightChart(weights: List<BodyWeight>) {
         return
     }
 
-    val sortedWeights = weights.sortedBy { it.date }
-    val latestWeight = sortedWeights.last().weight
-    val firstWeight = sortedWeights.first().weight
-    val change = latestWeight - firstWeight
+    val stats = com.example.gymdiary3.domain.BodyWeightAnalyzer.getStats(weights) ?: return
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
     Column {
@@ -212,13 +209,13 @@ fun BodyWeightChart(weights: List<BodyWeight>) {
         ) {
             Column {
                 Text("CURRENT", color = Color.Gray, fontSize = 10.sp)
-                Text("${latestWeight}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("${stats.latestWeight}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("CHANGE", color = Color.Gray, fontSize = 10.sp)
-                val changeColor = if (change <= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
+                val changeColor = if (stats.totalChange <= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
                 Text(
-                    "${if (change >= 0) "+" else ""}${"%.1f".format(change)}kg",
+                    "${if (stats.totalChange >= 0) "+" else ""}${"%.1f".format(stats.totalChange)}kg",
                     color = changeColor,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -226,14 +223,14 @@ fun BodyWeightChart(weights: List<BodyWeight>) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text("LOWEST", color = Color.Gray, fontSize = 10.sp)
-                Text("${sortedWeights.minOf { it.weight }}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("${stats.minWeight}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         LineChart(
             linesChartData = listOf(
                 LineChartData(
-                    points = sortedWeights.map { bw ->
+                    points = weights.sortedBy { it.date }.map { bw ->
                         LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.date)))
                     },
                     lineDrawer = SolidLineDrawer(color = Color(0xFF7B68EE), thickness = 2.dp)

@@ -10,7 +10,9 @@ import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.WorkoutSession
 import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.database.WorkoutDao
+import com.example.gymdiary3.domain.WorkoutAnalyzer
 import com.example.gymdiary3.utils.WorkoutCalculations
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -28,6 +30,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessions: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
+        .map { list -> list.filter { it.totalVolume > 0 } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessionsWithSets: StateFlow<List<SessionWithSets>> = sessions
@@ -94,6 +97,22 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     fun selectMuscle(muscle: String) {
         _selectedMuscle.value = muscle
+    }
+
+    fun getExerciseUiState(exercise: String): ExerciseUiState {
+        val stats = WorkoutAnalyzer.getExerciseStats(exercise, sessions.value)
+        return ExerciseUiState(
+            exercise = stats.exercise,
+            trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
+            trendColor = when {
+                stats.trend > 0 -> Color.Green
+                stats.trend < 0 -> Color.Red
+                else -> Color.Gray
+            },
+            isPR = stats.isPR,
+            recommendation = WorkoutAnalyzer.getRecommendation(stats),
+            best1RM = stats.best1RM
+        )
     }
 
     fun startRestTimer(seconds: Int = 90) {

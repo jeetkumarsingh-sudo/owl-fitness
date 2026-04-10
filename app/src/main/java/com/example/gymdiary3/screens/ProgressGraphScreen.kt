@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.domain.WorkoutAnalyzer
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
@@ -59,24 +60,11 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             .map { LineChartData.Point(it.second, it.first) }
     }
 
-    val plateauStatus = remember(allSessions) {
+    val plateauStatus: List<Pair<String, com.example.gymdiary3.viewmodel.ExerciseUiState>> = remember(allSessions) {
         val exList = allSessions.flatMap { it.sets }.map { it.exercise }.distinct()
         exList.map { exercise ->
-            val bestSets = allSessions
-                .sortedBy { it.session.startTime }
-                .mapNotNull { session ->
-                    session.sets.filter { it.exercise == exercise }
-                        .maxByOrNull { it.weight * it.reps }
-                }
-            val last3 = bestSets.takeLast(3)
-            val isPlateau = last3.size == 3 &&
-                    last3[0].weight == last3[1].weight && last3[1].weight == last3[2].weight &&
-                    last3[0].reps == last3[1].reps && last3[1].reps == last3[2].reps
-            
-            val isImproving = last3.size >= 2 && 
-                    (last3.last().weight * last3.last().reps > last3[last3.size - 2].weight * last3[last3.size - 2].reps)
-            
-            Triple(exercise, isPlateau, isImproving)
+            val uiState = viewModel.getExerciseUiState(exercise)
+            Pair(exercise, uiState)
         }
     }
 
@@ -185,10 +173,10 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                         .mapNotNull { sessionWithSets ->
                             val setsForExercise = sessionWithSets.sets.filter { it.exercise == selectedExercise }
                             if (setsForExercise.isEmpty()) return@mapNotNull null
-                            val best1rm = setsForExercise.maxOf { set ->
-                                if (set.weight > 0) set.weight * (1 + set.reps / 30.0) else 0.0
-                            }
-                            Pair(sessionWithSets.session.startTime, best1rm)
+                            
+                            // Using WorkoutAnalyzer for 1RM calculation consistency
+                            val stats = WorkoutAnalyzer.getExerciseStats(selectedExercise, listOf(sessionWithSets))
+                            Pair(sessionWithSets.session.startTime, stats.best1RM)
                         }
                     
                     if (exerciseData.size >= 2) {
@@ -259,7 +247,7 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                 color = Color(0xFF7B68EE)
                             )
                             Spacer(Modifier.height(12.dp))
-                            for ((exercise, isPlateau, isImproving) in plateauStatus) {
+                            for ((exercise, uiState) in plateauStatus) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -271,31 +259,13 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                         fontWeight = FontWeight.Medium,
                                         color = Color.White
                                     )
-                                    when {
-                                        isPlateau -> {
-                                            Text(
-                                                "⚠ No progress in last 3 sessions",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color.Red,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                        isImproving -> {
-                                            Text(
-                                                "📈 Progressing well",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color(0xFF4CAF50),
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                        else -> {
-                                            Text(
-                                                "Steady",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color.Gray
-                                            )
-                                        }
-                                    }
+                                    
+                                    Text(
+                                        uiState.trendLabel,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = uiState.trendColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
