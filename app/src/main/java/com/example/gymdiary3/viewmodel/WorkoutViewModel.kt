@@ -14,6 +14,7 @@ import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.system.session.SessionManager
 import com.example.gymdiary3.system.timer.RestTimerManager
 import com.example.gymdiary3.system.export.ExportFormatter
+import com.example.gymdiary3.domain.settings.UserSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -21,7 +22,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
+class WorkoutViewModel(
+    private val workoutDao: WorkoutDao,
+    val settingsRepository: UserSettingsRepository? = null
+) : ViewModel() {
 
     // System Managers
     val sessionManager = SessionManager(workoutDao)
@@ -57,11 +61,18 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     private val _currentSet = MutableStateFlow(1)
     val currentSet: StateFlow<Int> = _currentSet.asStateFlow()
 
+    val latestBodyWeight: StateFlow<Double?> = workoutDao.getLatestBodyWeightFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     val isRestTimerRunning: StateFlow<Boolean> = restTimerManager.isRestTimerRunning
     val restTimerSeconds: StateFlow<Int> = restTimerManager.restTimerSeconds
 
     fun skipRestTimer() {
         restTimerManager.skipTimer()
+    }
+
+    fun getLastThreeSets(exercise: String): Flow<List<WorkoutSet>> {
+        return workoutDao.getLastThreeSets(exercise)
     }
 
     init {
@@ -120,7 +131,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, support, sessionId))
             updateSetNumber(exercise)
-            restTimerManager.startTimer()
+            
+            val defaultRest = settingsRepository?.userSettingsFlow?.firstOrNull()?.defaultRestSeconds ?: 90
+            restTimerManager.startTimer(defaultRest)
         }
     }
 
@@ -171,5 +184,31 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             workoutDao.deleteExercise(exercise)
         }
+    }
+
+    fun getRecentExercises(): List<Pair<String, String>> {
+        return sessions.value
+            .sortedByDescending { it.session.startTime }
+            .take(10)
+            .flatMap { it.sets }
+            .map { it.exercise to it.muscle }
+            .distinctBy { it.first }
+    }
+
+    fun getMuscleGroups(): List<String> {
+        return sessions.value
+            .flatMap { it.sets }
+            .map { it.muscle }
+            .distinct()
+            .sorted()
+    }
+
+    fun getExercisesByMuscle(muscle: String): List<String> {
+        return sessions.value
+            .flatMap { it.sets }
+            .filter { it.muscle == muscle }
+            .map { it.exercise }
+            .distinct()
+            .sorted()
     }
 }

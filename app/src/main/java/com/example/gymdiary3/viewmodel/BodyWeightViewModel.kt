@@ -7,10 +7,14 @@ import com.example.gymdiary3.database.BodyWeightDao
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import com.example.gymdiary3.domain.settings.UserSettingsRepository
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class BodyWeightViewModel(private val bodyWeightDao: BodyWeightDao) : ViewModel() {
+class BodyWeightViewModel(
+    private val bodyWeightDao: BodyWeightDao,
+    val settingsRepository: UserSettingsRepository? = null
+) : ViewModel() {
 
     val allWeights: StateFlow<List<BodyWeight>> = bodyWeightDao.getWeights()
         .stateIn(

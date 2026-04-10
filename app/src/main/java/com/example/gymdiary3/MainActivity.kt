@@ -14,9 +14,17 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.*
 import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
-import com.example.gymdiary3.viewmodel.BodyWeightViewModel
+import com.example.gymdiary3.domain.settings.UserSettingsRepository
+import com.example.gymdiary3.viewmodel.SettingsViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.ui.theme.OwlFitnessTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
 
 class MainActivity : ComponentActivity() {
 
@@ -31,7 +39,7 @@ class MainActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return WorkoutViewModel(workoutDao) as T
+                    return WorkoutViewModel(workoutDao, UserSettingsRepository(applicationContext)) as T
                 }
             }
         }
@@ -40,7 +48,16 @@ class MainActivity : ComponentActivity() {
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return BodyWeightViewModel(bodyDao) as T
+                    return BodyWeightViewModel(bodyDao, UserSettingsRepository(applicationContext)) as T
+                }
+            }
+        }
+
+        val settingsViewModel by viewModels<SettingsViewModel> {
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return SettingsViewModel(UserSettingsRepository(applicationContext)) as T
                 }
             }
         }
@@ -93,6 +110,10 @@ class MainActivity : ComponentActivity() {
 
                     composable("graph") {
                         ProgressGraphScreen(nav, workoutViewModel)
+                    }
+
+                    composable("settings") {
+                        SettingsScreen(nav, settingsViewModel)
                     }
                 }
             }

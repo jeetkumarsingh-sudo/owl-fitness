@@ -63,8 +63,11 @@ interface WorkoutDao {
     @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 1")
     suspend fun getLastSet(exerciseName: String): WorkoutSet?
 
-    @Query("SELECT * FROM BodyWeight ORDER BY date DESC LIMIT 1")
-    suspend fun getLatestBodyWeight(): com.example.gymdiary3.data.BodyWeight?
+    @Query("SELECT weight FROM BodyWeight ORDER BY date DESC LIMIT 1")
+    fun getLatestBodyWeightFlow(): Flow<Double?>
+
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 3")
+    fun getLastThreeSets(exerciseName: String): Flow<List<WorkoutSet>>
 
     @Query("SELECT * FROM BodyWeight ORDER BY date DESC")
     suspend fun getAllBodyWeightsList(): List<com.example.gymdiary3.data.BodyWeight>

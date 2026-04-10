@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -54,6 +55,12 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
 
+    val userSettings by if (viewModel.settingsRepository != null) {
+        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    } else {
+        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         topBar = {
@@ -66,21 +73,24 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                 actions = {
                     sessionWithSets?.let { s ->
                         IconButton(onClick = {
-                            val text = buildShareText(s)
+                            val text = buildShareText(s, userSettings.weightUnit)
                             shareText(context, text)
                         }) {
                             Icon(Icons.Default.Share, contentDescription = "Share Text", tint = MaterialTheme.colorScheme.onBackground)
                         }
                     }
-                    TextButton(onClick = {
-                        summaryView?.let { view ->
-                            view.post {
-                                val bitmap = captureView(view)
-                                shareImage(context, bitmap)
+                    TextButton(
+                        onClick = {
+                            summaryView?.let { view ->
+                                view.post {
+                                    val bitmap = captureView(view)
+                                    shareImage(context, bitmap)
+                                }
                             }
-                        }
-                    }) {
-                        Text("SHARE IMAGE", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("SHARE IMAGE", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             )
@@ -96,20 +106,20 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                 sessionWithSets?.let { s ->
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding = PaddingValues(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item(key = "stats") {
-                            SummaryStatsCard(isVisible, s)
+                            SummaryStatsCard(isVisible, s, userSettings.weightUnit)
                         }
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
                             val uiState = viewModel.getExerciseUiState(entry.first)
-                            ExerciseSummaryCard(isVisible, uiState, entry.second)
+                            ExerciseSummaryCard(isVisible, uiState, entry.second, userSettings.weightUnit)
                         }
 
                         item(key = "muscle_volume") {
-                            MuscleVolumeCard(isVisible, s.volumePerMuscle)
+                            MuscleVolumeCard(isVisible, s.volumePerMuscle, userSettings.weightUnit)
                         }
 
                         if (s.sets.isEmpty()) {
@@ -140,10 +150,11 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                     }
                                     nav.navigate("home") { popUpTo("home") { inclusive = true } } 
                                 },
-                                modifier = Modifier.fillMaxWidth().height(56.dp).scale(doneScale.value),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                modifier = Modifier.fillMaxWidth().height(64.dp).scale(doneScale.value),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                shape = MaterialTheme.shapes.medium
                             ) {
-                                Text("DONE", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary))
+                                Text("DONE", style = MaterialTheme.typography.titleLarge)
                             }
                         }
                     }
@@ -156,7 +167,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                     factory = { ctx ->
                         ComposeView(ctx).apply {
                             setContent {
-                                ShareableSummary(s)
+                                ShareableSummary(s, userSettings.weightUnit)
                             }
                         }
                     },
@@ -171,7 +182,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 }
 
 @Composable
-fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
+fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets, unit: String) {
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
@@ -179,25 +190,23 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
         val sdf = remember { SimpleDateFormat("EEEE, MMM dd, yyyy 'at' HH:mm", Locale.getDefault()) }
         val dateStr = remember(s.date) { sdf.format(Date(s.date)) }
 
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+            color = MaterialTheme.colorScheme.surface,
+            shape = MaterialTheme.shapes.medium,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Text(
                     text = dateStr,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     SummaryStat("SETS", s.sets.size.toString())
-                    SummaryStat("VOLUME", "${s.totalVolume.toInt()}kg")
+                    SummaryStat("VOLUME", "${s.totalVolume.toInt()}$unit")
                     SummaryStat("TIME", "${s.duration / 60000}m")
                 }
             }
@@ -206,19 +215,18 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
 }
 
 @Composable
-fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List<WorkoutSet>) {
+fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List<WorkoutSet>, unit: String) {
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            color = MaterialTheme.colorScheme.surface,
+            shape = MaterialTheme.shapes.medium,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -229,7 +237,6 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                             Text(
                                 uiState.exercise.uppercase(),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             if (uiState.isPR) {
@@ -237,8 +244,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                                 Text(
                                     "NEW PR",
                                     color = Color(0xFFFFC107),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
+                                    style = MaterialTheme.typography.labelSmall
                                 )
                             }
                         }
@@ -256,16 +262,14 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
 
                     if (uiState.best1RM > 0.0) {
                         Text(
-                            "Best 1RM: ${uiState.best1RM.toInt()} kg",
+                            "Best 1RM: ${uiState.best1RM.toInt()} $unit",
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary
                         )
                     } else {
                         Text(
                             "Bodyweight",
                             style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
                             color = Color(0xFF9E9E9E)
                         )
                     }
@@ -275,11 +279,10 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                 Text(
                     uiState.recommendation,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
-                    fontSize = 12.sp
+                    color = Color.Gray
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 sets.forEach { set ->
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -287,9 +290,8 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                     ) {
                         Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            "${set.weight}kg × ${set.reps}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
+                            "${set.weight}$unit × ${set.reps}",
+                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -300,7 +302,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
 }
 
 @Composable
-fun ShareableSummary(sessionWithSets: SessionWithSets) {
+fun ShareableSummary(sessionWithSets: SessionWithSets, unit: String) {
     Column(
         modifier = Modifier
             .width(400.dp) // Fixed width for consistent image size
@@ -330,7 +332,7 @@ fun ShareableSummary(sessionWithSets: SessionWithSets) {
         sessionWithSets.exercises.forEach { (exercise, sets) ->
             Text(exercise, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
             sets.forEach {
-                Text("Set ${it.setNumber}: ${it.weight}kg x ${it.reps}", color = Color.Black)
+                Text("Set ${it.setNumber}: ${it.weight}$unit x ${it.reps}", color = Color.Black)
             }
             Spacer(Modifier.height(12.dp))
         }
@@ -339,7 +341,7 @@ fun ShareableSummary(sessionWithSets: SessionWithSets) {
         HorizontalDivider(color = Color.LightGray)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Total Volume: ${sessionWithSets.totalVolume.toInt()} kg",
+            "Total Volume: ${sessionWithSets.totalVolume.toInt()} $unit",
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp,
             color = Color.Black
@@ -393,7 +395,7 @@ fun shareText(context: Context, text: String) {
     context.startActivity(Intent.createChooser(intent, "Share Workout Text"))
 }
 
-fun buildShareText(sessionWithSets: SessionWithSets): String {
+fun buildShareText(sessionWithSets: SessionWithSets, unit: String): String {
     val sb = StringBuilder()
     val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
@@ -406,45 +408,45 @@ fun buildShareText(sessionWithSets: SessionWithSets): String {
     sessionWithSets.exercises.forEach { (exercise, sets) ->
         sb.append("$exercise\n")
         sets.forEach {
-            sb.append("- Set ${it.setNumber}: ${it.weight}kg x ${it.reps}\n")
+            sb.append("- Set ${it.setNumber}: ${it.weight}$unit x ${it.reps}\n")
         }
         sb.append("\n")
     }
 
     sb.append("---------------------------\n")
-    sb.append("Total Volume: ${sessionWithSets.totalVolume.toInt()} kg\n")
+    sb.append("Total Volume: ${sessionWithSets.totalVolume.toInt()} $unit\n")
     sb.append("Total Sets: ${sessionWithSets.sets.size}\n")
     
     return sb.toString()
 }
 
 @Composable
-fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>) {
+fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit: String) {
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
+            color = MaterialTheme.colorScheme.surface,
+            shape = MaterialTheme.shapes.medium,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Text(
                     "VOLUME BY MUSCLE",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 1.sp
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 muscleVolume.filter { it.value > 0 }.forEach { (muscle, volume) ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(muscle, style = MaterialTheme.typography.bodyMedium)
-                        Text("${volume.toInt()} kg", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                        Text(muscle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${volume.toInt()} $unit", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }

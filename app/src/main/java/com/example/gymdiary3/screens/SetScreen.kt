@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -44,6 +44,20 @@ fun SetScreen(
     
     val isTimerRunning by viewModel.isRestTimerRunning.collectAsStateWithLifecycle()
     val timerSeconds by viewModel.restTimerSeconds.collectAsStateWithLifecycle()
+    
+    val userSettings by if (viewModel.settingsRepository != null) {
+        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    } else {
+        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
+    }
+
+    var timerInitialSeconds by remember { mutableIntStateOf(userSettings.defaultRestSeconds) }
+    
+    LaunchedEffect(isTimerRunning) {
+        if (isTimerRunning) {
+            timerInitialSeconds = userSettings.defaultRestSeconds
+        }
+    }
 
     val canLogSet = remember(reps, weight) {
         reps.isNotEmpty() && weight.isNotEmpty() && 
@@ -74,12 +88,12 @@ fun SetScreen(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .imePadding()
-            .padding(16.dp)
+            .padding(20.dp)
     ) {
 
         Text(
             text = exercise,
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1
         )
@@ -87,8 +101,7 @@ fun SetScreen(
         Text(
             text = "Set $currentSet",
             style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(Modifier.height(16.dp))
@@ -102,7 +115,7 @@ fun SetScreen(
             ),
             label = {
                 Text(
-                    "Weight (kg)",
+                    "Weight (${userSettings.weightUnit})",
                     color = MaterialTheme.colorScheme.primary
                 )
             },
@@ -155,7 +168,7 @@ fun SetScreen(
         ) {
             lastSet?.let {
                 Text(
-                    text = "Last: ${it.weight}kg × ${it.reps}",
+                    text = "Last: ${it.weight}${userSettings.weightUnit} × ${it.reps}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -166,8 +179,9 @@ fun SetScreen(
                     onClick = { weight = suggestion.toString() },
                     contentPadding = PaddingValues(0.dp)
                 ) {
+                    val unit = userSettings.weightUnit
                     Text(
-                        text = "Suggest: ${suggestion}kg",
+                        text = "Suggest: ${suggestion}${unit}",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
@@ -195,51 +209,58 @@ fun SetScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         AnimatedVisibility(visible = isTimerRunning) {
-            Card(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2E)),
-                border = BorderStroke(1.dp, Color(0xFF7B68EE))
+                    .padding(vertical = 12.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         "REST TIMER",
-                        color = Color(0xFF7B68EE),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 2.sp
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text = "%d:%02d".format(timerSeconds / 60, timerSeconds % 60),
-                        color = Color.White,
-                        fontSize = 48.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    val progress = if (timerSeconds > 0) timerSeconds / 90f else 0f
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Color(0xFF7B68EE),
-                        trackColor = Color(0xFF333350)
                     )
 
                     Spacer(Modifier.height(12.dp))
 
+                    Text(
+                        text = "%d:%02d".format(timerSeconds / 60, timerSeconds % 60),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontSize = 48.sp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    val progress = if (timerInitialSeconds > 0) {
+                        timerSeconds.toFloat() / timerInitialSeconds.toFloat()
+                    } else 0f
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        strokeCap = StrokeCap.Round
+                    )
+
+                    Spacer(Modifier.height(20.dp))
+
                     OutlinedButton(
                         onClick = { viewModel.skipRestTimer() },
-                        border = BorderStroke(1.dp, Color(0xFF7B68EE))
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        shape = MaterialTheme.shapes.medium
                     ) {
-                        Text("SKIP", color = Color(0xFF7B68EE), fontSize = 12.sp)
+                        Text(
+                            "SKIP", 
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
