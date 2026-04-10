@@ -1,6 +1,7 @@
 package com.example.gymdiary3.screens
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -27,7 +28,7 @@ fun MuscleScreen(nav: NavHostController) {
         modifier = Modifier.fillMaxSize(),
         topBar = { 
             TopAppBar(
-                title = { Text("SELECT MUSCLE", fontWeight = FontWeight.ExtraBold) },
+                title = { Text("SELECT MUSCLE", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
@@ -41,9 +42,9 @@ fun MuscleScreen(nav: NavHostController) {
                 .padding(padding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(muscles, key = { it }) { muscle ->
                 MuscleCard(muscle) { nav.navigate("exercise/$muscle") }
@@ -54,20 +55,17 @@ fun MuscleScreen(nav: NavHostController) {
 
 @Composable
 fun MuscleCard(muscle: String, onClick: () -> Unit) {
-    Log.d("PERF", "MuscleCard recomposing: $muscle")
-    Card(
+    Surface(
         onClick = onClick,
-        modifier = Modifier.height(110.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier.height(120.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
                 muscle.uppercase(),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
