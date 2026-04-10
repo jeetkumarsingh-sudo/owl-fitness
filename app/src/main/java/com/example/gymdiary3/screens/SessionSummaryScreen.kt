@@ -30,8 +30,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.data.WorkoutSet
+import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.domain.WorkoutAnalyzer
+import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -205,7 +206,7 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
 }
 
 @Composable
-fun ExerciseSummaryCard(isVisible: Boolean, uiState: com.example.gymdiary3.viewmodel.ExerciseUiState, sets: List<WorkoutSet>) {
+fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List<WorkoutSet>) {
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }

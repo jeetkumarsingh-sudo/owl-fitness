@@ -1,8 +1,8 @@
-package com.example.gymdiary3.domain
+package com.example.gymdiary3.system.export
 
 import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.data.BodyWeight
-import com.example.gymdiary3.utils.WorkoutCalculations
+import com.example.gymdiary3.domain.util.WorkoutCalculations
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -11,7 +11,6 @@ object ExportFormatter {
         val sb = StringBuilder()
         val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
 
-        // Section 1: Workout Sessions
         sb.appendLine("=== WORKOUT SESSIONS ===")
         sb.appendLine("Session ID,Date,Duration (min),Total Sets,Total Volume (kg)")
 
@@ -31,7 +30,6 @@ object ExportFormatter {
 
         sb.appendLine()
 
-        // Section 2: All Sets
         sb.appendLine("=== ALL SETS ===")
         sb.appendLine("Date,Session ID,Exercise,Muscle Group,Set Number,Weight (kg),Reps,Volume (kg),Est. 1RM (kg)")
 
@@ -57,7 +55,6 @@ object ExportFormatter {
 
         sb.appendLine()
 
-        // Section 3: Body Weight History
         sb.appendLine("=== BODY WEIGHT HISTORY ===")
         sb.appendLine("Date,Weight (kg)")
         

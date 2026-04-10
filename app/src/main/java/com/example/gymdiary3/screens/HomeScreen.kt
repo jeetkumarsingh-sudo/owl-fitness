@@ -39,8 +39,8 @@ fun HomeScreen(
 ) {
 
     val scope = rememberCoroutineScope()
-    val sessionsWithSets by viewModel.sessionsWithSets.collectAsStateWithLifecycle()
-    val currentSessionId by viewModel.currentSessionId.collectAsStateWithLifecycle()
+    val sessionsWithSets by viewModel.sessions.collectAsStateWithLifecycle()
+    val currentSessionId by viewModel.sessionManager.currentSessionId.collectAsStateWithLifecycle()
 
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }

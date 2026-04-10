@@ -1,4 +1,4 @@
-package com.example.gymdiary3.domain
+package com.example.gymdiary3.domain.model
 
 data class ExerciseStats(
     val exercise: String,

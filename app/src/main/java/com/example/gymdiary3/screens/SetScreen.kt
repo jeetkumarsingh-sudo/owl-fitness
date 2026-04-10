@@ -225,7 +225,7 @@ fun SetScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    val progress = timerSeconds / 90f
+                    val progress = if (timerSeconds > 0) timerSeconds / 90f else 0f
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier.fillMaxWidth(),
