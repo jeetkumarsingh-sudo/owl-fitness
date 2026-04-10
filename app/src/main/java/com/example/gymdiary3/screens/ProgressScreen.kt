@@ -79,8 +79,9 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 items = exercisesList,
                 key = { it }
             ) { exercise ->
+                val uiState = viewModel.getExerciseUiState(exercise)
                 val sets = grouped[exercise] ?: emptyList()
-                ExerciseProgressCard(exercise, sets, sdf)
+                ExerciseProgressCard(exercise, uiState, sets, sdf)
             }
             
             item {
@@ -152,27 +153,15 @@ fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>) {
 }
 
 @Composable
-fun ExerciseProgressCard(exercise: String, sets: List<WorkoutSet>, sdf: SimpleDateFormat) {
+fun ExerciseProgressCard(
+    exercise: String,
+    uiState: com.example.gymdiary3.viewmodel.ExerciseUiState,
+    sets: List<WorkoutSet>,
+    sdf: SimpleDateFormat
+) {
     Log.d("PERF", "ExerciseProgressCard recomposing: $exercise")
     
     val sortedSets = remember(sets) { sets.sortedByDescending { it.date } }
-    val prSet = remember(sets) { sets.maxByOrNull { it.weight } }
-    
-    val latestWeight = remember(sortedSets) {
-        val sessionGroups = sortedSets.groupBy { 
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.date)) 
-        }.values.toList()
-        if (sessionGroups.isNotEmpty()) sessionGroups[0].maxOf { it.weight } else 0.0
-    }
-
-    val previousWeight = remember(sortedSets) {
-        val sessionGroups = sortedSets.groupBy { 
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.date)) 
-        }.values.toList()
-        if (sessionGroups.size >= 2) sessionGroups[1].maxOf { it.weight } else 0.0
-    }
-    
-    val diff = if (previousWeight > 0) latestWeight - previousWeight else null
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -192,7 +181,7 @@ fun ExerciseProgressCard(exercise: String, sets: List<WorkoutSet>, sdf: SimpleDa
                     color = MaterialTheme.colorScheme.primary
                 )
                 
-                if (latestWeight >= (prSet?.weight ?: 0.0) && latestWeight > 0) {
+                if (uiState.isPR) {
                     Text(
                         "NEW PR",
                         color = Color(0xFFFFC107),
@@ -205,9 +194,9 @@ fun ExerciseProgressCard(exercise: String, sets: List<WorkoutSet>, sdf: SimpleDa
             Spacer(Modifier.height(8.dp))
             
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Best Weight: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text("Best 1RM: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    "${prSet?.weight ?: 0.0} kg",
+                    "${uiState.best1RM.toInt()} kg",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -217,30 +206,30 @@ fun ExerciseProgressCard(exercise: String, sets: List<WorkoutSet>, sdf: SimpleDa
             Spacer(Modifier.height(12.dp))
             Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             
-            diff?.let { d ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    when {
-                        d > 0.0 -> Text(
-                            text = "+${d}kg since last session",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4CAF50)
-                        )
-                        d < 0.0 -> Text(
-                            text = "${d}kg since last session",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFFF5252)
-                        )
-                        else -> Text(
-                            text = "Same weight as last session",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray
-                        )
-                    }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val trendColor = when {
+                    uiState.trend > 0 -> Color(0xFF4CAF50)
+                    uiState.trend < 0 -> Color(0xFFFF5252)
+                    else -> Color.Gray
                 }
-            } ?: Text("Not enough data for trend", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                
+                Text(
+                    text = if (uiState.trend != 0.0) {
+                        (if (uiState.trend > 0) "+" else "") + "${uiState.trend}kg since last session"
+                    } else {
+                        "Same weight as last session"
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = trendColor
+                )
+            }
+            
+            Text(
+                text = uiState.recommendation,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
 
             Spacer(Modifier.height(8.dp))
             

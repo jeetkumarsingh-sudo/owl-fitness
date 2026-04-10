@@ -140,9 +140,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val id = _currentSessionId.value ?: return@launch
             
             val sessionWithSets = workoutDao.getSessionWithSetsById(id)
-            val totalVolume = sessionWithSets?.totalVolume ?: 0.0
-
-            if (totalVolume <= 0) {
+            if (sessionWithSets == null || !WorkoutAnalyzer.isValidSession(sessionWithSets)) {
                 val session = sessionWithSets?.session ?: workoutDao.getSessionById(id)
                 workoutDao.deleteSession(session)
                 _currentSessionId.value = null
@@ -240,9 +238,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         val sessionId = _currentSessionId.value ?: return 
         if (!validateSet(weight, reps)) return
         
-        val volume = WorkoutCalculations.calculateVolume(weight, reps)
-        if (volume <= 0) return
-
         viewModelScope.launch {
             workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, support, sessionId))
             val count = workoutDao.getTodaySetCount(exercise)
