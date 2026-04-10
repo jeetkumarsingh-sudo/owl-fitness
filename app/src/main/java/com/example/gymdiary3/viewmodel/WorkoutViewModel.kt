@@ -9,8 +9,8 @@ import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.WorkoutSession
 import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.data.BodyWeight
 import com.example.gymdiary3.database.WorkoutDao
+import com.example.gymdiary3.utils.WorkoutCalculations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -20,15 +20,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-
-data class SessionSummary(
-    val totalSets: Int,
-    val totalVolume: Double,
-    val exercises: Map<String, List<WorkoutSet>>,
-    val duration: Long,
-    val bodyWeight: Double? = null,
-    val date: Long
-)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
@@ -40,8 +31,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessionsWithSets: StateFlow<List<SessionWithSets>> = sessions
-
-    private val _allBodyWeights = MutableStateFlow<List<BodyWeight>>(emptyList())
 
     private val _selectedMuscle = MutableStateFlow("")
     val exercisesByMuscle: StateFlow<List<Exercise>> = _selectedMuscle
@@ -62,9 +51,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
 
     private val _currentSessionId = MutableStateFlow<Int?>(null)
     val currentSessionId: StateFlow<Int?> = _currentSessionId
-
-    private val _summary = MutableStateFlow<SessionSummary?>(null)
-    val summary: StateFlow<SessionSummary?> = _summary
 
     private var currentStartTime: Long = 0L
 
@@ -110,23 +96,6 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         _selectedMuscle.value = muscle
     }
 
-    fun loadSummary(sessionId: Int) {
-        viewModelScope.launch {
-            val sessionWithSets = workoutDao.getSessionWithSetsById(sessionId) ?: return@launch
-            
-            val latestBodyWeight = workoutDao.getLatestBodyWeight()?.weight
-            
-            _summary.value = SessionSummary(
-                totalSets = sessionWithSets.sets.size,
-                totalVolume = sessionWithSets.totalVolume,
-                exercises = sessionWithSets.exercises,
-                duration = sessionWithSets.duration,
-                bodyWeight = latestBodyWeight,
-                date = sessionWithSets.date
-            )
-        }
-    }
-
     fun startRestTimer(seconds: Int = 90) {
         restTimerJob?.cancel()
         _restTimerSeconds.value = seconds
@@ -164,8 +133,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             val id = _currentSessionId.value ?: return@launch
             
             val sessionWithSets = workoutDao.getSessionWithSetsById(id)
-            val sets = sessionWithSets?.sets ?: emptyList()
-            val totalVolume = com.example.gymdiary3.data.calculateVolume(sets)
+            val totalVolume = sessionWithSets?.totalVolume ?: 0.0
 
             if (totalVolume <= 0) {
                 val session = sessionWithSets?.session ?: workoutDao.getSessionById(id)
@@ -249,18 +217,25 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         }
     }
 
-    fun calculateVolume(sets: List<WorkoutSet>): Double {
-        return sets.sumOf { it.weight * it.reps }
-    }
-
     fun deleteExercise(exercise: Exercise) {
         viewModelScope.launch {
             workoutDao.deleteExercise(exercise)
         }
     }
 
+    fun validateSet(weight: Double, reps: Int): Boolean {
+        if (weight < 0) return false
+        if (reps <= 0) return false
+        return true
+    }
+
     fun insertWorkout(muscle: String, exercise: String, setNumber: Int, reps: Int, weight: Double, support: Boolean) {
         val sessionId = _currentSessionId.value ?: return 
+        if (!validateSet(weight, reps)) return
+        
+        val volume = WorkoutCalculations.calculateVolume(weight, reps)
+        if (volume <= 0) return
+
         viewModelScope.launch {
             workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, support, sessionId))
             val count = workoutDao.getTodaySetCount(exercise)
@@ -285,8 +260,8 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             for (sessionWithSets in sessionsVal.sortedByDescending { it.session.startTime }) {
                 val session = sessionWithSets.session
                 val sets = sessionWithSets.sets
-                val totalVolume = sets.sumOf { it.weight * it.reps }
-                val durationMin = ((session.endTime ?: session.startTime) - session.startTime) / 60_000
+                val totalVolume = sessionWithSets.totalVolume
+                val durationMin = sessionWithSets.duration / 60_000
                 sb.appendLine(
                     "${session.id}," +
                     "\"${dateFormat.format(Date(session.startTime))}\"," +
@@ -305,7 +280,9 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
             for (sessionWithSets in sessionsVal.sortedByDescending { it.session.startTime }) {
                 val dateStr = dateFormat.format(Date(sessionWithSets.session.startTime))
                 for (set in sessionWithSets.sets.sortedBy { it.setNumber }) {
-                    val est1rm = if (set.weight > 0) "%.1f".format(set.weight * (1 + set.reps / 30.0)) else "N/A"
+                    val volume = WorkoutCalculations.calculateVolume(set.weight, set.reps)
+                    val est1rmVal = WorkoutCalculations.calculate1RM(set.weight, set.reps)
+                    val est1rm = if (est1rmVal > 0) "%.1f".format(est1rmVal) else "N/A"
                     sb.appendLine(
                         "\"$dateStr\"," +
                         "${set.sessionId}," +
@@ -314,7 +291,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
                         "${set.setNumber}," +
                         "${set.weight}," +
                         "${set.reps}," +
-                        "%.1f".format(set.weight * set.reps) + "," +
+                        "%.1f".format(volume) + "," +
                         est1rm
                     )
                 }

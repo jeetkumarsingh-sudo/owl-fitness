@@ -1,6 +1,5 @@
 package com.example.gymdiary3.screens
 
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import android.content.Context
@@ -31,9 +30,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.data.WorkoutSet
-import com.example.gymdiary3.viewmodel.SessionSummary
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.data.calculate1RM
+import com.example.gymdiary3.domain.WorkoutAnalyzer
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -44,7 +42,6 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
-    Log.d("PERF", "SessionSummaryScreen recomposing")
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val sessionWithSets = remember(sessions, sessionId) {
         sessions.find { it.session.id == sessionId }
@@ -106,7 +103,8 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         }
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
-                            ExerciseSummaryCard(isVisible, entry.first, entry.second)
+                            val stats = WorkoutAnalyzer.getExerciseStats(entry.first, sessions)
+                            ExerciseSummaryCard(isVisible, entry.first, entry.second, stats)
                         }
 
                         item(key = "muscle_volume") {
@@ -173,8 +171,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 
 @Composable
 fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
-    Log.d("PERF", "SummaryStatsCard recomposing")
-        androidx.compose.animation.AnimatedVisibility(
+    AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
@@ -208,14 +205,10 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
 }
 
 @Composable
-fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<WorkoutSet>) {
-    Log.d("PERF", "ExerciseSummaryCard recomposing: $exercise")
-    
-    val best1RM = remember(sets) {
-        sets.maxOfOrNull { calculate1RM(it.weight, it.reps) } ?: 0.0
-    }
+fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<WorkoutSet>, stats: com.example.gymdiary3.domain.ExerciseStats) {
+    val best1RM = stats.best1RM
 
-    androidx.compose.animation.AnimatedVisibility(
+    AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
@@ -232,12 +225,36 @@ fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<Workout
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        exercise.uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                exercise.uppercase(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (stats.isPR) {
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "NEW PR",
+                                    color = Color(0xFFFFC107),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                        
+                        Text(
+                            WorkoutAnalyzer.getTrendLabel(stats.trend),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = when {
+                                stats.trend > 0 -> Color.Green
+                                stats.trend < 0 -> Color.Red
+                                else -> Color.Gray
+                            }
+                        )
+                    }
+
                     if (best1RM > 0.0) {
                         Text(
                             "Best 1RM: ${best1RM.roundToInt()} kg",
@@ -254,6 +271,15 @@ fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<Workout
                         )
                     }
                 }
+                
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    WorkoutAnalyzer.getRecommendation(stats),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+
                 Spacer(Modifier.height(8.dp))
                 sets.forEach { set ->
                     Row(
@@ -395,7 +421,7 @@ fun buildShareText(sessionWithSets: SessionWithSets): String {
 
 @Composable
 fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>) {
-    androidx.compose.animation.AnimatedVisibility(
+    AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
