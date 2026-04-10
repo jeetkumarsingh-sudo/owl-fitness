@@ -103,8 +103,8 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         }
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
-                            val stats = WorkoutAnalyzer.getExerciseStats(entry.first, sessions)
-                            ExerciseSummaryCard(isVisible, entry.first, entry.second, stats)
+                            val uiState = viewModel.getExerciseUiState(entry.first)
+                            ExerciseSummaryCard(isVisible, uiState, entry.second)
                         }
 
                         item(key = "muscle_volume") {
@@ -205,9 +205,7 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets) {
 }
 
 @Composable
-fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<WorkoutSet>, stats: com.example.gymdiary3.domain.ExerciseStats) {
-    val best1RM = stats.best1RM
-
+fun ExerciseSummaryCard(isVisible: Boolean, uiState: com.example.gymdiary3.viewmodel.ExerciseUiState, sets: List<WorkoutSet>) {
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
@@ -228,12 +226,12 @@ fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<Workout
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                exercise.uppercase(),
+                                uiState.exercise.uppercase(),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            if (stats.isPR) {
+                            if (uiState.isPR) {
                                 Spacer(Modifier.width(8.dp))
                                 Text(
                                     "NEW PR",
@@ -245,19 +243,15 @@ fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<Workout
                         }
                         
                         Text(
-                            WorkoutAnalyzer.getTrendLabel(stats.trend),
+                            uiState.trendLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = when {
-                                stats.trend > 0 -> Color.Green
-                                stats.trend < 0 -> Color.Red
-                                else -> Color.Gray
-                            }
+                            color = uiState.trendColor
                         )
                     }
 
-                    if (best1RM > 0.0) {
+                    if (uiState.best1RM > 0.0) {
                         Text(
-                            "Best 1RM: ${best1RM.roundToInt()} kg",
+                            "Best 1RM: ${uiState.best1RM.toInt()} kg",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary
@@ -274,7 +268,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, exercise: String, sets: List<Workout
                 
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    WorkoutAnalyzer.getRecommendation(stats),
+                    uiState.recommendation,
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray,
                     fontSize = 12.sp

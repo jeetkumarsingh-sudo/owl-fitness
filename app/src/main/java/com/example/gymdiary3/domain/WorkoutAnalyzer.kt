@@ -47,7 +47,10 @@ object WorkoutAnalyzer {
         } else 0.0
 
         val trend = if (previous > 0) last - previous else 0.0
-        val isPR = last >= bestWeight && last > 0
+        
+        // Robust PR detection: A PR is when the current max weight is >= historical max weight, 
+        // AND we have at least one previous session to compare against.
+        val isPR = last >= bestWeight && last > 0 && sortedSessions.size > 1 && last > previous
 
         return ExerciseStats(
             exercise,
@@ -71,10 +74,14 @@ object WorkoutAnalyzer {
 
     fun getRecommendation(stats: ExerciseStats): String {
         return when {
-            stats.trend > 0 -> "Increase weight next session"
-            stats.trend < -2 -> "Reduce load or check fatigue"
-            stats.trend == 0.0 -> "Try slight weight increase"
-            else -> "Maintain current weight"
+            stats.isPR -> "New Personal Record! Maintain and consolidate."
+            stats.trend > 0 -> "Solid progress. Attempt +2.5kg next time."
+            stats.trend < -5 -> "Significant drop. Consider a deload week."
+            stats.trend < 0 -> "Slight regression. Focus on form and recovery."
+            stats.lastSessionWeight > 0 && stats.previousSessionWeight > 0 && stats.trend == 0.0 -> 
+                "Plateau detected. Increase intensity or volume."
+            stats.lastSessionWeight > 0 -> "Establish a baseline for a few sessions."
+            else -> "Start logging to see recommendations."
         }
     }
 
