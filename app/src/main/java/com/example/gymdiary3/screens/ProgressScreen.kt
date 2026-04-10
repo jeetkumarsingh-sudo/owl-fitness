@@ -99,7 +99,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
 
 @Composable
 fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>) {
-    val weeklyVolume = remember(sessions) { WorkoutAnalyzer.getWeeklyVolume(sessions) }
+    val weeklyVolume: Map<String, Double> = remember(sessions) { WorkoutAnalyzer.getWeeklyVolume(sessions) }
     val sortedWeeks = remember(weeklyVolume) { weeklyVolume.keys.toList().sortedDescending() }
 
     if (sortedWeeks.isNotEmpty()) {

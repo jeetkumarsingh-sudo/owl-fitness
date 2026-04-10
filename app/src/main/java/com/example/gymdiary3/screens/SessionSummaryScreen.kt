@@ -245,7 +245,11 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: com.example.gymdiary3.viewm
                         Text(
                             uiState.trendLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = uiState.trendColor
+                            color = when {
+                                uiState.trend > 0 -> Color.Green
+                                uiState.trend < 0 -> Color.Red
+                                else -> Color.Gray
+                            }
                         )
                     }
 

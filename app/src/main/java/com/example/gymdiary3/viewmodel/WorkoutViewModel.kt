@@ -30,7 +30,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessions: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
-        .map { list -> list.filter { it.totalVolume > 0 } }
+        .map { list -> list.filter { WorkoutAnalyzer.isValidSession(it) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sessionsWithSets: StateFlow<List<SessionWithSets>> = sessions
@@ -76,15 +76,7 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         viewModelScope.launch {
             val last = workoutDao.getLastSet(exerciseName)
             _lastSet.value = last
-            _suggestedWeight.value = last?.let { getSuggestedWeight(it.weight) }
-        }
-    }
-
-    private fun getSuggestedWeight(lastWeight: Double): Double {
-        return when {
-            lastWeight < 20 -> lastWeight + 1.25
-            lastWeight < 50 -> lastWeight + 2.5
-            else -> lastWeight + 5
+            _suggestedWeight.value = last?.let { WorkoutAnalyzer.getSuggestedWeight(it.weight) }
         }
     }
 
@@ -103,12 +95,8 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
         val stats = WorkoutAnalyzer.getExerciseStats(exercise, sessions.value)
         return ExerciseUiState(
             exercise = stats.exercise,
+            trend = stats.trend,
             trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
-            trendColor = when {
-                stats.trend > 0 -> Color.Green
-                stats.trend < 0 -> Color.Red
-                else -> Color.Gray
-            },
             isPR = stats.isPR,
             recommendation = WorkoutAnalyzer.getRecommendation(stats),
             best1RM = stats.best1RM
@@ -264,80 +252,11 @@ class WorkoutViewModel(private val workoutDao: WorkoutDao) : ViewModel() {
     }
 
     suspend fun exportAllDataToCsv(context: Context): Uri? = withContext(Dispatchers.IO) {
-        try {
-            val sessionsVal = sessions.value
-            if (sessionsVal.isEmpty()) return@withContext null
-
-            val sb = StringBuilder()
-
-            // Section 1: Workout Sessions
-            sb.appendLine("=== WORKOUT SESSIONS ===")
-            sb.appendLine("Session ID,Date,Duration (min),Total Sets,Total Volume (kg)")
-
-            val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
-
-            for (sessionWithSets in sessionsVal.sortedByDescending { it.session.startTime }) {
-                val session = sessionWithSets.session
-                val sets = sessionWithSets.sets
-                val totalVolume = sessionWithSets.totalVolume
-                val durationMin = sessionWithSets.duration / 60_000
-                sb.appendLine(
-                    "${session.id}," +
-                    "\"${dateFormat.format(Date(session.startTime))}\"," +
-                    "$durationMin," +
-                    "${sets.size}," +
-                    "%.1f".format(totalVolume)
-                )
-            }
-
-            sb.appendLine()
-
-            // Section 2: All Sets
-            sb.appendLine("=== ALL SETS ===")
-            sb.appendLine("Date,Session ID,Exercise,Muscle Group,Set Number,Weight (kg),Reps,Volume (kg),Est. 1RM (kg)")
-
-            for (sessionWithSets in sessionsVal.sortedByDescending { it.session.startTime }) {
-                val dateStr = dateFormat.format(Date(sessionWithSets.session.startTime))
-                for (set in sessionWithSets.sets.sortedBy { it.setNumber }) {
-                    val volume = WorkoutCalculations.calculateVolume(set.weight, set.reps)
-                    val est1rmVal = WorkoutCalculations.calculate1RM(set.weight, set.reps)
-                    val est1rm = if (est1rmVal > 0) "%.1f".format(est1rmVal) else "N/A"
-                    sb.appendLine(
-                        "\"$dateStr\"," +
-                        "${set.sessionId}," +
-                        "\"${set.exercise}\"," +
-                        "\"${set.muscle}\"," +
-                        "${set.setNumber}," +
-                        "${set.weight}," +
-                        "${set.reps}," +
-                        "%.1f".format(volume) + "," +
-                        est1rm
-                    )
-                }
-            }
-
-            sb.appendLine()
-
-            // Section 3: Body Weight History
-            sb.appendLine("=== BODY WEIGHT HISTORY ===")
-            sb.appendLine("Date,Weight (kg)")
-            
-            val bodyWeights = workoutDao.getAllBodyWeightsList()
-            for (bw in bodyWeights.sortedByDescending { it.date }) {
-                sb.appendLine("\"${dateFormat.format(Date(bw.date))}\",${bw.weight}")
-            }
-
-            // Write to cache file
-            val fileName = "owl_fitness_export_${System.currentTimeMillis()}.csv"
-            val file = File(context.cacheDir, fileName)
-            file.writeText(sb.toString())
-
-            // Return FileProvider URI
-            FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
+        val sessionsVal = sessions.value
+        if (sessionsVal.isEmpty()) return@withContext null
+        
+        val bodyWeights = workoutDao.getAllBodyWeightsList()
+        val csvContent = com.example.gymdiary3.domain.ExportFormatter.buildCsv(sessionsVal, bodyWeights)
+        return@withContext com.example.gymdiary3.data.FileHandler.writeToCache(context, csvContent)
     }
 }

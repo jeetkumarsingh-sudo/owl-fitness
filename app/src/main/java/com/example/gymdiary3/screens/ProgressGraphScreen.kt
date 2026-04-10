@@ -260,10 +260,15 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                                         color = Color.White
                                     )
                                     
+                                    val trendColor = when {
+                                        uiState.trend > 0 -> Color.Green
+                                        uiState.trend < 0 -> Color.Red
+                                        else -> Color.Gray
+                                    }
                                     Text(
                                         uiState.trendLabel,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = uiState.trendColor,
+                                        color = trendColor,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
