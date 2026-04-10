@@ -2,12 +2,15 @@ package com.example.gymdiary3.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,9 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import com.example.gymdiary3.ui.components.EmptyState
+import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -61,32 +66,34 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = { 
             TopAppBar(
-                title = { Text("SESSION HISTORY", fontWeight = FontWeight.Bold) },
+                title = { Text("SESSION HISTORY", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
             ) 
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (sessionsWithSets.isEmpty()) {
-                Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        "No workout history found.\nYour completed sessions will appear here.",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+                EmptyState(
+                    message = "Your completed sessions will appear here.",
+                    title = "NO WORKOUT HISTORY"
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(
                         items = sessionsWithSets,
@@ -120,7 +127,7 @@ fun SessionCard(
     val scale = remember { Animatable(1f) }
     val scope = rememberCoroutineScope()
 
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .scale(scale.value)
@@ -134,15 +141,15 @@ fun SessionCard(
                 },
                 onLongClick = { onLongClick(session.id) }
             ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Column(Modifier.padding(20.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = sdf.format(Date(session.startTime)),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
@@ -150,25 +157,38 @@ fun SessionCard(
                 if (duration > 0) {
                     Text(
                         text = "$duration min",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             
-            Text(
-                text = timeSdf.format(Date(session.startTime)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            
-            Text(
-                text = "${sessionWithSets.totalVolume.toInt()} kg total",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+                Column {
+                    Text(
+                        text = timeSdf.format(Date(session.startTime)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    Text(
+                        text = "${sessionWithSets.totalVolume.toInt()} kg total",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+                
+                Text(
+                    text = "VIEW SUMMARY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
         }
     }
 }

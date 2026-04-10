@@ -2,6 +2,7 @@ package com.example.gymdiary3.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,6 +41,13 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
 
     var weightInput by remember { mutableStateOf("") }
     val weights by viewModel.allWeights.collectAsStateWithLifecycle()
+    
+    val userSettings by if (viewModel.settingsRepository != null) {
+        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    } else {
+        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
+    }
+
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val scope = rememberCoroutineScope()
 
@@ -63,30 +71,28 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                 .padding(padding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             AnimatedVisibility(
                 visible = isVisible,
                 enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
             ) {
-                Card(
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         OutlinedTextField(
                             value = weightInput,
                             onValueChange = { weightInput = it },
-                            label = { Text("Current Weight (kg)", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            label = { Text("Current Weight (${userSettings.weightUnit})", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            textStyle = TextStyle(
-                                fontSize = 24.sp, 
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            ),
+                            textStyle = MaterialTheme.typography.headlineSmall,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -110,22 +116,23 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                                 viewModel.insertWeight(w)
                                 weightInput = ""
                             },
-                            modifier = Modifier.fillMaxWidth().height(56.dp).scale(logScale.value),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            modifier = Modifier.fillMaxWidth().height(64.dp).scale(logScale.value),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            shape = MaterialTheme.shapes.medium
                         ) {
-                            Text("LOG WEIGHT", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                            Text("LOG WEIGHT", style = MaterialTheme.typography.titleLarge)
                         }
                     }
                 }
             }
 
-            BodyWeightChart(weights)
+            BodyWeightChart(weights, userSettings.weightUnit)
 
-            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.ExtraBold)
+            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(
                     items = weights,
@@ -154,13 +161,13 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                             }
                         }
                     ) {
-                        WeightCard(item, sdf)
+                        WeightCard(item, sdf, userSettings.weightUnit)
                     }
                 }
             }
 
             val backScale = remember { Animatable(1f) }
-            Button(
+            OutlinedButton(
                 onClick = { 
                     scope.launch {
                         backScale.animateTo(0.95f, tween(100))
@@ -169,27 +176,28 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                     nav.popBackStack() 
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp).scale(backScale.value),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Text("BACK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text("BACK", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
 }
 
 @Composable
-fun BodyWeightChart(weights: List<BodyWeight>) {
+fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
     if (weights.size < 2) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
-                .background(Color(0xFF1C1C2E), RoundedCornerShape(12.dp)),
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 "Log at least 2 entries to see your trend",
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center
             )
@@ -208,22 +216,22 @@ fun BodyWeightChart(weights: List<BodyWeight>) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text("CURRENT", color = Color.Gray, fontSize = 10.sp)
-                Text("${stats.latestWeight}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("CURRENT", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                Text("${stats.latestWeight}$unit", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("CHANGE", color = Color.Gray, fontSize = 10.sp)
+                Text("CHANGE", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
                 val changeColor = if (stats.totalChange <= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
                 Text(
-                    "${if (stats.totalChange >= 0) "+" else ""}${"%.1f".format(stats.totalChange)}kg",
+                    "${if (stats.totalChange >= 0) "+" else ""}${"%.1f".format(stats.totalChange)}$unit",
                     color = changeColor,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("LOWEST", color = Color.Gray, fontSize = 10.sp)
-                Text("${stats.minWeight}kg", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("LOWEST", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                Text("${stats.minWeight}$unit", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -233,13 +241,13 @@ fun BodyWeightChart(weights: List<BodyWeight>) {
                     points = weights.sortedBy { it.date }.map { bw ->
                         LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.date)))
                     },
-                    lineDrawer = SolidLineDrawer(color = Color(0xFF7B68EE), thickness = 2.dp)
+                    lineDrawer = SolidLineDrawer(color = MaterialTheme.colorScheme.primary, thickness = 2.dp)
                 )
             ),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp),
-            pointDrawer = FilledCircularPointDrawer(color = Color(0xFF7B68EE), diameter = 6.dp),
+            pointDrawer = FilledCircularPointDrawer(color = MaterialTheme.colorScheme.primary, diameter = 6.dp),
             xAxisDrawer = SimpleXAxisDrawer(labelTextColor = Color.Gray, axisLineColor = Color.Gray),
             yAxisDrawer = SimpleYAxisDrawer(
                 labelTextColor = Color.Gray,
@@ -252,11 +260,12 @@ fun BodyWeightChart(weights: List<BodyWeight>) {
 }
 
 @Composable
-fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateFormat) {
-    Card(
+fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateFormat, unit: String) {
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -265,9 +274,8 @@ fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateForma
         ) {
             Text(sdf.format(Date(item.date)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                "${item.weight} kg",
+                "${item.weight} $unit",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
         }

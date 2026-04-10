@@ -68,6 +68,9 @@ dependencies {
     // Charts
     implementation(libs.tehras.charts)
 
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

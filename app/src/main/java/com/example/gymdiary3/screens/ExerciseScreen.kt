@@ -7,6 +7,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.gymdiary3.ui.components.EmptyState
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -36,7 +40,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(muscle.uppercase(), fontWeight = FontWeight.Bold) },
+                title = { Text(muscle.uppercase(), style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
@@ -44,7 +48,11 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                 ),
                 actions = {
                     IconButton(onClick = { showAddDialog = true }) {
-                        Text("+", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Exercise",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             )
@@ -52,19 +60,15 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             if (exercises.isEmpty()) {
-                Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        "No exercises found for this category.\nTap '+' to add your first $muscle exercise!",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+                EmptyState(
+                    message = "No exercises found for this category.\nTap '+' to add your first $muscle exercise!",
+                    title = muscle.uppercase() + " EXERCISES"
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(
                         items = exercises,
@@ -73,7 +77,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                         var showMenu by remember { mutableStateOf(false) }
 
                         Box {
-                            Card(
+                            Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .combinedClickable(
@@ -82,15 +86,24 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                                         },
                                         onLongClick = { showMenu = true }
                                     ),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = MaterialTheme.shapes.medium,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
-                                Column(Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.padding(20.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text(
                                         exercise.name,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                                     )
                                 }
                             }

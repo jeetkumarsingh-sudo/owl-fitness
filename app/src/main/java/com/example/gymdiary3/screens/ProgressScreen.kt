@@ -1,6 +1,7 @@
 package com.example.gymdiary3.screens
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +20,7 @@ import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
+import com.example.gymdiary3.ui.components.EmptyState
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -32,11 +34,17 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     val grouped = remember(workouts) { workouts.groupBy { it.exercise } }
     val sdf = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
 
+    val userSettings by if (viewModel.settingsRepository != null) {
+        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    } else {
+        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         topBar = {
             TopAppBar(
-                title = { Text("PROGRESS & PRS", fontWeight = FontWeight.ExtraBold) },
+                title = { Text("PROGRESS & PRS", style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
@@ -51,28 +59,20 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 .padding(padding)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                WeeklyVolumeAnalysisCard(sessions)
+                WeeklyVolumeAnalysisCard(sessions, userSettings.weightUnit)
             }
 
             if (exercisesList.isEmpty()) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 64.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "No exercise data available.\nStart a workout to track your progress!",
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+                    EmptyState(
+                        message = "Start a workout to track your progress!",
+                        title = "NO PERFORMANCE DATA",
+                        modifier = Modifier.padding(top = 64.dp)
+                    )
                 }
             }
 
@@ -82,17 +82,18 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             ) { exercise ->
                 val uiState = viewModel.getExerciseUiState(exercise)
                 val sets = grouped[exercise] ?: emptyList()
-                ExerciseProgressCard(exercise, uiState, sets, sdf)
+                ExerciseProgressCard(exercise, uiState, sets, sdf, userSettings.weightUnit)
             }
             
             item {
-                Spacer(Modifier.height(16.dp))
-                Button(
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
                     onClick = { nav.popBackStack() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface)
+                    shape = MaterialTheme.shapes.medium,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
-                    Text("BACK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("BACK", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
@@ -100,24 +101,25 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
 }
 
 @Composable
-fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>) {
+fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>, unit: String) {
     val weeklyVolume: Map<String, Double> = remember(sessions) { WorkoutAnalyzer.getWeeklyVolume(sessions) }
     val sortedWeeks = remember(weeklyVolume) { weeklyVolume.keys.toList().sortedDescending() }
 
     if (sortedWeeks.isNotEmpty()) {
-        Card(
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = MaterialTheme.shapes.medium,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Text(
                     "WEEKLY VOLUME ANALYSIS",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    letterSpacing = 1.sp
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
 
                 val currentWeekKey = sortedWeeks.first()
                 val currentVolume = weeklyVolume[currentWeekKey] ?: 0.0
@@ -128,8 +130,8 @@ fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Current Week", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
-                        Text("${currentVolume.toInt()} kg", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("Current Week", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                        Text("${currentVolume.toInt()} $unit", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     }
 
                     if (sortedWeeks.size >= 2) {
@@ -138,11 +140,10 @@ fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>) {
                         val diff = currentVolume - prevVolume
                         
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("vs Last Week", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+                            Text("vs Last Week", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
                             Text(
-                                text = (if (diff >= 0) "+" else "") + "${diff.toInt()} kg",
+                                text = (if (diff >= 0) "+" else "") + "${diff.toInt()} $unit",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
                                 color = if (diff >= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
                             )
                         }
@@ -158,53 +159,52 @@ fun ExerciseProgressCard(
     exercise: String,
     uiState: ExerciseUiState,
     sets: List<WorkoutSet>,
-    sdf: SimpleDateFormat
+    sdf: SimpleDateFormat,
+    unit: String
 ) {
     Log.d("PERF", "ExerciseProgressCard recomposing: $exercise")
     
     val sortedSets = remember(sets) { sets.sortedByDescending { it.date } }
 
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        color = MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    exercise,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
+                    exercise.uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 
                 if (uiState.isPR) {
                     Text(
                         "NEW PR",
-                        color = Color(0xFFFFC107),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFFC107)
                     )
                 }
             }
             
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Best 1RM: ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text("Best 1RM: ", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
                 Text(
-                    "${uiState.best1RM.toInt()} kg",
+                    "${uiState.best1RM.toInt()} $unit",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
             Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -216,12 +216,11 @@ fun ExerciseProgressCard(
                 
                 Text(
                     text = if (uiState.trend != 0.0) {
-                        (if (uiState.trend > 0) "+" else "") + "${uiState.trend}kg since last session"
+                        (if (uiState.trend > 0) "+" else "") + "${uiState.trend}$unit since last session"
                     } else {
                         "Same weight as last session"
                     },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                     color = trendColor
                 )
             }
@@ -232,15 +231,15 @@ fun ExerciseProgressCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             
             sortedSets.take(3).forEach { set ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${set.weight}kg × ${set.reps}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("${set.weight}$unit × ${set.reps}", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
