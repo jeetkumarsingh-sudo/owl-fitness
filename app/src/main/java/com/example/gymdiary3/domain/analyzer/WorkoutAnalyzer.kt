@@ -1,7 +1,8 @@
-package com.example.gymdiary3.domain
+package com.example.gymdiary3.domain.analyzer
 
 import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.utils.WorkoutCalculations
+import com.example.gymdiary3.domain.model.ExerciseStats
+import com.example.gymdiary3.domain.util.WorkoutCalculations
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -48,8 +49,6 @@ object WorkoutAnalyzer {
 
         val trend = if (previous > 0) last - previous else 0.0
         
-        // Robust PR detection: A PR is when the current max weight is >= historical max weight, 
-        // AND we have at least one previous session to compare against.
         val isPR = last >= bestWeight && last > 0 && sortedSessions.size > 1 && last > previous
 
         return ExerciseStats(
@@ -72,19 +71,6 @@ object WorkoutAnalyzer {
         }
     }
 
-    fun getRecommendation(stats: ExerciseStats): String {
-        return when {
-            stats.isPR -> "New Personal Record! Maintain and consolidate."
-            stats.trend > 0 -> "Solid progress. Attempt +2.5kg next time."
-            stats.trend < -5 -> "Significant drop. Consider a deload week."
-            stats.trend < 0 -> "Slight regression. Focus on form and recovery."
-            stats.lastSessionWeight > 0 && stats.previousSessionWeight > 0 && stats.trend == 0.0 -> 
-                "Plateau detected. Increase intensity or volume."
-            stats.lastSessionWeight > 0 -> "Establish a baseline for a few sessions."
-            else -> "Start logging to see recommendations."
-        }
-    }
-
     fun getSuggestedWeight(lastWeight: Double): Double {
         return when {
             lastWeight < 20 -> lastWeight + 1.25
@@ -97,12 +83,47 @@ object WorkoutAnalyzer {
         return session.totalVolume > 0
     }
 
+    fun isValidSet(weight: Double, reps: Int): Boolean {
+        return weight >= 0 && reps > 0
+    }
+
+    fun filterValidSessions(sessions: List<SessionWithSets>): List<SessionWithSets> {
+        return sessions.filter { isValidSession(it) }
+    }
+
     fun getWeeklyVolume(sessions: List<SessionWithSets>): Map<String, Double> {
         val sdf = SimpleDateFormat("yyyy-'W'ww", Locale.getDefault())
         return sessions
             .groupBy { sdf.format(Date(it.session.startTime)) }
             .mapValues { (_, sessionList) ->
                 sessionList.sumOf { it.totalVolume }
+            }
+    }
+
+    fun getVolumeHistory(sessions: List<SessionWithSets>): List<Pair<String, Double>> {
+        val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+        return sessions.sortedBy { it.session.startTime }
+            .groupBy { dateFormat.format(Date(it.session.startTime)) }
+            .map { (date, sessionList) ->
+                val totalVolume = sessionList.sumOf { it.totalVolume }
+                val sortTime = sessionList.first().session.startTime
+                Triple(date, totalVolume, sortTime)
+            }
+            .sortedBy { it.third }
+            .map { it.first to it.second }
+    }
+
+    fun get1RMHistory(exercise: String, sessions: List<SessionWithSets>): List<Pair<Long, Double>> {
+        return sessions
+            .sortedBy { it.session.startTime }
+            .mapNotNull { sessionWithSets ->
+                val setsForExercise = sessionWithSets.sets.filter { it.exercise == exercise }
+                if (setsForExercise.isEmpty()) return@mapNotNull null
+                
+                val best1RM = setsForExercise.maxOf { 
+                    WorkoutCalculations.calculate1RM(it.weight, it.reps)
+                }
+                Pair(sessionWithSets.session.startTime, best1RM)
             }
     }
 }

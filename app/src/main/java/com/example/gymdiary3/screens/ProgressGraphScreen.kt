@@ -18,7 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.domain.WorkoutAnalyzer
+import com.example.gymdiary3.presentation.state.ExerciseUiState
+import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
@@ -47,20 +48,11 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     var showExerciseDropdown by remember { mutableStateOf(false) }
 
     val volumeData = remember(allSessions) {
-        val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
-        
-        allSessions.sortedBy { it.session.startTime }
-            .groupBy { dateFormat.format(Date(it.session.startTime)) }
-            .map { (date, sessionList) ->
-                val totalVolume = sessionList.sumOf { it.totalVolume }
-                val sortTime = sessionList.first().session.startTime
-                Triple(date, totalVolume.toFloat(), sortTime)
-            }
-            .sortedBy { it.third }
-            .map { LineChartData.Point(it.second, it.first) }
+        WorkoutAnalyzer.getVolumeHistory(allSessions)
+            .map { LineChartData.Point(it.second.toFloat(), it.first) }
     }
 
-    val plateauStatus: List<Pair<String, com.example.gymdiary3.viewmodel.ExerciseUiState>> = remember(allSessions) {
+    val plateauStatus: List<Pair<String, ExerciseUiState>> = remember(allSessions) {
         val exList = allSessions.flatMap { it.sets }.map { it.exercise }.distinct()
         exList.map { exercise ->
             val uiState = viewModel.getExerciseUiState(exercise)
@@ -168,16 +160,9 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 Spacer(Modifier.height(16.dp))
                 
                 if (selectedExercise.isNotEmpty()) {
-                    val exerciseData = allSessions
-                        .sortedBy { it.session.startTime }
-                        .mapNotNull { sessionWithSets ->
-                            val setsForExercise = sessionWithSets.sets.filter { it.exercise == selectedExercise }
-                            if (setsForExercise.isEmpty()) return@mapNotNull null
-                            
-                            // Using WorkoutAnalyzer for 1RM calculation consistency
-                            val stats = WorkoutAnalyzer.getExerciseStats(selectedExercise, listOf(sessionWithSets))
-                            Pair(sessionWithSets.session.startTime, stats.best1RM)
-                        }
+                    val exerciseData = remember(selectedExercise, allSessions) {
+                        WorkoutAnalyzer.get1RMHistory(selectedExercise, allSessions)
+                    }
                     
                     if (exerciseData.size >= 2) {
                         val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
@@ -201,7 +186,7 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                             )
                         )
                         
-                        val best = exerciseData.maxOf { it.second }
+                        val best = exerciseData.maxOf { pair: Pair<Long, Double> -> pair.second }
                         val latest = exerciseData.last().second
                         Row(
                             modifier = Modifier.padding(vertical = 8.dp),

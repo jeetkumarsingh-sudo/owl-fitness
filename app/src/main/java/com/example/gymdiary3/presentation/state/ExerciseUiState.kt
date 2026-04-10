@@ -1,6 +1,4 @@
-package com.example.gymdiary3.viewmodel
-
-import androidx.compose.ui.graphics.Color
+package com.example.gymdiary3.presentation.state
 
 data class ExerciseUiState(
     val exercise: String,

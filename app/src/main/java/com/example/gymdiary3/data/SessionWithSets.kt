@@ -3,7 +3,7 @@ package com.example.gymdiary3.data
 import androidx.compose.runtime.Immutable
 import androidx.room.Embedded
 import androidx.room.Relation
-import com.example.gymdiary3.utils.WorkoutCalculations
+import com.example.gymdiary3.domain.util.WorkoutCalculations
 
 @Immutable
 data class SessionWithSets(

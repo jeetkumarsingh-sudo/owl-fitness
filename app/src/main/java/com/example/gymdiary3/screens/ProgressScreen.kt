@@ -17,7 +17,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.domain.WorkoutAnalyzer
+import com.example.gymdiary3.presentation.state.ExerciseUiState
+import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -155,7 +156,7 @@ fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>) {
 @Composable
 fun ExerciseProgressCard(
     exercise: String,
-    uiState: com.example.gymdiary3.viewmodel.ExerciseUiState,
+    uiState: ExerciseUiState,
     sets: List<WorkoutSet>,
     sdf: SimpleDateFormat
 ) {
