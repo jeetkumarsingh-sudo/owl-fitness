@@ -85,14 +85,24 @@ object WorkoutAnalyzer {
         }
     }
 
-    fun getWeeklyVolume(sessions: List<SessionWithSets>): Map<String, Double> {
-        val sdf = SimpleDateFormat("yyyy-ww", Locale.getDefault())
-        return sessions.groupBy {
-            sdf.format(Date(it.session.startTime))
-        }.mapValues { (_, sessionsInWeek) ->
-            sessionsInWeek.flatMap { it.sets }.sumOf { 
-                WorkoutCalculations.calculateVolume(it.weight, it.reps)
-            }
+    fun getSuggestedWeight(lastWeight: Double): Double {
+        return when {
+            lastWeight < 20 -> lastWeight + 1.25
+            lastWeight < 50 -> lastWeight + 2.5
+            else -> lastWeight + 5
         }
+    }
+
+    fun isValidSession(session: SessionWithSets): Boolean {
+        return session.totalVolume > 0
+    }
+
+    fun getWeeklyVolume(sessions: List<SessionWithSets>): Map<String, Double> {
+        val sdf = SimpleDateFormat("yyyy-'W'ww", Locale.getDefault())
+        return sessions
+            .groupBy { sdf.format(Date(it.session.startTime)) }
+            .mapValues { (_, sessionList) ->
+                sessionList.sumOf { it.totalVolume }
+            }
     }
 }
