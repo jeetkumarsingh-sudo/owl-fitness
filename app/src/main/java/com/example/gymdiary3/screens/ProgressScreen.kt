@@ -54,12 +54,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = OwlColors.DeepBg,
                     titleContentColor = OwlColors.TextPrimary
-                ),
-                actions = {
-                    IconButton(onClick = { nav.navigate("graph") }) {
-                        Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = "View Graphs", tint = OwlColors.Purple)
-                    }
-                }
+                )
             )
         }
     ) { padding ->
@@ -93,7 +88,7 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 val uiState = exerciseUiStates[exercise] ?: return@items
                 val sets = grouped[exercise] ?: emptyList()
                 ExerciseProgressCard(exercise, uiState, sets, sdf, userSettings.weightUnit) {
-                    nav.navigate("graph?exercise=${Uri.encode(exercise)}")
+                    nav.navigate("analytics/${Uri.encode(exercise)}")
                 }
             }
             

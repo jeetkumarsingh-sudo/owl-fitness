@@ -11,14 +11,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.*
 import androidx.navigation.compose.*
-import androidx.navigation.navArgument
 import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.domain.settings.UserSettingsRepository
-import com.example.gymdiary3.viewmodel.SettingsViewModel
-import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.viewmodel.BodyWeightViewModel
+import com.example.gymdiary3.viewmodel.*
 import com.example.gymdiary3.ui.theme.OwlFitnessTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -109,15 +108,16 @@ class MainActivity : ComponentActivity() {
                         ProgressScreen(nav, workoutViewModel)
                     }
 
-                    composable(
-                        route = "graph?exercise={exercise}",
-                        arguments = listOf(navArgument("exercise") {
-                            defaultValue = ""
-                            nullable = false
-                        })
-                    ) { backStackEntry ->
-                        val preselected = Uri.decode(backStackEntry.arguments?.getString("exercise") ?: "")
-                        ProgressGraphScreen(nav, workoutViewModel, preselectedExercise = preselected)
+                    composable("analytics/{exercise}") { backStackEntry ->
+                        val analyticsViewModel = viewModel<AnalyticsViewModel>(
+                            factory = object : ViewModelProvider.Factory {
+                                @Suppress("UNCHECKED_CAST")
+                                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                    return AnalyticsViewModel(backStackEntry.savedStateHandle, workoutDao) as T
+                                }
+                            }
+                        )
+                        AnalyticsScreen(nav, analyticsViewModel)
                     }
 
                     composable("settings") {

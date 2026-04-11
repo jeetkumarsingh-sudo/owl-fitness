@@ -57,7 +57,8 @@ class WorkoutViewModel(
                         trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
                         isPR = stats.isPR,
                         recommendation = RecommendationEngine.getRecommendation(stats),
-                        best1RM = stats.best1RM
+                        best1RM = stats.best1RM,
+                        totalVolume = stats.totalVolume
                     )
                 }
         }
@@ -161,7 +162,8 @@ class WorkoutViewModel(
             trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
             isPR = stats.isPR,
             recommendation = RecommendationEngine.getRecommendation(stats),
-            best1RM = stats.best1RM
+            best1RM = stats.best1RM,
+            totalVolume = stats.totalVolume
         )
     }
 
@@ -251,5 +253,16 @@ class WorkoutViewModel(
             .map { it.exercise }
             .distinct()
             .sorted()
+    }
+
+    // New optimized helpers for Analytics
+    fun get1RMHistoryForExercise(exercise: String): List<Pair<Long, Double>> {
+        val exerciseSets = workouts.value.filter { it.exercise == exercise }
+        return WorkoutAnalyzer.get1RMHistory(exercise, exerciseSets)
+    }
+
+    fun getVolumeHistoryForExercise(exercise: String): List<Pair<String, Double>> {
+        val exerciseSets = workouts.value.filter { it.exercise == exercise }
+        return WorkoutAnalyzer.getExerciseVolumeHistory(exercise, exerciseSets)
     }
 }
