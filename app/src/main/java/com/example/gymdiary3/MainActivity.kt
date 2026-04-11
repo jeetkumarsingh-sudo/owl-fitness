@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.example.gymdiary3.database.WorkoutDatabase
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.domain.settings.UserSettingsRepository
@@ -108,8 +109,15 @@ class MainActivity : ComponentActivity() {
                         ProgressScreen(nav, workoutViewModel)
                     }
 
-                    composable("graph") {
-                        ProgressGraphScreen(nav, workoutViewModel)
+                    composable(
+                        route = "graph?exercise={exercise}",
+                        arguments = listOf(navArgument("exercise") {
+                            defaultValue = ""
+                            nullable = false
+                        })
+                    ) { backStackEntry ->
+                        val preselected = Uri.decode(backStackEntry.arguments?.getString("exercise") ?: "")
+                        ProgressGraphScreen(nav, workoutViewModel, preselectedExercise = preselected)
                     }
 
                     composable("settings") {

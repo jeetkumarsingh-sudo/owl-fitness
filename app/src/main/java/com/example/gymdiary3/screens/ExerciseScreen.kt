@@ -144,11 +144,14 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
             confirmButton = {
                 Button(
                     onClick = {
-                        if (newExerciseName.isNotBlank()) {
-                            viewModel.addExercise(newExerciseName, muscle)
+                        val sanitized = newExerciseName.trim()
+                            .split(" ")
+                            .joinToString(" ") { word -> word.lowercase().replaceFirstChar { it.uppercase() } }
+                        if (sanitized.isNotEmpty()) {
+                            viewModel.addExercise(sanitized, muscle)
+                            newExerciseName = ""
+                            showAddDialog = false
                         }
-                        showAddDialog = false
-                        newExerciseName = ""
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple)
                 ) { Text("ADD", color = Color.White) }

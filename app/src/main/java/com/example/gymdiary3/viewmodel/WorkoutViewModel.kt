@@ -46,6 +46,23 @@ class WorkoutViewModel(
     val currentSessionId = sessionManager.currentSessionId
     val totalWorkoutCount: StateFlow<Int> = sessions.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    val exerciseUiStates: StateFlow<Map<String, ExerciseUiState>> = workouts
+        .map { allSets ->
+            allSets.groupBy { it.exercise }
+                .mapValues { (exercise, sets) ->
+                    val stats = WorkoutAnalyzer.getExerciseStats(exercise, sets)
+                    ExerciseUiState(
+                        exercise = stats.exercise,
+                        trend = stats.trend,
+                        trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
+                        isPR = stats.isPR,
+                        recommendation = RecommendationEngine.getRecommendation(stats),
+                        best1RM = stats.best1RM
+                    )
+                }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     private val _selectedMuscle = MutableStateFlow("")
     val exercisesByMuscle: StateFlow<List<Exercise>> = _selectedMuscle
         .flatMapLatest { muscle ->

@@ -35,13 +35,13 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
+fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel, preselectedExercise: String = "") {
     val allSessions by viewModel.sessions.collectAsStateWithLifecycle()
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
     val latestBodyWeight by viewModel.latestBodyWeight.collectAsStateWithLifecycle()
 
     var selectedMuscle by remember { mutableStateOf("") }
-    var selectedExercise by remember { mutableStateOf("") }
+    var selectedExercise by remember { mutableStateOf(preselectedExercise) }
     var showMuscleDropdown by remember { mutableStateOf(false) }
     var showExerciseDropdown by remember { mutableStateOf(false) }
     var graphType by remember { mutableStateOf("1RM") }
@@ -57,6 +57,14 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
         viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
     } else {
         remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
+    }
+
+    LaunchedEffect(preselectedExercise, allSessions) {
+        if (preselectedExercise.isNotEmpty()) {
+            val muscle = allSessions.flatMap { it.sets }
+                .firstOrNull { it.exercise == preselectedExercise }?.muscle ?: ""
+            selectedMuscle = muscle
+        }
     }
 
     val exerciseStats = remember(selectedExercise, allSessions) {
@@ -99,6 +107,66 @@ fun ProgressGraphScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                     val unit = userSettings.weightUnit
                     AnalyticsStatCard("Weight", "${latestBodyWeight ?: "--"} $unit", Modifier.weight(1f))
                     AnalyticsStatCard("Best 1RM", if (exerciseStats != null) "${exerciseStats.best1RM.toInt()} $unit" else "--", Modifier.weight(1f))
+                }
+            }
+
+            item {
+                val volumeHistory = remember(allSessions) {
+                    WorkoutAnalyzer.getVolumeHistory(allSessions)
+                }
+
+                if (volumeHistory.size >= 2) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "VOLUME HISTORY",
+                        color = OwlColors.PurpleSoft,
+                        style = MaterialTheme.typography.labelMedium,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(Modifier.height(12.dp))
+
+                    Surface(
+                        color = OwlColors.CardBg,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            // Show last 8 data points max so chart is readable
+                            val displayData = if (volumeHistory.size > 8) volumeHistory.takeLast(8) else volumeHistory
+
+                            LineChart(
+                                linesChartData = listOf(
+                                    LineChartData(
+                                        points = displayData.map { (label, volume) ->
+                                            LineChartData.Point(volume.toFloat(), label)
+                                        },
+                                        lineDrawer = SolidLineDrawer(color = OwlColors.PurpleSoft, thickness = 2.dp)
+                                    )
+                                ),
+                                modifier = Modifier.fillMaxWidth().height(200.dp),
+                                pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple),
+                                xAxisDrawer = SimpleXAxisDrawer(
+                                    labelTextColor = OwlColors.TextMuted,
+                                    axisLineColor = OwlColors.BorderSubtle
+                                ),
+                                yAxisDrawer = SimpleYAxisDrawer(
+                                    labelTextColor = OwlColors.TextMuted,
+                                    axisLineColor = OwlColors.BorderSubtle,
+                                    labelValueFormatter = { v -> "${v.toInt()}kg" }
+                                )
+                            )
+
+                            Spacer(Modifier.height(8.dp))
+                            val totalVol = displayData.lastOrNull()?.second ?: 0.0
+                            Text(
+                                "Latest session: ${totalVol.toInt()} kg total volume",
+                                color = OwlColors.TextSecondary,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(24.dp))
                 }
             }
 
