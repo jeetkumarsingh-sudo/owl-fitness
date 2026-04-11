@@ -9,6 +9,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,12 +17,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.ui.components.EmptyState
+import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -42,20 +45,20 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     if (showDeleteDialog != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = { Text("Delete Session", color = MaterialTheme.colorScheme.onSurface) },
-            text = { Text("Are you sure you want to delete this workout session?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            containerColor = OwlColors.CardBg,
+            title = { Text("Delete Session", color = OwlColors.TextPrimary) },
+            text = { Text("Are you sure you want to delete this workout session?", color = OwlColors.TextSecondary) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog?.let { viewModel.deleteSession(it) }
                     showDeleteDialog = null
                 }) {
-                    Text("DELETE", color = MaterialTheme.colorScheme.error)
+                    Text("DELETE", color = OwlColors.RedNegative)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = null }) {
-                    Text("CANCEL", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("CANCEL", color = OwlColors.TextSecondary)
                 }
             }
         )
@@ -66,18 +69,17 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = OwlColors.DeepBg,
         topBar = { 
             TopAppBar(
-                title = { Text("SESSION HISTORY", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("SESSION HISTORY", fontWeight = FontWeight.Black, fontSize = 20.sp, letterSpacing = 1.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = OwlColors.DeepBg,
+                    titleContentColor = OwlColors.TextPrimary
                 ),
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OwlColors.TextPrimary)
                     }
                 }
             ) 
@@ -141,16 +143,17 @@ fun SessionCard(
                 },
                 onLongClick = { onLongClick(session.id) }
             ),
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = OwlColors.CardBg,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
     ) {
         Column(Modifier.padding(20.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = sdf.format(Date(session.startTime)),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = OwlColors.TextPrimary,
+                    fontWeight = FontWeight.Bold
                 )
                 
                 val duration = sessionWithSets.duration / 60000
@@ -158,7 +161,7 @@ fun SessionCard(
                     Text(
                         text = "$duration min",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = OwlColors.TextMuted
                     )
                 }
             }
@@ -170,14 +173,14 @@ fun SessionCard(
                     Text(
                         text = timeSdf.format(Date(session.startTime)),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = OwlColors.Purple,
                         fontWeight = FontWeight.Bold
                     )
                     
                     Text(
                         text = "${sessionWithSets.totalVolume.toInt()} kg total",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = OwlColors.TextSecondary,
                         letterSpacing = 0.5.sp
                     )
                 }
@@ -185,7 +188,7 @@ fun SessionCard(
                 Text(
                     text = "VIEW SUMMARY",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = OwlColors.Purple,
                     fontWeight = FontWeight.ExtraBold
                 )
             }

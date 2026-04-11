@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
+import com.example.gymdiary3.ui.theme.OwlColors
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.data.BodyWeight
 import com.github.tehras.charts.line.LineChart
@@ -55,13 +56,13 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
     LaunchedEffect(Unit) { isVisible = true }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize().background(OwlColors.DeepBg),
         topBar = { 
             TopAppBar(
                 title = { Text("BODY WEIGHT", fontWeight = FontWeight.ExtraBold) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = OwlColors.DeepBg,
+                    titleContentColor = OwlColors.TextPrimary
                 )
             ) 
         }
@@ -70,7 +71,7 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(OwlColors.DeepBg)
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -80,28 +81,28 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
             ) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    color = OwlColors.CardBg,
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
                 ) {
                     Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         OutlinedTextField(
                             value = weightInput,
                             onValueChange = { weightInput = it },
-                            label = { Text("Current Weight (${userSettings.weightUnit})", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            label = { Text("Current Weight (${userSettings.weightUnit})", color = OwlColors.TextMuted) },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            textStyle = MaterialTheme.typography.headlineSmall,
+                            textStyle = MaterialTheme.typography.headlineSmall.copy(color = OwlColors.TextPrimary),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                                focusedTextColor = OwlColors.TextPrimary,
+                                unfocusedTextColor = OwlColors.TextPrimary,
+                                focusedLabelColor = OwlColors.Purple,
+                                unfocusedLabelColor = OwlColors.TextMuted,
+                                focusedBorderColor = OwlColors.Purple,
+                                unfocusedBorderColor = OwlColors.BorderSubtle,
+                                focusedContainerColor = OwlColors.InputBg,
+                                unfocusedContainerColor = OwlColors.InputBg
                             )
                         )
 
@@ -117,10 +118,10 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                                 weightInput = ""
                             },
                             modifier = Modifier.fillMaxWidth().height(64.dp).scale(logScale.value),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            shape = MaterialTheme.shapes.medium
+                            colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
+                            shape = RoundedCornerShape(14.dp)
                         ) {
-                            Text("LOG WEIGHT", style = MaterialTheme.typography.titleLarge)
+                            Text("LOG WEIGHT", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -128,7 +129,7 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
 
             BodyWeightChart(weights, userSettings.weightUnit)
 
-            Text("HISTORY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text("HISTORY", color = OwlColors.Purple, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -176,10 +177,10 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                     nav.popBackStack() 
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp).scale(backScale.value),
-                shape = MaterialTheme.shapes.medium,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, OwlColors.PurpleDim)
             ) {
-                Text("BACK", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text("BACK", color = OwlColors.TextPrimary, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -192,21 +193,41 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(180.dp)
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
+                .background(OwlColors.CardBg, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                "Log at least 2 entries to see your trend",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("📈", fontSize = 28.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Log 2+ entries to see your trend",
+                    color = OwlColors.TextMuted,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
         return
     }
 
     val stats = com.example.gymdiary3.domain.BodyWeightAnalyzer.getStats(weights) ?: return
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+
+    val latestWeight = weights.maxByOrNull { it.date }
+    val previousWeight = if (weights.size >= 2) {
+        weights.sortedByDescending { it.date }[1]
+    } else null
+
+    val weightChange = (latestWeight?.weight ?: 0.0) - (previousWeight?.weight ?: 0.0)
+
+    val trendColor = when {
+        weightChange > 0.1  -> OwlColors.GreenBulk     // gaining weight = GOOD (bulking)
+        weightChange < -0.1 -> OwlColors.RedNegative   // losing weight
+        else                -> OwlColors.TextMuted      // stable
+    }
+
+    val trendPrefix = if (weightChange > 0) "+" else ""
+    val trendText = "${trendPrefix}${"%.2f".format(weightChange)}$unit"
 
     Column {
         Row(
@@ -216,22 +237,21 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text("CURRENT", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                Text("${stats.latestWeight}$unit", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("CURRENT", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("${stats.latestWeight}$unit", color = OwlColors.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("CHANGE", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                val changeColor = if (stats.totalChange <= 0) Color(0xFF4CAF50) else Color(0xFFFF5252)
+                Text("CHANGE", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Text(
-                    "${if (stats.totalChange >= 0) "+" else ""}${"%.1f".format(stats.totalChange)}$unit",
-                    color = changeColor,
-                    fontSize = 18.sp,
+                    trendText,
+                    color = trendColor,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("LOWEST", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                Text("${stats.minWeight}$unit", color = MaterialTheme.colorScheme.onSurface, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("LOWEST", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("${stats.minWeight}$unit", color = OwlColors.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -241,17 +261,17 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
                     points = weights.sortedBy { it.date }.map { bw ->
                         LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.date)))
                     },
-                    lineDrawer = SolidLineDrawer(color = MaterialTheme.colorScheme.primary, thickness = 2.dp)
+                    lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 2.dp)
                 )
             ),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp),
-            pointDrawer = FilledCircularPointDrawer(color = MaterialTheme.colorScheme.primary, diameter = 6.dp),
-            xAxisDrawer = SimpleXAxisDrawer(labelTextColor = Color.Gray, axisLineColor = Color.Gray),
+            pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple, diameter = 6.dp),
+            xAxisDrawer = SimpleXAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle),
             yAxisDrawer = SimpleYAxisDrawer(
-                labelTextColor = Color.Gray,
-                axisLineColor = Color.Gray,
+                labelTextColor = OwlColors.TextMuted,
+                axisLineColor = OwlColors.BorderSubtle,
                 labelValueFormatter = { value -> "%.1f".format(value) }
             ),
             horizontalOffset = 5f
@@ -263,20 +283,21 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
 fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateFormat, unit: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = OwlColors.CardBg,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(sdf.format(Date(item.date)), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(sdf.format(Date(item.date)), color = OwlColors.TextMuted, fontSize = 14.sp)
             Text(
-                "${item.weight} $unit",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                "${item.weight}$unit",
+                color = OwlColors.TextPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
             )
         }
     }

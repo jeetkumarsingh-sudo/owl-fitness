@@ -6,6 +6,7 @@ import com.example.gymdiary3.data.BodyWeight
 import com.example.gymdiary3.database.BodyWeightDao
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import com.example.gymdiary3.domain.settings.UserSettingsRepository
 import kotlinx.coroutines.launch
@@ -21,6 +22,14 @@ class BodyWeightViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
+        )
+
+    val latestBodyWeight: StateFlow<com.example.gymdiary3.data.BodyWeight?> = bodyWeightDao.getWeights()
+        .map { it.maxByOrNull { bw -> bw.date } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
         )
 
     fun insertWeight(weight: Double) {

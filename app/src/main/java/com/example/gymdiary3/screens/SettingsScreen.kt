@@ -2,8 +2,10 @@ package com.example.gymdiary3.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,19 +27,17 @@ fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel) {
     val settings by viewModel.userSettings.collectAsStateWithLifecycle()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = OwlColors.DeepBg,
         topBar = {
             TopAppBar(
-                title = { Text("SETTINGS", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("SETTINGS", fontWeight = FontWeight.Black, fontSize = 20.sp, letterSpacing = 1.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = OwlColors.DeepBg,
+                    titleContentColor = OwlColors.TextPrimary
                 ),
                 navigationIcon = {
                     IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OwlColors.TextPrimary)
                     }
                 }
             )
@@ -52,15 +53,15 @@ fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel) {
             item {
                 Text(
                     text = "UNITS",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = OwlColors.PurpleSoft,
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = 1.2.sp
                 )
                 Spacer(Modifier.height(16.dp))
                 Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    color = OwlColors.CardBg,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
                 ) {
                     Row(
                         modifier = Modifier
@@ -68,8 +69,18 @@ fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel) {
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        UnitButton("kg", settings.weightUnit == "kg", Modifier.weight(1f)) { viewModel.updateWeightUnit("kg") }
-                        UnitButton("lbs", settings.weightUnit == "lbs", Modifier.weight(1f)) { viewModel.updateWeightUnit("lbs") }
+                        UnitButton(
+                            label = "kg",
+                            isSelected = settings.weightUnit == "kg",
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.updateWeightUnit("kg") }
+                        )
+                        UnitButton(
+                            label = "lbs",
+                            isSelected = settings.weightUnit == "lbs",
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.updateWeightUnit("lbs") }
+                        )
                     }
                 }
             }
@@ -77,41 +88,47 @@ fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel) {
             item {
                 Text(
                     text = "REST TIMER DEFAULTS",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = OwlColors.PurpleSoft,
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = 1.2.sp
                 )
                 Spacer(Modifier.height(16.dp))
                 Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    color = OwlColors.CardBg,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
                 ) {
                     Column(
                         modifier = Modifier.padding(vertical = 8.dp)
                     ) {
-                        listOf(30, 60, 90, 120, 180).forEachIndexed { index, seconds ->
+                        val timerOptions = listOf(30, 60, 90, 120, 180)
+                        timerOptions.forEachIndexed { index, seconds ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 4.dp),
+                                    .clickable { viewModel.updateDefaultRestSeconds(seconds) }
+                                    .padding(horizontal = 8.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 RadioButton(
                                     selected = settings.defaultRestSeconds == seconds,
                                     onClick = { viewModel.updateDefaultRestSeconds(seconds) },
-                                    colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
+                                    colors = RadioButtonDefaults.colors(
+                                        selectedColor = OwlColors.Purple,
+                                        unselectedColor = OwlColors.TextMuted
+                                    )
                                 )
+                                Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "${seconds} seconds",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = OwlColors.TextPrimary
                                 )
                             }
-                            if (index < 4) {
+                            if (index < timerOptions.size - 1) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                    color = OwlColors.BorderSubtle
                                 )
                             }
                         }
@@ -128,13 +145,12 @@ fun UnitButton(label: String, isSelected: Boolean, modifier: Modifier = Modifier
         onClick = onClick,
         modifier = modifier.height(44.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+            containerColor = if (isSelected) OwlColors.Purple else Color.Transparent,
+            contentColor = if (isSelected) Color.White else OwlColors.TextSecondary
         ),
-        elevation = if (isSelected) ButtonDefaults.buttonElevation(defaultElevation = 2.dp) else null,
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(0.dp)
     ) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
+        Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
     }
 }

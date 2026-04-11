@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     composable("home") {
-                        HomeScreen(nav, workoutViewModel, applicationContext)
+                        HomeScreen(nav, workoutViewModel, bodyWeightViewModel, applicationContext)
                     }
 
                     composable("muscle") {

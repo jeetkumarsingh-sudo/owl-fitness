@@ -18,6 +18,9 @@ import com.example.gymdiary3.domain.settings.UserSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -41,6 +44,7 @@ class WorkoutViewModel(
 
     val sessionsWithSets = sessions
     val currentSessionId = sessionManager.currentSessionId
+    val totalWorkoutCount: StateFlow<Int> = sessions.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     private val _selectedMuscle = MutableStateFlow("")
     val exercisesByMuscle: StateFlow<List<Exercise>> = _selectedMuscle
@@ -111,9 +115,29 @@ class WorkoutViewModel(
         }
     }
 
+    fun getLastWeekSetsForExercise(exerciseName: String): Flow<List<WorkoutSet>> {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val thisWeekStart = cal.timeInMillis
+        val lastWeekStart = thisWeekStart - 7L * 24 * 60 * 60 * 1000
+        return workoutDao.getSetsForExerciseInDateRange(exerciseName, lastWeekStart, thisWeekStart)
+    }
+
+    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double {
+        return workoutDao.getHistoricBest1RM(exerciseName, excludeSessionId) ?: 0.0
+    }
+
+    fun startRestTimer(seconds: Int) {
+        restTimerManager.startTimer(seconds)
+    }
+
     // Task 3 & 4: Delegate to Analyzer and RecommendationEngine
     fun getExerciseUiState(exercise: String): ExerciseUiState {
-        val stats = WorkoutAnalyzer.getExerciseStats(exercise, sessions.value)
+        val stats = WorkoutAnalyzer.getExerciseStats(exercise, workouts.value.filter { it.exercise == exercise })
         return ExerciseUiState(
             exercise = stats.exercise,
             trend = stats.trend,
@@ -162,12 +186,12 @@ class WorkoutViewModel(
             if (existing.isEmpty()) {
                 val defaults = listOf(
                     Exercise("Bench Press", "Chest"), Exercise("Incline Bench Press", "Chest"),
-                    Exercise("Deadlift", "Back"), Exercise("Pull-ups", "Back"),
+                    Exercise("Deadlift", "Back"), Exercise("Pullups", "Back"),
                     Exercise("Squat", "Legs"), Exercise("Leg Press", "Legs"),
                     Exercise("Overhead Press", "Shoulders"), Exercise("Lateral Raise", "Shoulders"),
                     Exercise("Barbell Curl", "Biceps"), Exercise("Hammer Curl", "Biceps"),
                     Exercise("Triceps Pushdown", "Triceps"), Exercise("Dips", "Triceps"),
-                    Exercise("Plank", "Abs"), Exercise("Crunch", "Abs")
+                    Exercise("Plank", "Abs"), Exercise("Crunches", "Abs")
                 )
                 defaults.forEach { workoutDao.insertExercise(it) }
             }
