@@ -9,5 +9,6 @@ data class ExerciseUiState(
     val trendLabel: String,
     val isPR: Boolean,
     val recommendation: String,
-    val best1RM: Double
+    val best1RM: Double,
+    val totalVolume: Double
 )

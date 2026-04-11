@@ -131,7 +131,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         }
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
-                            val uiState = exerciseUiStates[entry.first] ?: ExerciseUiState(entry.first, 0.0, "Stable", false, "", 0.0)
+                            val uiState = exerciseUiStates[entry.first] ?: ExerciseUiState(entry.first, 0.0, "Stable", false, "", 0.0, 0.0)
                             var historicBest by remember { mutableStateOf(0.0) }
                             LaunchedEffect(entry.first, s.session.id) {
                                 historicBest = viewModel.getHistoricBest1RM(entry.first, s.session.id.toLong())
