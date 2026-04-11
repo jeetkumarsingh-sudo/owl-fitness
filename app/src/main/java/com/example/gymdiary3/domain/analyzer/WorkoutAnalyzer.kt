@@ -108,13 +108,16 @@ object WorkoutAnalyzer {
     }
 
     fun get1RMHistory(exercise: String, allSetsForExercise: List<WorkoutSet>): List<Pair<Long, Double>> {
+        if (allSetsForExercise.isEmpty()) return emptyList()
         return allSetsForExercise
+            .filter { it.weight > 0 && it.reps > 0 }
             .groupBy { set -> set.sessionId ?: (set.date / (24 * 60 * 60 * 1000)) }
-            .map { (_, sets) ->
-                val best1RM = sets.maxOf { 
-                    WorkoutCalculations.calculate1RM(it.weight, it.reps)
+            .mapNotNull { (_, sets) ->
+                if (sets.isEmpty()) return@mapNotNull null
+                val best1RM = sets.maxOf { s ->
+                    WorkoutCalculations.calculate1RM(s.weight, s.reps)
                 }
-                val startTime = sets.minOf { it.date }
+                val startTime = sets.minOf { s -> s.date }
                 Pair(startTime, best1RM)
             }
             .sortedBy { it.first }
@@ -125,8 +128,8 @@ object WorkoutAnalyzer {
         return allSetsForExercise
             .groupBy { set -> set.sessionId ?: (set.date / (24 * 60 * 60 * 1000)) }
             .map { (_, sets) ->
-                val exerciseVolume = sets.sumOf { WorkoutCalculations.calculateVolume(it.weight, it.reps) }
-                val startTime = sets.minOf { it.date }
+                val exerciseVolume = sets.sumOf { s -> WorkoutCalculations.calculateVolume(s.weight, s.reps) }
+                val startTime = sets.minOf { s -> s.date }
                 startTime to exerciseVolume
             }
             .sortedBy { it.first }

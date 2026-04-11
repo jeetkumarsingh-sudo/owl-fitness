@@ -32,6 +32,7 @@ import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.presentation.state.ExerciseUiState
+import com.example.gymdiary3.ui.components.PrBadge
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import kotlinx.coroutines.launch
@@ -47,6 +48,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
+    val exerciseUiStates by viewModel.exerciseUiStates.collectAsStateWithLifecycle()
     val sessionWithSets = remember(sessions, sessionId) {
         sessions.find { it.session.id == sessionId }
     }
@@ -129,7 +131,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         }
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
-                            val uiState = viewModel.getExerciseUiState(entry.first)
+                            val uiState = exerciseUiStates[entry.first] ?: ExerciseUiState(entry.first, 0.0, "Stable", false, "", 0.0)
                             var historicBest by remember { mutableStateOf(0.0) }
                             LaunchedEffect(entry.first, s.session.id) {
                                 historicBest = viewModel.getHistoricBest1RM(entry.first, s.session.id.toLong())
@@ -267,13 +269,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                             )
                             if (isNewPR) {
                                 Spacer(Modifier.width(8.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .background(OwlColors.Purple, RoundedCornerShape(6.dp))
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                                ) {
-                                    Text("🏆 PR", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                }
+                                PrBadge()
                             }
                         }
                         
