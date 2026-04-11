@@ -1,6 +1,7 @@
 package com.example.gymdiary3.domain.analyzer
 
 import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.domain.model.ExerciseStats
 import com.example.gymdiary3.domain.util.WorkoutCalculations
 import java.text.SimpleDateFormat
@@ -8,11 +9,8 @@ import java.util.*
 
 object WorkoutAnalyzer {
 
-    fun getExerciseStats(exercise: String, sessions: List<SessionWithSets>): ExerciseStats {
-        val exerciseSets = sessions.flatMap { it.sets }
-            .filter { it.exercise == exercise }
-
-        if (exerciseSets.isEmpty()) {
+    fun getExerciseStats(exercise: String, allSetsForExercise: List<WorkoutSet>): ExerciseStats {
+        if (allSetsForExercise.isEmpty()) {
             return ExerciseStats(
                 exercise = exercise,
                 bestWeight = 0.0,
@@ -25,41 +23,37 @@ object WorkoutAnalyzer {
             )
         }
 
-        val bestWeight = exerciseSets.maxOfOrNull { it.weight } ?: 0.0
-
-        val best1RM = exerciseSets.maxOfOrNull {
+        val bestWeight = allSetsForExercise.maxOf { it.weight }
+        val best1RM = allSetsForExercise.maxOf {
             WorkoutCalculations.calculate1RM(it.weight, it.reps)
-        } ?: 0.0
+        }
+        val totalVolume = allSetsForExercise.sumOf { WorkoutCalculations.calculateVolume(it.weight, it.reps) }
 
-        val totalVolume = exerciseSets.sumOf { WorkoutCalculations.calculateVolume(it.weight, it.reps) }
+        // Group sets into sessions. Use sessionId if available, otherwise fallback to date (per day)
+        val sessions = allSetsForExercise
+            .groupBy { set ->
+                set.sessionId ?: (set.date / (24 * 60 * 60 * 1000))
+            }
+            .values
+            .sortedBy { it.first().date }
 
-        val sessionsWithExercise = sessions
-            .filter { session -> session.sets.any { it.exercise == exercise } }
-            .sortedBy { it.session.startTime }
-
-        val last = sessionsWithExercise.lastOrNull()
-            ?.sets?.filter { it.exercise == exercise }
-            ?.maxOfOrNull { it.weight } ?: 0.0
-
-        val previous = if (sessionsWithExercise.size >= 2) {
-            sessionsWithExercise[sessionsWithExercise.size - 2]
-                .sets.filter { it.exercise == exercise }
-                .maxOfOrNull { it.weight } ?: 0.0
+        val last = sessions.lastOrNull()?.maxOfOrNull { it.weight } ?: 0.0
+        val previous = if (sessions.size >= 2) {
+            sessions[sessions.size - 2].maxOfOrNull { it.weight } ?: 0.0
         } else 0.0
 
         val trend = if (previous > 0) last - previous else 0.0
-        
-        val isPR = last >= bestWeight && last > 0 && sessionsWithExercise.size > 1 && last > previous
+        val isPR = last >= bestWeight && last > 0 && sessions.size > 1 && last > previous
 
         return ExerciseStats(
-            exercise,
-            bestWeight,
-            best1RM,
-            totalVolume,
-            last,
-            previous,
-            trend,
-            isPR
+            exercise = exercise,
+            bestWeight = bestWeight,
+            best1RM = best1RM,
+            totalVolume = totalVolume,
+            lastSessionWeight = last,
+            previousSessionWeight = previous,
+            trend = trend,
+            isPR = isPR
         )
     }
 
@@ -113,28 +107,29 @@ object WorkoutAnalyzer {
             .map { it.first to it.second }
     }
 
-    fun get1RMHistory(exercise: String, sessions: List<SessionWithSets>): List<Pair<Long, Double>> {
-        return sessions
-            .sortedBy { it.session.startTime }
-            .mapNotNull { sessionWithSets ->
-                val setsForExercise = sessionWithSets.sets.filter { it.exercise == exercise }
-                if (setsForExercise.isEmpty()) return@mapNotNull null
-                
-                val best1RM = setsForExercise.maxOf { 
-                    com.example.gymdiary3.domain.util.WorkoutCalculations.calculate1RM(it.weight, it.reps)
+    fun get1RMHistory(exercise: String, allSetsForExercise: List<WorkoutSet>): List<Pair<Long, Double>> {
+        return allSetsForExercise
+            .groupBy { set -> set.sessionId ?: (set.date / (24 * 60 * 60 * 1000)) }
+            .map { (_, sets) ->
+                val best1RM = sets.maxOf { 
+                    WorkoutCalculations.calculate1RM(it.weight, it.reps)
                 }
-                Pair(sessionWithSets.session.startTime, best1RM)
+                val startTime = sets.minOf { it.date }
+                Pair(startTime, best1RM)
             }
+            .sortedBy { it.first }
     }
 
-    fun getExerciseVolumeHistory(exercise: String, sessions: List<SessionWithSets>): List<Pair<String, Double>> {
+    fun getExerciseVolumeHistory(exercise: String, allSetsForExercise: List<WorkoutSet>): List<Pair<String, Double>> {
         val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
-        return sessions.sortedBy { it.session.startTime }
-            .filter { session -> session.sets.any { it.exercise == exercise } }
-            .map { session ->
-                val exerciseVolume = session.sets.filter { it.exercise == exercise }
-                    .sumOf { com.example.gymdiary3.domain.util.WorkoutCalculations.calculateVolume(it.weight, it.reps) }
-                Pair(dateFormat.format(Date(session.session.startTime)), exerciseVolume)
+        return allSetsForExercise
+            .groupBy { set -> set.sessionId ?: (set.date / (24 * 60 * 60 * 1000)) }
+            .map { (_, sets) ->
+                val exerciseVolume = sets.sumOf { WorkoutCalculations.calculateVolume(it.weight, it.reps) }
+                val startTime = sets.minOf { it.date }
+                startTime to exerciseVolume
             }
+            .sortedBy { it.first }
+            .map { (time, volume) -> dateFormat.format(Date(time)) to volume }
     }
 }

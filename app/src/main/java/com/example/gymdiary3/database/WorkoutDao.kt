@@ -16,6 +16,12 @@ import com.example.gymdiary3.data.SessionWithSets
 @Dao
 interface WorkoutDao {
 
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName AND date >= :weekStart AND date < :weekEnd ORDER BY date ASC")
+    fun getSetsForExerciseInDateRange(exerciseName: String, weekStart: Long, weekEnd: Long): Flow<List<WorkoutSet>>
+
+    @Query("SELECT MAX(weight * (1 + reps / 30.0)) FROM WorkoutSet WHERE exercise = :exerciseName AND sessionId != :excludeSessionId AND weight > 0")
+    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkout(workout: WorkoutSet)
 

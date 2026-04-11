@@ -1,13 +1,16 @@
 package com.example.gymdiary3.screens
 
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -18,9 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.ui.components.EmptyState
+import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -37,28 +42,32 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     var newExerciseName by remember { mutableStateOf("") }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        containerColor = OwlColors.DeepBg,
         topBar = {
             TopAppBar(
-                title = { Text(muscle.uppercase(), style = MaterialTheme.typography.titleLarge) },
+                title = { Text(muscle.uppercase(), fontWeight = FontWeight.Black, fontSize = 20.sp, letterSpacing = 1.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    actionIconContentColor = MaterialTheme.colorScheme.primary
+                    containerColor = OwlColors.DeepBg,
+                    titleContentColor = OwlColors.TextPrimary
                 ),
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OwlColors.TextPrimary)
+                    }
+                },
                 actions = {
                     IconButton(onClick = { showAddDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add Exercise",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = OwlColors.Purple
                         )
                     }
                 }
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (exercises.isEmpty()) {
                 EmptyState(
                     message = "No exercises found for this category.\nTap '+' to add your first $muscle exercise!",
@@ -86,9 +95,9 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                                         },
                                         onLongClick = { showMenu = true }
                                     ),
-                                color = MaterialTheme.colorScheme.surface,
-                                shape = MaterialTheme.shapes.medium,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                                color = OwlColors.CardBg,
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, OwlColors.BorderSubtle)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(20.dp),
@@ -97,13 +106,13 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                                     Text(
                                         exercise.name,
                                         style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = OwlColors.TextPrimary,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                        tint = OwlColors.TextMuted
                                     )
                                 }
                             }
@@ -111,10 +120,10 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                             DropdownMenu(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false },
-                                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                                modifier = Modifier.background(OwlColors.CardBg)
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Delete Exercise", color = Color.Red) },
+                                    text = { Text("Delete Exercise", color = OwlColors.RedNegative) },
                                     onClick = {
                                         viewModel.deleteExercise(exercise)
                                         showMenu = false
@@ -131,7 +140,7 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = OwlColors.CardBg,
             confirmButton = {
                 Button(
                     onClick = {
@@ -141,31 +150,34 @@ fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutVie
                         showAddDialog = false
                         newExerciseName = ""
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) { Text("ADD", color = MaterialTheme.colorScheme.onPrimary) }
+                    colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple)
+                ) { Text("ADD", color = Color.White) }
             },
             dismissButton = {
                 TextButton(onClick = { 
                     showAddDialog = false
                     newExerciseName = "" 
-                }) { Text("CANCEL", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) }
+                }) { Text("CANCEL", color = OwlColors.TextSecondary) }
             },
-            title = { Text("Add $muscle Exercise", color = MaterialTheme.colorScheme.onSurface) },
+            title = { Text("Add $muscle Exercise", color = OwlColors.TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = newExerciseName,
                     onValueChange = { newExerciseName = it },
-                    label = { Text("Exercise Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                    label = { Text("Exercise Name", color = OwlColors.TextMuted) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                    textStyle = TextStyle(color = OwlColors.TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = MaterialTheme.colorScheme.primary,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        focusedTextColor = OwlColors.TextPrimary,
+                        unfocusedTextColor = OwlColors.TextPrimary,
+                        focusedBorderColor = OwlColors.Purple,
+                        unfocusedBorderColor = OwlColors.BorderSubtle,
+                        focusedLabelColor = OwlColors.Purple,
+                        unfocusedLabelColor = OwlColors.TextMuted,
+                        cursorColor = OwlColors.Purple,
+                        focusedContainerColor = OwlColors.InputBg,
+                        unfocusedContainerColor = OwlColors.InputBg
                     )
                 )
             }

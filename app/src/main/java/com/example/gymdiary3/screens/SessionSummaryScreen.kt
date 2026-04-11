@@ -39,7 +39,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.roundToInt
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.gymdiary3.ui.theme.OwlColors
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,13 +64,26 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize().background(OwlColors.DeepBg),
         topBar = {
             TopAppBar(
-                title = { Text("SESSION SUMMARY", fontWeight = FontWeight.ExtraBold) },
+                title = {
+                    Column {
+                        Text("SESSION SUMMARY", fontWeight = FontWeight.ExtraBold)
+                        sessionWithSets?.let { s ->
+                            Text(
+                                SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault())
+                                    .format(Date(s.session.startTime)),
+                                color = OwlColors.TextMuted,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = OwlColors.DeepBg,
+                    titleContentColor = OwlColors.TextPrimary
                 ),
                 actions = {
                     sessionWithSets?.let { s ->
@@ -76,7 +91,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             val text = buildShareText(s, userSettings.weightUnit)
                             shareText(context, text)
                         }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Text", tint = MaterialTheme.colorScheme.onBackground)
+                            Icon(Icons.Default.Share, contentDescription = "Share Text", tint = OwlColors.Purple)
                         }
                     }
                     TextButton(
@@ -88,7 +103,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                 }
                             }
                         },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                        colors = ButtonDefaults.textButtonColors(contentColor = OwlColors.Purple)
                     ) {
                         Text("SHARE IMAGE", style = MaterialTheme.typography.labelLarge)
                     }
@@ -100,7 +115,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(OwlColors.DeepBg)
         ) {
             Box(modifier = Modifier.weight(1f)) {
                 sessionWithSets?.let { s ->
@@ -115,7 +130,11 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
 
                         items(s.exercises.toList(), key = { it.first }) { entry ->
                             val uiState = viewModel.getExerciseUiState(entry.first)
-                            ExerciseSummaryCard(isVisible, uiState, entry.second, userSettings.weightUnit)
+                            var historicBest by remember { mutableStateOf(0.0) }
+                            LaunchedEffect(entry.first, s.session.id) {
+                                historicBest = viewModel.getHistoricBest1RM(entry.first, s.session.id.toLong())
+                            }
+                            ExerciseSummaryCard(isVisible, uiState, entry.second, userSettings.weightUnit, historicBest)
                         }
 
                         item(key = "muscle_volume") {
@@ -215,16 +234,21 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets, unit: String) {
 }
 
 @Composable
-fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List<WorkoutSet>, unit: String) {
+fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List<WorkoutSet>, unit: String, historicBest: Double) {
+    val currentBest1rm = sets.maxOfOrNull { s ->
+        if (s.weight > 0) s.weight * (1 + s.reps / 30.0) else 0.0
+    } ?: 0.0
+    val isNewPR = currentBest1rm > historicBest && currentBest1rm > 0.0
+
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.medium,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            color = OwlColors.CardBg,
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, OwlColors.BorderSubtle)
         ) {
             Column(Modifier.padding(20.dp)) {
                 Row(
@@ -237,40 +261,51 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                             Text(
                                 uiState.exercise.uppercase(),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary
+                                color = OwlColors.Purple,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
                             )
-                            if (uiState.isPR) {
+                            if (isNewPR) {
                                 Spacer(Modifier.width(8.dp))
-                                Text(
-                                    "NEW PR",
-                                    color = Color(0xFFFFC107),
-                                    style = MaterialTheme.typography.labelSmall
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .background(OwlColors.Purple, RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text("🏆 PR", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                         
+                        val trendColor = when {
+                            uiState.trend > 0.1 -> OwlColors.GreenPositive
+                            uiState.trend < -0.1 -> OwlColors.RedNegative
+                            else -> OwlColors.TextMuted
+                        }
+                        val trendText = when {
+                            uiState.trend > 0.1 -> "+${"%.1f".format(uiState.trend)}$unit since last session"
+                            uiState.trend < -0.1 -> "${"%.1f".format(uiState.trend)}$unit since last session"
+                            else -> "Same weight as last session"
+                        }
+
                         Text(
-                            uiState.trendLabel,
+                            trendText,
                             style = MaterialTheme.typography.labelSmall,
-                            color = when {
-                                uiState.trend > 0 -> Color.Green
-                                uiState.trend < 0 -> Color.Red
-                                else -> Color.Gray
-                            }
+                            color = trendColor
                         )
                     }
 
                     if (uiState.best1RM > 0.0) {
                         Text(
-                            "Best 1RM: ${uiState.best1RM.toInt()} $unit",
+                            "Best 1RM: ${"%.0f".format(uiState.best1RM)} $unit",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary
+                            color = OwlColors.TextSecondary
                         )
                     } else {
                         Text(
                             "Bodyweight",
                             style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFF9E9E9E)
+                            color = OwlColors.TextMuted
                         )
                     }
                 }
@@ -279,7 +314,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                 Text(
                     uiState.recommendation,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = OwlColors.TextMuted
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -288,11 +323,11 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = OwlColors.TextMuted)
                         Text(
                             "${set.weight}$unit × ${set.reps}",
                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = OwlColors.TextPrimary
                         )
                     }
                 }
