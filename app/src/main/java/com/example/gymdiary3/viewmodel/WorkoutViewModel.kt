@@ -47,7 +47,9 @@ class WorkoutViewModel(
         else allSets.filter { it.sessionId == sessionId }
              .map { it.exercise }
              .distinct()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+    .distinctUntilChanged()
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Last set logged
     val lastSetLogged: StateFlow<WorkoutSet?> = workouts
