@@ -20,9 +20,9 @@ interface BodyWeightDao {
     @Delete
     suspend fun deleteWeight(bodyWeight: BodyWeight)
 
-    @Query("SELECT * FROM BodyWeight ORDER BY date DESC")
+    @Query("SELECT * FROM BodyWeight ORDER BY timestamp DESC")
     fun getWeights(): Flow<List<BodyWeight>>
 
-    @Query("SELECT * FROM BodyWeight WHERE date >= :start AND date < :end")
+    @Query("SELECT * FROM BodyWeight WHERE timestamp >= :start AND timestamp < :end")
     suspend fun getWeightBetween(start: Long, end: Long): List<BodyWeight>
 }

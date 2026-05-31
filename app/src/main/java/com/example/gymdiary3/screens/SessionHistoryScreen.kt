@@ -93,7 +93,7 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().animateContentSize(),
                     contentPadding = PaddingValues(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -101,13 +101,8 @@ fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                         items = sessionsWithSets,
                         key = { it.session.id }
                     ) { sessionWithSets ->
-                        AnimatedVisibility(
-                            visible = isVisible,
-                            enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
-                        ) {
-                            SessionCard(sessionWithSets, nav, sdf, timeSdf) {
-                                showDeleteDialog = it
-                            }
+                        SessionCard(sessionWithSets, nav, sdf, timeSdf) {
+                            showDeleteDialog = it
                         }
                     }
                 }
@@ -164,6 +159,20 @@ fun SessionCard(
                         color = OwlColors.TextMuted
                     )
                 }
+            }
+
+            val muscleGroups = remember(sessionWithSets.sets) {
+                sessionWithSets.sets.map { it.muscle }.distinct().sorted().joinToString(" · ")
+            }
+
+            if (muscleGroups.isNotEmpty()) {
+                Text(
+                    text = muscleGroups,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OwlColors.PurpleSoft,
+                    letterSpacing = 0.5.sp,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
             
             Spacer(Modifier.height(8.dp))

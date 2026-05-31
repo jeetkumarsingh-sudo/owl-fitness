@@ -1,7 +1,6 @@
 package com.example.gymdiary3.screens
 
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -12,7 +11,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.components.LoadingOverlay
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
@@ -41,13 +38,15 @@ fun HomeScreen(
     bodyViewModel: BodyWeightViewModel,
     context: Context
 ) {
-    val scope = rememberCoroutineScope()
     val currentSessionId by viewModel.sessionManager.currentSessionId.collectAsStateWithLifecycle()
     val latestWeight by bodyViewModel.latestBodyWeight.collectAsStateWithLifecycle()
     val totalWorkouts by viewModel.totalWorkoutCount.collectAsStateWithLifecycle(0)
 
+    val sessionDuration by viewModel.sessionDurationSeconds.collectAsStateWithLifecycle()
+    val exercisesThisSession by viewModel.exercisesThisSession.collectAsStateWithLifecycle()
+    val lastSetLogged by viewModel.lastSetLogged.collectAsStateWithLifecycle()
+
     var isVisible by remember { mutableStateOf(false) }
-    var isExporting by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
 
     Box(Modifier.fillMaxSize().background(OwlColors.DeepBg)) {
@@ -76,41 +75,36 @@ fun HomeScreen(
                 }
             }
 
-            // Session Card
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = OwlColors.CardBg,
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
+            if (currentSessionId != null) {
+                ActiveSessionPanel(
+                    sessionDuration = sessionDuration,
+                    exercisesThisSession = exercisesThisSession,
+                    lastSetLogged = lastSetLogged,
+                    onContinueWorkout = { nav.navigate("muscle") },
+                    onFinishSession = { viewModel.endSession { id -> nav.navigate("summary/$id") } }
+                )
+            } else {
+                // Session Card
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
                 ) {
-                    Column(Modifier.padding(20.dp)) {
-                        Text(
-                            text = if (currentSessionId != null) "WORKOUT IN PROGRESS" else "READY FOR GYM?",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (currentSessionId != null) OwlColors.Purple else OwlColors.TextSecondary,
-                            letterSpacing = 1.sp
-                        )
-                        
-                        Spacer(Modifier.height(12.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = OwlColors.CardBg,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
+                    ) {
+                        Column(Modifier.padding(20.dp)) {
+                            Text(
+                                text = "READY FOR GYM?",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = OwlColors.TextSecondary,
+                                letterSpacing = 1.sp
+                            )
+                            
+                            Spacer(Modifier.height(12.dp))
 
-                        if (currentSessionId != null) {
-                            Button(
-                                onClick = { 
-                                    viewModel.endSession { sessionId ->
-                                        nav.navigate("summary/$sessionId")
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth().height(56.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.RedNegative),
-                                shape = RoundedCornerShape(12.dp)
-                            ) { 
-                                Text("FINISH SESSION", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) 
-                            }
-                        } else {
                             Button(
                                 onClick = { viewModel.startSession() },
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -122,102 +116,150 @@ fun HomeScreen(
                         }
                     }
                 }
-            }
 
-            // Quick Stats
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { it / 2 }
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().height(80.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // Quick Stats
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { it / 2 }
                 ) {
-                    HomeQuickStatCard(
-                        label = "WORKOUTS",
-                        value = totalWorkouts.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                    HomeQuickStatCard(
-                        label = "BODY WEIGHT",
-                        value = latestWeight?.let { "${it.weight}kg" } ?: "--",
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // Menu Grid
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    MenuButton(
-                        text = "LOG WORKOUT",
-                        icon = Icons.Default.Add,
-                        color = OwlColors.Purple,
-                        onClick = {
-                            if (currentSessionId != null) nav.navigate("muscle")
-                            else Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                }
-                item {
-                    MenuButton(
-                        text = "BODY WEIGHT",
-                        icon = Icons.Default.MonitorWeight,
-                        color = OwlColors.GreenBulk,
-                        onClick = { nav.navigate("weight") }
-                    )
-                }
-                item {
-                    MenuButton(
-                        text = "ANALYTICS",
-                        icon = Icons.AutoMirrored.Filled.ShowChart,
-                        color = OwlColors.PurpleSoft,
-                        onClick = { nav.navigate("progress") }
-                    )
-                }
-                item {
-                    MenuButton(
-                        text = "HISTORY",
-                        icon = Icons.Default.History,
-                        color = OwlColors.TextSecondary,
-                        onClick = { nav.navigate("history") }
-                    )
-                }
-            }
-
-            // Export
-            OutlinedButton(
-                onClick = {
-                    scope.launch {
-                        isExporting = true
-                        val uri = viewModel.exportAllDataToCsv(context)
-                        isExporting = false
-                        if (uri != null) {
-                            val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/csv"
-                                putExtra(Intent.EXTRA_STREAM, uri)
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            }
-                            context.startActivity(Intent.createChooser(intent, "Export CSV"))
-                        } else {
-                            Toast.makeText(context, "No data to export", Toast.LENGTH_SHORT).show()
-                        }
+                    Row(
+                        Modifier.fillMaxWidth().height(80.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        HomeQuickStatCard(
+                            label = "WORKOUTS",
+                            value = totalWorkouts.toString(),
+                            modifier = Modifier.weight(1f)
+                        )
+                        HomeQuickStatCard(
+                            label = "BODY WEIGHT",
+                            value = latestWeight?.let { "${it.weight}kg" } ?: "--",
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-                },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary),
-                border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-            ) { Text("EXPORT DATA (CSV)", style = MaterialTheme.typography.labelLarge) }
-        }
+                }
 
-        if (isExporting) {
-            LoadingOverlay(message = "GENERATING CSV...")
+                // Menu Grid (Modified to 2 items)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        MenuButton(
+                            text = "LOG WORKOUT",
+                            icon = Icons.Default.Add,
+                            color = OwlColors.Purple,
+                            onClick = {
+                                if (currentSessionId != null) nav.navigate("muscle")
+                                else Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                    item {
+                        MenuButton(
+                            text = "QUICK START",
+                            icon = Icons.Default.FlashOn,
+                            color = OwlColors.GreenBulk,
+                            onClick = { 
+                                viewModel.startSession()
+                                nav.navigate("muscle")
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ActiveSessionPanel(
+    sessionDuration: Long,
+    exercisesThisSession: List<String>,
+    lastSetLogged: com.example.gymdiary3.data.WorkoutSet?,
+    onContinueWorkout: () -> Unit,
+    onFinishSession: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = OwlColors.CardBg,
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, OwlColors.PurpleDim)
+    ) {
+        Column(Modifier.padding(24.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("ACTIVE SESSION", color = OwlColors.Purple, style = MaterialTheme.typography.labelLarge, letterSpacing = 1.sp)
+                    Text(
+                        text = "%02d:%02d:%02d".format(sessionDuration / 3600, (sessionDuration % 3600) / 60, sessionDuration % 60),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = OwlColors.TextPrimary,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+                Icon(Icons.Default.Timer, contentDescription = null, tint = OwlColors.PurpleDim, modifier = Modifier.size(40.dp))
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            if (exercisesThisSession.isNotEmpty()) {
+                Text("EXERCISES LOGGED", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelSmall)
+                Text(
+                    text = exercisesThisSession.joinToString(" · "),
+                    color = OwlColors.TextPrimary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            if (lastSetLogged != null) {
+                Surface(
+                    color = OwlColors.CardBgAlt,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.History, null, tint = OwlColors.TextMuted, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Last: ${lastSetLogged.exercise} — ${lastSetLogged.weight}kg × ${lastSetLogged.reps}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = OwlColors.TextSecondary
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = onContinueWorkout,
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple)
+            ) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("CONTINUE WORKOUT", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            TextButton(
+                onClick = onFinishSession,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+            ) {
+                Text("FINISH SESSION", color = OwlColors.RedNegative, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

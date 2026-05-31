@@ -10,5 +10,7 @@ data class WorkoutSession(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val startTime: Long,
-    val endTime: Long?
+    val endTime: Long?,
+    val name: String? = null,
+    val notes: String? = null
 )

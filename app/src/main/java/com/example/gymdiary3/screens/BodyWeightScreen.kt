@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -43,11 +42,7 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
     var weightInput by remember { mutableStateOf("") }
     val weights by viewModel.allWeights.collectAsStateWithLifecycle()
     
-    val userSettings by if (viewModel.settingsRepository != null) {
-        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
-    } else {
-        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
-    }
+    val userSettings by viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
 
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val scope = rememberCoroutineScope()
@@ -166,22 +161,6 @@ fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
                     }
                 }
             }
-
-            val backScale = remember { Animatable(1f) }
-            OutlinedButton(
-                onClick = { 
-                    scope.launch {
-                        backScale.animateTo(0.95f, tween(100))
-                        backScale.animateTo(1f, tween(100))
-                    }
-                    nav.popBackStack() 
-                },
-                modifier = Modifier.fillMaxWidth().height(56.dp).scale(backScale.value),
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, OwlColors.PurpleDim)
-            ) {
-                Text("BACK", color = OwlColors.TextPrimary, fontWeight = FontWeight.Bold)
-            }
         }
     }
 }
@@ -213,12 +192,18 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
     val stats = com.example.gymdiary3.domain.BodyWeightAnalyzer.getStats(weights) ?: return
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
-    val latestWeight = weights.maxByOrNull { it.date }
+    val latestWeight = weights.maxByOrNull { it.timestamp }
     val previousWeight = if (weights.size >= 2) {
-        weights.sortedByDescending { it.date }[1]
+        weights.sortedByDescending { it.timestamp }[1]
     } else null
 
     val weightChange = (latestWeight?.weight ?: 0.0) - (previousWeight?.weight ?: 0.0)
+
+    val recentAvg = remember(weights) {
+        val cutoff = System.currentTimeMillis() - 14L * 24 * 60 * 60 * 1000
+        val recent = weights.filter { it.timestamp >= cutoff }
+        if (recent.isEmpty()) null else recent.map { it.weight }.average()
+    }
 
     val trendColor = when {
         weightChange > 0.1  -> OwlColors.GreenBulk     // gaining weight = GOOD (bulking)
@@ -250,16 +235,21 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("LOWEST", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text("${stats.minWeight}$unit", color = OwlColors.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("AVG (14 DAYS)", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text(
+                    text = if (recentAvg != null) "${"%.1f".format(recentAvg)}$unit" else "--",
+                    color = OwlColors.TextPrimary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
         LineChart(
             linesChartData = listOf(
                 LineChartData(
-                    points = weights.sortedBy { it.date }.map { bw ->
-                        LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.date)))
+                    points = weights.sortedBy { it.timestamp }.map { bw ->
+                        LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.timestamp)))
                     },
                     lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 2.dp)
                 )
@@ -292,7 +282,7 @@ fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateForma
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(sdf.format(Date(item.date)), color = OwlColors.TextMuted, fontSize = 14.sp)
+            Text(sdf.format(Date(item.timestamp)), color = OwlColors.TextMuted, fontSize = 14.sp)
             Text(
                 "${item.weight}$unit",
                 color = OwlColors.TextPrimary,

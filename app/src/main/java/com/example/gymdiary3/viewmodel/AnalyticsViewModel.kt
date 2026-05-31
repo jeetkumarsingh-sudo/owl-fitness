@@ -3,6 +3,7 @@ package com.example.gymdiary3.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.database.WorkoutDao
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.service.RecommendationEngine
@@ -22,12 +23,17 @@ class AnalyticsViewModel(
         }
     }
 
-    val exerciseUiState: StateFlow<ExerciseUiState?> = workoutDao.getWorkouts()
-        .map { allSets ->
-            val exerciseSets = allSets.filter { it.exercise == exerciseName }
-            if (exerciseSets.isEmpty()) null
+    // Single source of truth — one DB subscription
+    private val exerciseSets: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
+        .map { allSets -> allSets.filter { it.exercise == exerciseName } }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val exerciseUiState: StateFlow<ExerciseUiState?> = exerciseSets
+        .map { sets ->
+            if (sets.isEmpty()) null
             else {
-                val stats = WorkoutAnalyzer.getExerciseStats(exerciseName, exerciseSets)
+                val stats = WorkoutAnalyzer.getExerciseStats(exerciseName, sets)
                 ExerciseUiState(
                     exercise = stats.exercise,
                     trend = stats.trend,
@@ -41,18 +47,12 @@ class AnalyticsViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    val oneRMHistory: StateFlow<List<Pair<Long, Double>>> = workoutDao.getWorkouts()
-        .map { allSets ->
-            val exerciseSets = allSets.filter { it.exercise == exerciseName }
-            WorkoutAnalyzer.get1RMHistory(exerciseName, exerciseSets)
-        }
+    val oneRMHistory: StateFlow<List<Pair<Long, Double>>> = exerciseSets
+        .map { sets -> WorkoutAnalyzer.get1RMHistory(exerciseName, sets) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val volumeHistory: StateFlow<List<Pair<String, Double>>> = workoutDao.getWorkouts()
-        .map { allSets ->
-            val exerciseSets = allSets.filter { it.exercise == exerciseName }
-            WorkoutAnalyzer.getExerciseVolumeHistory(exerciseName, exerciseSets)
-        }
+    val volumeHistory: StateFlow<List<Pair<String, Double>>> = exerciseSets
+        .map { sets -> WorkoutAnalyzer.getExerciseVolumeHistory(exerciseName, sets) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val globalVolumeHistory: StateFlow<List<Pair<String, Double>>> = workoutDao.getSessionsWithSets()

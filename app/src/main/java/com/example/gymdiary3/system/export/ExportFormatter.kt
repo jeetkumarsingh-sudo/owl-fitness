@@ -43,8 +43,8 @@ object ExportFormatter {
         // SECTION 2: Body weight — separate header block
         sb.appendLine("Body Weight Log")
         sb.appendLine("Date,Weight (kg)")
-        for (bw in bodyWeights.sortedByDescending { it.date }) {
-            sb.appendLine("\"${dateFormat.format(Date(bw.date))}\",${bw.weight}")
+        for (bw in bodyWeights.sortedByDescending { it.timestamp }) {
+            sb.appendLine("\"${dateFormat.format(Date(bw.timestamp))}\",${bw.weight}")
         }
 
         return sb.toString()

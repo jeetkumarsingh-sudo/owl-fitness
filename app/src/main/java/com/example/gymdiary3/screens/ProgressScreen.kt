@@ -58,7 +58,11 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
             )
         }
     ) { padding ->
-        val exercisesList = remember(grouped) { grouped.keys.toList().sorted() }
+        val exercisesList = remember(grouped) {
+            grouped.entries
+                .sortedByDescending { (_, sets) -> sets.maxOfOrNull { it.timestamp } ?: 0L }
+                .map { it.key }
+        }
         
         LazyColumn(
             modifier = Modifier
@@ -212,7 +216,7 @@ fun ExerciseProgressCard(
     unit: String,
     onClick: () -> Unit
 ) {
-    val sortedSets = remember(sets.map { it.id }) { sets.sortedByDescending { it.date } }
+    val sortedSets = remember(sets.map { it.id }) { sets.sortedByDescending { it.timestamp } }
 
     Surface(
         onClick = onClick,
@@ -287,7 +291,7 @@ fun ExerciseProgressCard(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(sdf.format(Date(set.date)), style = MaterialTheme.typography.bodySmall, color = OwlColors.TextMuted)
+                    Text(sdf.format(Date(set.timestamp)), style = MaterialTheme.typography.bodySmall, color = OwlColors.TextMuted)
                     Text("${set.weight}$unit × ${set.reps}", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = OwlColors.TextPrimary)
                 }
             }

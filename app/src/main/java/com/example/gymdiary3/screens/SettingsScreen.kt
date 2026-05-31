@@ -23,7 +23,7 @@ import com.example.gymdiary3.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel) {
+fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel, onExportClick: () -> Unit) {
     val settings by viewModel.userSettings.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -133,6 +133,20 @@ fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel) {
                             }
                         }
                     }
+                }
+            }
+
+            item {
+                Text("DATA", color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.2.sp)
+                Spacer(Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { onExportClick() },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, OwlColors.BorderSubtle),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
+                ) {
+                    Text("EXPORT ALL DATA (CSV)", style = MaterialTheme.typography.labelLarge)
                 }
             }
         }
