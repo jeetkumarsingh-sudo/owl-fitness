@@ -40,11 +40,8 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
     val grouped = remember(workouts) { workouts.groupBy { it.exercise } }
     val sdf = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
 
-    val userSettings by if (viewModel.settingsRepository != null) {
-        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
-    } else {
-        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
-    }
+    val userSettings by viewModel.settingsRepository.userSettingsFlow
+        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
 
     Scaffold(
         containerColor = OwlColors.DeepBg,
@@ -93,19 +90,6 @@ fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
                 val sets = grouped[exercise] ?: emptyList()
                 ExerciseProgressCard(exercise, uiState, sets, sdf, userSettings.weightUnit) {
                     nav.navigate("analytics/${Uri.encode(exercise)}")
-                }
-            }
-            
-            item {
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(
-                    onClick = { nav.popBackStack() },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
-                ) {
-                    Text("BACK", style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }

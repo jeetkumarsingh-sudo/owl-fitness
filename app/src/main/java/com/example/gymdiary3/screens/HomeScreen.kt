@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -159,13 +160,10 @@ fun HomeScreen(
                     }
                     item {
                         MenuButton(
-                            text = "QUICK START",
-                            icon = Icons.Default.FlashOn,
+                            text = "BODY WEIGHT",
+                            icon = Icons.Default.MonitorWeight,
                             color = OwlColors.GreenBulk,
-                            onClick = { 
-                                viewModel.startSession()
-                                nav.navigate("muscle")
-                            }
+                            onClick = { nav.navigate("weight") }
                         )
                     }
                 }

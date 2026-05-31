@@ -1,6 +1,5 @@
 package com.example.gymdiary3.screens
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,7 +24,6 @@ import com.example.gymdiary3.ui.theme.OwlColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MuscleScreen(nav: NavHostController) {
-    Log.d("PERF", "MuscleScreen recomposing")
     val muscles = remember {
         listOf("Chest", "Back", "Legs", "Shoulders", "Biceps", "Triceps", "Abs")
     }

@@ -52,11 +52,8 @@ fun SetScreen(
     val isTimerRunning by viewModel.isRestTimerRunning.collectAsStateWithLifecycle()
     val timerSeconds by viewModel.restTimerSeconds.collectAsStateWithLifecycle()
     
-    val userSettings by if (viewModel.settingsRepository != null) {
-        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
-    } else {
-        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
-    }
+    val userSettings by viewModel.settingsRepository.userSettingsFlow
+        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
 
     var timerInitialSeconds by remember { mutableIntStateOf(userSettings.defaultRestSeconds) }
     
