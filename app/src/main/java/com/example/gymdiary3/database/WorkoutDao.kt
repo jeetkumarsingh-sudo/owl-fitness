@@ -16,7 +16,7 @@ import com.example.gymdiary3.data.SessionWithSets
 @Dao
 interface WorkoutDao {
 
-    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName AND date >= :weekStart AND date < :weekEnd ORDER BY date ASC")
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName AND timestamp >= :weekStart AND timestamp < :weekEnd ORDER BY timestamp ASC")
     fun getSetsForExerciseInDateRange(exerciseName: String, weekStart: Long, weekEnd: Long): Flow<List<WorkoutSet>>
 
     @Query("SELECT MAX(weight * (1 + reps / 30.0)) FROM WorkoutSet WHERE exercise = :exerciseName AND sessionId != :excludeSessionId AND weight > 0")
@@ -51,7 +51,7 @@ interface WorkoutDao {
     @Query("DELETE FROM session WHERE id = :id")
     suspend fun deleteSessionById(id: Int)
 
-    @Query("SELECT * FROM WorkoutSet ORDER BY date DESC")
+    @Query("SELECT * FROM WorkoutSet ORDER BY timestamp DESC")
     fun getWorkouts(): Flow<List<WorkoutSet>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -66,22 +66,38 @@ interface WorkoutDao {
     @Query("SELECT * FROM Exercise")
     suspend fun getAllExercisesList(): List<Exercise>
 
-    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 1")
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLastSet(exerciseName: String): WorkoutSet?
 
-    @Query("SELECT weight FROM BodyWeight ORDER BY date DESC LIMIT 1")
+    @Query("SELECT weight FROM BodyWeight ORDER BY timestamp DESC LIMIT 1")
     fun getLatestBodyWeightFlow(): Flow<Double?>
 
-    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY date DESC LIMIT 3")
+    @Query("SELECT * FROM WorkoutSet WHERE exercise = :exerciseName ORDER BY timestamp DESC LIMIT 3")
     fun getLastThreeSets(exerciseName: String): Flow<List<WorkoutSet>>
 
-    @Query("SELECT * FROM BodyWeight ORDER BY date DESC")
+    @Query("SELECT * FROM BodyWeight ORDER BY timestamp DESC")
     suspend fun getAllBodyWeightsList(): List<com.example.gymdiary3.data.BodyWeight>
 
     @Query("""
         SELECT COUNT(*) FROM WorkoutSet
         WHERE exercise = :exerciseName
-        AND date(date / 1000, 'unixepoch', 'localtime') = date('now', 'localtime')
+        AND timestamp >= :dayStart
+        AND timestamp < :dayEnd
     """)
-    suspend fun getTodaySetCount(exerciseName: String): Int
+    suspend fun getTodaySetCount(exerciseName: String, dayStart: Long, dayEnd: Long): Int
+
+    @Query("""
+        SELECT * FROM WorkoutSet 
+        WHERE exercise = :exerciseName 
+        AND sessionId = (
+            SELECT sessionId FROM WorkoutSet 
+            WHERE exercise = :exerciseName 
+            AND sessionId IS NOT NULL 
+            AND sessionId != :currentSessionId
+            ORDER BY timestamp DESC 
+            LIMIT 1
+        )
+        ORDER BY setNumber ASC
+    """)
+    fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>>
 }

@@ -85,27 +85,38 @@ fun AnalyticsScreen(
                 }
             }
 
-            // AI Insights / Trend
+            // RECOMMENDATION / Trend
             item {
-                Surface(
-                    color = OwlColors.CardBg,
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("AI INSIGHTS", color = OwlColors.PurpleSoft, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Your trend is ${if(state.trend > 0) "upwards" else if(state.trend < 0) "downwards" else "stable"}.",
-                            color = OwlColors.TextPrimary,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "Last change: ${(if(state.trend >= 0) "+" else "")}${state.trend.toInt()} kg",
-                            color = if(state.trend > 0) OwlColors.GreenPositive else if(state.trend < 0) OwlColors.RedNegative else OwlColors.TextSecondary,
-                            fontWeight = FontWeight.Bold
-                        )
+                if (state.recommendation.isNotBlank()) {
+                    Surface(
+                        color = OwlColors.CardBg,
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(
+                                "RECOMMENDATION",
+                                color = OwlColors.PurpleSoft,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = state.recommendation,
+                                color = OwlColors.TextPrimary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} kg since last session",
+                                color = if (state.trend > 0) OwlColors.GreenPositive 
+                                        else if (state.trend < 0) OwlColors.RedNegative 
+                                        else OwlColors.TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
             }

@@ -14,7 +14,7 @@ import java.util.Calendar
 
 class BodyWeightViewModel(
     private val bodyWeightDao: BodyWeightDao,
-    val settingsRepository: UserSettingsRepository? = null
+    val settingsRepository: UserSettingsRepository
 ) : ViewModel() {
 
     val allWeights: StateFlow<List<BodyWeight>> = bodyWeightDao.getWeights()
@@ -25,7 +25,7 @@ class BodyWeightViewModel(
         )
 
     val latestBodyWeight: StateFlow<com.example.gymdiary3.data.BodyWeight?> = bodyWeightDao.getWeights()
-        .map { it.maxByOrNull { bw -> bw.date } }
+        .map { it.maxByOrNull { bw -> bw.timestamp } }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -42,7 +42,7 @@ class BodyWeightViewModel(
                 bodyWeightDao.updateWeight(existing.copy(weight = weight))
             } else {
                 val bodyWeight = BodyWeight(
-                    date = System.currentTimeMillis(),
+                    timestamp = System.currentTimeMillis(),
                     weight = weight
                 )
                 bodyWeightDao.insertWeight(bodyWeight)

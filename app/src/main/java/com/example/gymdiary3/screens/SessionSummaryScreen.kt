@@ -2,16 +2,12 @@ package com.example.gymdiary3.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import android.content.Context
-import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.view.View
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -26,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.data.SessionWithSets
@@ -34,15 +29,11 @@ import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.ui.components.PrBadge
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
-import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.gymdiary3.system.export.ShareUtils
 import com.example.gymdiary3.ui.theme.OwlColors
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,17 +44,13 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
         sessions.find { it.session.id == sessionId }
     }
     val context = LocalContext.current
-    var summaryView by remember { mutableStateOf<View?>(null) }
+    var summaryView by remember { mutableStateOf<android.view.View?>(null) }
     val scope = rememberCoroutineScope()
 
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
 
-    val userSettings by if (viewModel.settingsRepository != null) {
-        viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
-    } else {
-        remember { mutableStateOf(com.example.gymdiary3.domain.settings.UserSettings()) }
-    }
+    val userSettings by viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
 
     Scaffold(
         modifier = Modifier.fillMaxSize().background(OwlColors.DeepBg),
@@ -90,8 +77,8 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                 actions = {
                     sessionWithSets?.let { s ->
                         IconButton(onClick = {
-                            val text = buildShareText(s, userSettings.weightUnit)
-                            shareText(context, text)
+                            val text = ShareUtils.buildShareText(s, userSettings.weightUnit)
+                            ShareUtils.shareText(context, text)
                         }) {
                             Icon(Icons.Default.Share, contentDescription = "Share Text", tint = OwlColors.Purple)
                         }
@@ -100,8 +87,8 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                         onClick = {
                             summaryView?.let { view ->
                                 view.post {
-                                    val bitmap = captureView(view)
-                                    shareImage(context, bitmap)
+                                    val bitmap = ShareUtils.captureView(view)
+                                    ShareUtils.shareImage(context, bitmap)
                                 }
                             }
                         },
@@ -153,7 +140,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                 ) {
                                     Text(
                                         "No exercises were logged in this session.",
-                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                        color = OwlColors.TextMuted,
                                         style = MaterialTheme.typography.bodyLarge
                                     )
                                 }
@@ -172,8 +159,8 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                                     nav.navigate("home") { popUpTo("home") { inclusive = true } } 
                                 },
                                 modifier = Modifier.fillMaxWidth().height(64.dp).scale(doneScale.value),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                shape = MaterialTheme.shapes.medium
+                                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
                                 Text("DONE", style = MaterialTheme.typography.titleLarge)
                             }
@@ -192,7 +179,7 @@ fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, se
                             }
                         }
                     },
-                    modifier = Modifier.size(0.dp), // Keep it hidden but part of the hierarchy
+                    modifier = Modifier.size(0.dp),
                     update = { view ->
                         summaryView = view
                     }
@@ -213,15 +200,15 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets, unit: String) {
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.medium,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            color = OwlColors.CardBg,
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, OwlColors.BorderSubtle)
         ) {
             Column(Modifier.padding(20.dp)) {
                 Text(
                     text = dateStr,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = OwlColors.Purple,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -241,6 +228,14 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
         if (s.weight > 0) s.weight * (1 + s.reps / 30.0) else 0.0
     } ?: 0.0
     val isNewPR = currentBest1rm > historicBest && currentBest1rm > 0.0
+
+    val prScale = remember { Animatable(0f) }
+    LaunchedEffect(isNewPR) {
+        if (isNewPR) {
+            prScale.animateTo(1.2f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+            prScale.animateTo(1.0f, tween(100))
+        }
+    }
 
     AnimatedVisibility(
         visible = isVisible,
@@ -269,7 +264,9 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                             )
                             if (isNewPR) {
                                 Spacer(Modifier.width(8.dp))
-                                PrBadge()
+                                Box(modifier = Modifier.scale(prScale.value)) {
+                                    PrBadge()
+                                }
                             }
                         }
                         
@@ -336,7 +333,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
 fun ShareableSummary(sessionWithSets: SessionWithSets, unit: String) {
     Column(
         modifier = Modifier
-            .width(400.dp) // Fixed width for consistent image size
+            .width(400.dp)
             .background(Color.White)
             .padding(24.dp)
     ) {
@@ -380,77 +377,6 @@ fun ShareableSummary(sessionWithSets: SessionWithSets, unit: String) {
     }
 }
 
-fun captureView(view: View): Bitmap {
-    // Measure and layout the view if it hasn't been done (since it's size 0 in UI)
-    val widthSpec = View.MeasureSpec.makeMeasureSpec(view.resources.displayMetrics.widthPixels, View.MeasureSpec.AT_MOST)
-    val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-    view.measure(widthSpec, heightSpec)
-    view.layout(0, 0, view.measuredWidth, view.measuredHeight)
-
-    val bitmap = Bitmap.createBitmap(
-        view.measuredWidth,
-        view.measuredHeight,
-        Bitmap.Config.ARGB_8888
-    )
-    val canvas = Canvas(bitmap)
-    view.draw(canvas)
-    return bitmap
-}
-
-fun shareImage(context: Context, bitmap: Bitmap) {
-    val file = File(context.cacheDir, "workout_summary.png")
-    FileOutputStream(file).use {
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
-    }
-
-    val uri = FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.provider",
-        file
-    )
-
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "image/png"
-        putExtra(Intent.EXTRA_STREAM, uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-
-    context.startActivity(Intent.createChooser(intent, "Share Workout Image"))
-}
-
-fun shareText(context: Context, text: String) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, text)
-    }
-    context.startActivity(Intent.createChooser(intent, "Share Workout Text"))
-}
-
-fun buildShareText(sessionWithSets: SessionWithSets, unit: String): String {
-    val sb = StringBuilder()
-    val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-
-    sb.append("Owl Fitness Workout Summary\n")
-    sb.append("---------------------------\n")
-    sb.append("Date: ${sdf.format(Date(sessionWithSets.date))}\n")
-    
-    sb.append("Duration: ${sessionWithSets.duration / 60000} min\n\n")
-
-    sessionWithSets.exercises.forEach { (exercise, sets) ->
-        sb.append("$exercise\n")
-        sets.forEach {
-            sb.append("- Set ${it.setNumber}: ${it.weight}$unit x ${it.reps}\n")
-        }
-        sb.append("\n")
-    }
-
-    sb.append("---------------------------\n")
-    sb.append("Total Volume: ${sessionWithSets.totalVolume.toInt()} $unit\n")
-    sb.append("Total Sets: ${sessionWithSets.sets.size}\n")
-    
-    return sb.toString()
-}
-
 @Composable
 fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit: String) {
     AnimatedVisibility(
@@ -459,15 +385,15 @@ fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.medium,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            color = OwlColors.CardBg,
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, OwlColors.BorderSubtle)
         ) {
             Column(Modifier.padding(20.dp)) {
                 Text(
                     "VOLUME BY MUSCLE",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = OwlColors.Purple,
                     letterSpacing = 1.sp
                 )
                 Spacer(Modifier.height(12.dp))
@@ -476,8 +402,8 @@ fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(muscle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${volume.toInt()} $unit", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+                        Text(muscle, style = MaterialTheme.typography.bodyMedium, color = OwlColors.TextSecondary)
+                        Text("${volume.toInt()} $unit", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = OwlColors.TextPrimary)
                     }
                 }
             }
@@ -488,7 +414,7 @@ fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit
 @Composable
 fun SummaryStat(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = OwlColors.Purple)
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = OwlColors.TextPrimary)
     }
 }

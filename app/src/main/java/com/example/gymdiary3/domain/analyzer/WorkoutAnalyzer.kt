@@ -32,10 +32,10 @@ object WorkoutAnalyzer {
         // Group sets into sessions. Use sessionId if available, otherwise fallback to date (per day)
         val sessions = allSetsForExercise
             .groupBy { set ->
-                set.sessionId ?: (set.date / (24 * 60 * 60 * 1000))
+                set.sessionId ?: (set.timestamp / (24 * 60 * 60 * 1000))
             }
             .values
-            .sortedBy { it.first().date }
+            .sortedBy { it.first().timestamp }
 
         val last = sessions.lastOrNull()?.maxOfOrNull { it.weight } ?: 0.0
         val previous = if (sessions.size >= 2) {
@@ -111,13 +111,13 @@ object WorkoutAnalyzer {
         if (allSetsForExercise.isEmpty()) return emptyList()
         return allSetsForExercise
             .filter { it.weight > 0 && it.reps > 0 }
-            .groupBy { set -> set.sessionId ?: (set.date / (24 * 60 * 60 * 1000)) }
+            .groupBy { set -> set.sessionId ?: (set.timestamp / (24 * 60 * 60 * 1000)) }
             .mapNotNull { (_, sets) ->
                 if (sets.isEmpty()) return@mapNotNull null
                 val best1RM = sets.maxOf { s ->
                     WorkoutCalculations.calculate1RM(s.weight, s.reps)
                 }
-                val startTime = sets.minOf { s -> s.date }
+                val startTime = sets.minOf { s -> s.timestamp }
                 Pair(startTime, best1RM)
             }
             .sortedBy { it.first }
@@ -126,10 +126,10 @@ object WorkoutAnalyzer {
     fun getExerciseVolumeHistory(exercise: String, allSetsForExercise: List<WorkoutSet>): List<Pair<String, Double>> {
         val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
         return allSetsForExercise
-            .groupBy { set -> set.sessionId ?: (set.date / (24 * 60 * 60 * 1000)) }
+            .groupBy { set -> set.sessionId ?: (set.timestamp / (24 * 60 * 60 * 1000)) }
             .map { (_, sets) ->
                 val exerciseVolume = sets.sumOf { s -> WorkoutCalculations.calculateVolume(s.weight, s.reps) }
-                val startTime = sets.minOf { s -> s.date }
+                val startTime = sets.minOf { s -> s.timestamp }
                 startTime to exerciseVolume
             }
             .sortedBy { it.first }

@@ -1,30 +1,46 @@
 package com.example.gymdiary3
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.runtime.SideEffect
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.*
-import androidx.navigation.compose.*
-import com.example.gymdiary3.database.WorkoutDatabase
-import com.example.gymdiary3.screens.*
-import com.example.gymdiary3.domain.settings.UserSettingsRepository
-import com.example.gymdiary3.viewmodel.*
-import com.example.gymdiary3.ui.theme.OwlFitnessTheme
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.*
+import androidx.navigation.compose.*
+import com.example.gymdiary3.database.WorkoutDatabase
+import com.example.gymdiary3.domain.settings.UserSettingsRepository
+import com.example.gymdiary3.screens.*
+import com.example.gymdiary3.ui.theme.OwlColors
+import com.example.gymdiary3.ui.theme.OwlFitnessTheme
+import com.example.gymdiary3.viewmodel.*
+import kotlinx.coroutines.launch
+
+sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
+    object Home : BottomNavItem("home", Icons.Default.Home, "HOME")
+    object History : BottomNavItem("history", Icons.Default.History, "HISTORY")
+    object Progress : BottomNavItem("progress", Icons.AutoMirrored.Filled.ShowChart, "PROGRESS")
+    object Weight : BottomNavItem("weight", Icons.Default.MonitorWeight, "WEIGHT")
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -63,65 +79,117 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            Log.d("PERF", "Root Recompose")
             OwlFitnessTheme {
                 val nav = rememberNavController()
+                val bottomNavItems = listOf(BottomNavItem.Home, BottomNavItem.History, BottomNavItem.Progress, BottomNavItem.Weight)
+                val rootRoutes = bottomNavItems.map { it.route }.toSet()
 
-                NavHost(
-                    navController = nav,
-                    startDestination = "home"
-                ) {
-
-                    composable("home") {
-                        HomeScreen(nav, workoutViewModel, bodyWeightViewModel, applicationContext)
-                    }
-
-                    composable("muscle") {
-                        MuscleScreen(nav)
-                    }
-
-                    composable("exercise/{muscle}") { back ->
-                        val muscle = back.arguments?.getString("muscle") ?: ""
-                        ExerciseScreen(nav, muscle, workoutViewModel)
-                    }
-
-                    composable("set/{muscle}/{exercise}") { back ->
-                        val muscle = back.arguments?.getString("muscle") ?: ""
-                        val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
-                        SetScreen(nav, muscle, exercise, workoutViewModel)
-                    }
-
-                    composable("history") {
-                        SessionHistoryScreen(nav, workoutViewModel)
-                    }
-
-                    composable("summary/{sessionId}") { back ->
-                        val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
-                        SessionSummaryScreen(nav, workoutViewModel, sessionId)
-                    }
-
-                    composable("weight") {
-                        BodyWeightScreen(nav, bodyWeightViewModel)
-                    }
-
-                    composable("progress") {
-                        ProgressScreen(nav, workoutViewModel)
-                    }
-
-                    composable("analytics/{exercise}") { backStackEntry ->
-                        val analyticsViewModel = viewModel<AnalyticsViewModel>(
-                            factory = object : ViewModelProvider.Factory {
-                                @Suppress("UNCHECKED_CAST")
-                                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                    return AnalyticsViewModel(backStackEntry.savedStateHandle, workoutDao) as T
+                Scaffold(
+                    bottomBar = {
+                        val navBackStackEntry by nav.currentBackStackEntryAsState()
+                        val currentRoute = navBackStackEntry?.destination?.route
+                        if (currentRoute in rootRoutes) {
+                            NavigationBar(
+                                containerColor = OwlColors.CardBg,
+                                contentColor = OwlColors.TextSecondary
+                            ) {
+                                bottomNavItems.forEach { item ->
+                                    val selected = currentRoute == item.route
+                                    NavigationBarItem(
+                                        selected = selected,
+                                        onClick = { 
+                                            nav.navigate(item.route) {
+                                                popUpTo(nav.graph.startDestinationId) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        icon = { Icon(item.icon, contentDescription = item.label) },
+                                        label = { Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            selectedIconColor = OwlColors.Purple,
+                                            selectedTextColor = OwlColors.Purple,
+                                            unselectedIconColor = OwlColors.TextSecondary,
+                                            unselectedTextColor = OwlColors.TextSecondary,
+                                            indicatorColor = OwlColors.PurpleDim
+                                        )
+                                    )
                                 }
                             }
-                        )
-                        AnalyticsScreen(nav, analyticsViewModel)
+                        }
                     }
+                ) { padding ->
+                    NavHost(
+                        navController = nav,
+                        startDestination = "home",
+                        modifier = Modifier.padding(padding)
+                    ) {
 
-                    composable("settings") {
-                        SettingsScreen(nav, settingsViewModel)
+                        composable("home") {
+                            HomeScreen(nav, workoutViewModel, bodyWeightViewModel, applicationContext)
+                        }
+
+                        composable("muscle") {
+                            MuscleScreen(nav)
+                        }
+
+                        composable("exercise/{muscle}") { back ->
+                            val muscle = back.arguments?.getString("muscle") ?: ""
+                            ExerciseScreen(nav, muscle, workoutViewModel)
+                        }
+
+                        composable("set/{muscle}/{exercise}") { back ->
+                            val muscle = back.arguments?.getString("muscle") ?: ""
+                            val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
+                            SetScreen(nav, muscle, exercise, workoutViewModel)
+                        }
+
+                        composable("history") {
+                            SessionHistoryScreen(nav, workoutViewModel)
+                        }
+
+                        composable("summary/{sessionId}") { back ->
+                            val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
+                            SessionSummaryScreen(nav, workoutViewModel, sessionId)
+                        }
+
+                        composable("weight") {
+                            BodyWeightScreen(nav, bodyWeightViewModel)
+                        }
+
+                        composable("progress") {
+                            ProgressScreen(nav, workoutViewModel)
+                        }
+
+                        composable("analytics/{exercise}") { backStackEntry ->
+                            val analyticsViewModel = viewModel<AnalyticsViewModel>(
+                                factory = object : ViewModelProvider.Factory {
+                                    @Suppress("UNCHECKED_CAST")
+                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                                        return AnalyticsViewModel(backStackEntry.savedStateHandle, workoutDao) as T
+                                    }
+                                }
+                            )
+                            AnalyticsScreen(nav, analyticsViewModel)
+                        }
+
+                        composable("settings") {
+                            SettingsScreen(nav, settingsViewModel) {
+                                lifecycleScope.launch {
+                                    val uri = workoutViewModel.exportAllDataToCsv(applicationContext)
+                                    if (uri != null) {
+                                        val intent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/csv"
+                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        startActivity(Intent.createChooser(intent, "Export CSV"))
+                                    } else {
+                                        Toast.makeText(applicationContext, "No data to export", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -11,8 +11,6 @@ data class BodyWeight(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
-    val date: Long,   // ✅ FIXED
+    val timestamp: Long,
     val weight: Double
 )
-
-

@@ -15,7 +15,7 @@ object BodyWeightAnalyzer {
     fun getStats(weights: List<BodyWeight>): BodyWeightStats? {
         if (weights.isEmpty()) return null
         
-        val sorted = weights.sortedBy { it.date }
+        val sorted = weights.sortedBy { it.timestamp }
         val latest = sorted.last().weight
         val first = sorted.first().weight
         val min = weights.minOf { it.weight }

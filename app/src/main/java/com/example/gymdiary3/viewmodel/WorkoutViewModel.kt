@@ -27,7 +27,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutViewModel(
     private val workoutDao: WorkoutDao,
-    val settingsRepository: UserSettingsRepository? = null
+    val settingsRepository: UserSettingsRepository
 ) : ViewModel() {
 
     // System Managers
@@ -37,6 +37,36 @@ class WorkoutViewModel(
     // Data Pipeline
     val workouts: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Exercises logged in current session  
+    val exercisesThisSession: StateFlow<List<String>> = combine(
+        sessionManager.currentSessionId,
+        workouts
+    ) { sessionId, allSets ->
+        if (sessionId == null) emptyList()
+        else allSets.filter { it.sessionId == sessionId }
+             .map { it.exercise }
+             .distinct()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Last set logged
+    val lastSetLogged: StateFlow<WorkoutSet?> = workouts
+        .map { sets -> sets.maxByOrNull { it.timestamp } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    // Time elapsed for current session
+    val sessionDurationSeconds: StateFlow<Long> = sessionManager.currentSessionId
+        .flatMapLatest { sessionId ->
+            if (sessionId == null) flowOf(0L)
+            else flow {
+                val startTime = workoutDao.getSessionById(sessionId).startTime
+                while (true) {
+                    emit((System.currentTimeMillis() - startTime) / 1000)
+                    kotlinx.coroutines.delay(1000)
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
     val sessions: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
         .map { WorkoutAnalyzer.filterValidSessions(it) }
@@ -62,6 +92,7 @@ class WorkoutViewModel(
                     )
                 }
         }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val _selectedMuscle = MutableStateFlow("")
@@ -112,7 +143,13 @@ class WorkoutViewModel(
 
     fun updateSetNumber(exerciseName: String) {
         viewModelScope.launch {
-            val count = workoutDao.getTodaySetCount(exerciseName)
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            }
+            val dayStart = cal.timeInMillis
+            val dayEnd = dayStart + 86_400_000L
+            val count = workoutDao.getTodaySetCount(exerciseName, dayStart, dayEnd)
             _currentSet.value = count + 1
         }
     }
@@ -145,6 +182,10 @@ class WorkoutViewModel(
         return workoutDao.getSetsForExerciseInDateRange(exerciseName, lastWeekStart, thisWeekStart)
     }
 
+    fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>> {
+        return workoutDao.getLastSessionSetsForExercise(exerciseName, currentSessionId)
+    }
+
     suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double {
         return workoutDao.getHistoricBest1RM(exerciseName, excludeSessionId) ?: 0.0
     }
@@ -167,15 +208,15 @@ class WorkoutViewModel(
         )
     }
 
-    fun insertWorkout(muscle: String, exercise: String, setNumber: Int, reps: Int, weight: Double, support: Boolean) {
+    fun insertWorkout(muscle: String, exercise: String, setNumber: Int, reps: Int, weight: Double, isAssisted: Boolean) {
         val sessionId = sessionManager.currentSessionId.value ?: return 
         if (!WorkoutAnalyzer.isValidSet(weight, reps)) return
         
         viewModelScope.launch {
-            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, support, sessionId))
+            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, isAssisted, sessionId))
             updateSetNumber(exercise)
             
-            val defaultRest = settingsRepository?.userSettingsFlow?.firstOrNull()?.defaultRestSeconds ?: 90
+            val defaultRest = settingsRepository.userSettingsFlow.firstOrNull()?.defaultRestSeconds ?: 90
             restTimerManager.startTimer(defaultRest)
         }
     }
