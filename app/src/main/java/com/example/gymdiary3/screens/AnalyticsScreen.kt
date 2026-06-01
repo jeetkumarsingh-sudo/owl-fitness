@@ -30,11 +30,13 @@ import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
     nav: NavHostController,
-    viewModel: AnalyticsViewModel
+    viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.exerciseUiState.collectAsStateWithLifecycle()
     val oneRMHistory by viewModel.oneRMHistory.collectAsStateWithLifecycle()

@@ -21,9 +21,15 @@ import androidx.navigation.NavHostController
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.SettingsViewModel
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(nav: NavHostController, viewModel: SettingsViewModel, onExportClick: () -> Unit) {
+fun SettingsScreen(
+    nav: NavHostController,
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onExportClick: () -> Unit
+) {
     val settings by viewModel.userSettings.collectAsStateWithLifecycle()
 
     Scaffold(

@@ -35,9 +35,14 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BodyWeightScreen(nav: NavHostController, viewModel: BodyWeightViewModel) {
+fun BodyWeightScreen(
+    nav: NavHostController,
+    viewModel: BodyWeightViewModel = hiltViewModel()
+) {
 
     var weightInput by remember { mutableStateOf("") }
     val weights by viewModel.allWeights.collectAsStateWithLifecycle()

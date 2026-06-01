@@ -35,9 +35,15 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SessionSummaryScreen(nav: NavHostController, viewModel: WorkoutViewModel, sessionId: Int) {
+fun SessionSummaryScreen(
+    nav: NavHostController,
+    sessionId: Int,
+    viewModel: WorkoutViewModel = hiltViewModel()
+) {
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val exerciseUiStates by viewModel.exerciseUiStates.collectAsStateWithLifecycle()
     val sessionWithSets = remember(sessions, sessionId) {

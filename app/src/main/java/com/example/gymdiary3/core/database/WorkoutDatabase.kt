@@ -1,20 +1,28 @@
-package com.example.gymdiary3.database
+package com.example.gymdiary3.core.database
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.gymdiary3.core.database.dao.BodyWeightDao
+import com.example.gymdiary3.core.database.dao.WorkoutDao
+import com.example.gymdiary3.core.database.entity.BodyWeightEntity
+import com.example.gymdiary3.core.database.entity.ExerciseEntity
+import com.example.gymdiary3.core.database.entity.WorkoutSessionEntity
+import com.example.gymdiary3.core.database.entity.WorkoutSetEntity
+import com.example.gymdiary3.core.database.migration.MIGRATION_8_9
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.gymdiary3.data.BodyWeight
-import com.example.gymdiary3.data.WorkoutSet
-import com.example.gymdiary3.data.Exercise
-import com.example.gymdiary3.data.WorkoutSession
 
 @Database(
-    entities = [WorkoutSet::class, BodyWeight::class, Exercise::class, WorkoutSession::class],
-    version = 8,
-    exportSchema = false
+    entities = [
+        WorkoutSetEntity::class,
+        BodyWeightEntity::class,
+        ExerciseEntity::class,
+        WorkoutSessionEntity::class
+    ],
+    version = 9,
+    exportSchema = true
 )
 abstract class WorkoutDatabase : RoomDatabase() {
 
@@ -27,13 +35,9 @@ abstract class WorkoutDatabase : RoomDatabase() {
 
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // Rename 'date' column to 'timestamp' in WorkoutSet
                 database.execSQL("ALTER TABLE WorkoutSet RENAME COLUMN date TO timestamp")
-                // Add 'name' column to session table (nullable, no default needed)
                 database.execSQL("ALTER TABLE session ADD COLUMN name TEXT")
-                // Add 'isAssisted' column, renaming from 'support'
                 database.execSQL("ALTER TABLE WorkoutSet RENAME COLUMN support TO isAssisted")
-                // Rename 'date' column to 'timestamp' in BodyWeight
                 database.execSQL("ALTER TABLE BodyWeight RENAME COLUMN date TO timestamp")
             }
         }
@@ -45,7 +49,7 @@ abstract class WorkoutDatabase : RoomDatabase() {
                     WorkoutDatabase::class.java,
                     "gym_database"
                 )
-                    .addMigrations(MIGRATION_7_8)
+                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9)
                     .build()
                 INSTANCE = instance
                 instance
