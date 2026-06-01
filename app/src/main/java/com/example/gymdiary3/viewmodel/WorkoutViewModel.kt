@@ -8,7 +8,8 @@ import com.example.gymdiary3.domain.model.Exercise
 import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.model.SessionWithSets
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
-import com.example.gymdiary3.domain.service.RecommendationEngine
+import com.example.gymdiary3.domain.usecase.workout.*
+import com.example.gymdiary3.domain.usecase.analytics.GetExerciseStatsUseCase
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.system.session.SessionManager
 import com.example.gymdiary3.system.timer.RestTimerManager
@@ -34,7 +35,12 @@ class WorkoutViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val exerciseRepository: ExerciseRepository,
     private val bodyWeightRepository: BodyWeightRepository,
-    val settingsRepository: SettingsRepository
+    val settingsRepository: SettingsRepository,
+    private val logSetUseCase: LogSetUseCase,
+    private val startSessionUseCase: StartSessionUseCase,
+    private val endSessionUseCase: EndSessionUseCase,
+    private val getExerciseStatsUseCase: GetExerciseStatsUseCase,
+    private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase
 ) : ViewModel() {
 
     // System Managers
@@ -42,7 +48,7 @@ class WorkoutViewModel @Inject constructor(
     val restTimerManager = RestTimerManager(viewModelScope)
 
     // Data Pipeline
-    val workouts: StateFlow<List<WorkoutSet>> = workoutRepository.getWorkouts()
+    val workouts: StateFlow<List<WorkoutSet>> = workoutRepository.getAllSets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Exercises logged in current session  
@@ -82,8 +88,26 @@ class WorkoutViewModel @Inject constructor(
         .map { WorkoutAnalyzer.filterValidSessions(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val sessionsWithSets = sessions
+    // Current session notes
+    val currentSessionNotes: StateFlow<String?> = sessionManager.currentSessionId
+        .flatMapLatest { sessionId ->
+            if (sessionId == null) flowOf(null)
+            else flow<String?> {
+                emit(workoutRepository.getSessionById(sessionId).notes)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun updateSessionNotes(notes: String) {
+        val sessionId = sessionManager.currentSessionId.value ?: return
+        viewModelScope.launch {
+            val session = workoutRepository.getSessionById(sessionId)
+            workoutRepository.updateSession(session.copy(notes = notes))
+        }
+    }
+
     val currentSessionId = sessionManager.currentSessionId
+    val sessionsWithSets = sessions
     val totalWorkoutCount: StateFlow<Int> = sessions.map { it.size }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val exerciseUiStates: StateFlow<Map<String, ExerciseUiState>> = workouts
@@ -96,7 +120,7 @@ class WorkoutViewModel @Inject constructor(
                         trend = stats.trend,
                         trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
                         isPR = stats.isPR,
-                        recommendation = RecommendationEngine.getRecommendation(stats),
+                        recommendation = "", // Will be replaced by intelligence insights
                         best1RM = stats.best1RM,
                         totalVolume = stats.totalVolume
                     )
@@ -170,13 +194,13 @@ class WorkoutViewModel @Inject constructor(
 
     fun startSession() {
         viewModelScope.launch {
-            sessionManager.startSession()
+            startSessionUseCase()
         }
     }
 
     fun endSession(onComplete: (Int) -> Unit) {
         viewModelScope.launch {
-            sessionManager.endSession(onComplete)
+            endSessionUseCase(onComplete)
         }
     }
 
@@ -193,7 +217,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>> {
-        return workoutRepository.getLastSessionSetsForExercise(exerciseName, currentSessionId)
+        return getLastSessionSetsUseCase(exerciseName, currentSessionId)
     }
 
     suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double {
@@ -204,7 +228,7 @@ class WorkoutViewModel @Inject constructor(
         restTimerManager.startTimer(seconds)
     }
 
-    // Task 3 & 4: Delegate to Analyzer and RecommendationEngine
+    // Task 3 & 4: Delegate to Analyzer and UseCase
     fun getExerciseUiState(exercise: String): ExerciseUiState {
         val stats = WorkoutAnalyzer.getExerciseStats(exercise, workouts.value.filter { it.exercise == exercise })
         return ExerciseUiState(
@@ -212,22 +236,38 @@ class WorkoutViewModel @Inject constructor(
             trend = stats.trend,
             trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
             isPR = stats.isPR,
-            recommendation = RecommendationEngine.getRecommendation(stats),
+            recommendation = "",
             best1RM = stats.best1RM,
             totalVolume = stats.totalVolume
         )
     }
 
-    fun insertWorkout(muscle: String, exercise: String, setNumber: Int, reps: Int, weight: Double, isAssisted: Boolean) {
+    fun insertWorkout(
+        muscle: String,
+        exercise: String,
+        setNumber: Int,
+        reps: Int,
+        weight: Double,
+        isAssisted: Boolean,
+        rpe: Float? = null,
+        notes: String? = null
+    ) {
         val sessionId = sessionManager.currentSessionId.value ?: return 
         if (!WorkoutAnalyzer.isValidSet(weight, reps)) return
         
         viewModelScope.launch {
-            workoutRepository.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, isAssisted, sessionId))
+            logSetUseCase(
+                sessionId = sessionId,
+                muscle = muscle,
+                exercise = exercise,
+                setNumber = setNumber,
+                reps = reps,
+                weight = weight,
+                isAssisted = isAssisted,
+                rpe = rpe,
+                notes = notes
+            )
             updateSetNumber(exercise)
-            
-            val defaultRest = settingsRepository.userSettingsFlow.firstOrNull()?.defaultRestSeconds ?: 90
-            restTimerManager.startTimer(defaultRest)
         }
     }
 
@@ -245,14 +285,14 @@ class WorkoutViewModel @Inject constructor(
 
     suspend fun exportAllDataToCsv(context: Context): Uri? = withContext(Dispatchers.IO) {
         if (sessions.value.isEmpty()) return@withContext null
-        val bodyWeights = bodyWeightRepository.getAllBodyWeightsList()
+        val bodyWeights = bodyWeightRepository.getAllWeights()
         val csvContent = ExportFormatter.buildCsv(sessions.value, bodyWeights)
         return@withContext com.example.gymdiary3.data.FileHandler.writeToCache(context, csvContent)
     }
 
     private fun insertDefaultWorkouts() {
         viewModelScope.launch {
-            val existing = exerciseRepository.getAllExercisesList()
+            val existing = exerciseRepository.getAllExercises()
             if (existing.isEmpty()) {
                 val defaults = listOf(
                     Exercise("Bench Press", "Chest"), Exercise("Incline Bench Press", "Chest"),
@@ -268,9 +308,24 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun addExercise(name: String, muscle: String) {
+    fun addExercise(
+        name: String, 
+        muscle: String,
+        equipment: com.example.gymdiary3.domain.model.EquipmentType = com.example.gymdiary3.domain.model.EquipmentType.OTHER,
+        movementPattern: com.example.gymdiary3.domain.model.MovementPattern = com.example.gymdiary3.domain.model.MovementPattern.ISOLATION,
+        trackingType: com.example.gymdiary3.domain.model.TrackingType = com.example.gymdiary3.domain.model.TrackingType.WEIGHT_REPS
+    ) {
         viewModelScope.launch {
-            exerciseRepository.insertExercise(Exercise(name, muscle, isCustom = true))
+            exerciseRepository.insertExercise(
+                Exercise(
+                    name = name,
+                    primaryMuscleGroup = muscle,
+                    equipment = equipment,
+                    movementPattern = movementPattern,
+                    trackingType = trackingType,
+                    isCustom = true
+                )
+            )
         }
     }
 
@@ -304,6 +359,10 @@ class WorkoutViewModel @Inject constructor(
             .map { it.exercise }
             .distinct()
             .sorted()
+    }
+
+    suspend fun getExerciseByName(name: String): Exercise? {
+        return exerciseRepository.getAllExercises().find { it.name == name }
     }
 
     // New optimized helpers for Analytics

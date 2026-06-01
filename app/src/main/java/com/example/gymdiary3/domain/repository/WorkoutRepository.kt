@@ -6,9 +6,9 @@ import com.example.gymdiary3.domain.model.SessionWithSets
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
-    fun getWorkouts(): Flow<List<WorkoutSet>>
+    fun getAllSets(): Flow<List<WorkoutSet>>
     fun getSessionsWithSets(): Flow<List<SessionWithSets>>
-    suspend fun insertWorkout(workout: WorkoutSet)
+    suspend fun insertSet(set: WorkoutSet)
     suspend fun insertSession(session: WorkoutSession): Long
     suspend fun updateSession(session: WorkoutSession)
     suspend fun deleteSession(session: WorkoutSession)

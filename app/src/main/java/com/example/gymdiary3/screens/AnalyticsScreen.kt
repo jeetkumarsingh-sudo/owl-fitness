@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.ui.theme.OwlColors
-import com.example.gymdiary3.viewmodel.AnalyticsViewModel
+import com.example.gymdiary3.viewmodel.ProgressViewModel
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
 import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
@@ -36,7 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun AnalyticsScreen(
     nav: NavHostController,
-    viewModel: AnalyticsViewModel = hiltViewModel()
+    viewModel: ProgressViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.exerciseUiState.collectAsStateWithLifecycle()
     val oneRMHistory by viewModel.oneRMHistory.collectAsStateWithLifecycle()

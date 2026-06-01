@@ -14,14 +14,14 @@ import javax.inject.Inject
 class WorkoutRepositoryImpl @Inject constructor(
     private val workoutDao: WorkoutDao
 ) : WorkoutRepository {
-    override fun getWorkouts(): Flow<List<WorkoutSet>> = 
+    override fun getAllSets(): Flow<List<WorkoutSet>> =
         workoutDao.getWorkouts().map { list -> list.map { it.toDomain() } }
     
     override fun getSessionsWithSets(): Flow<List<SessionWithSets>> = 
         workoutDao.getSessionsWithSets().map { list -> list.map { it.toDomain() } }
     
-    override suspend fun insertWorkout(workout: WorkoutSet) = 
-        workoutDao.insertWorkout(workout.toEntity())
+    override suspend fun insertSet(set: WorkoutSet) = 
+        workoutDao.insertWorkout(set.toEntity())
     
     override suspend fun insertSession(session: WorkoutSession): Long = 
         workoutDao.insertSession(session.toEntity())

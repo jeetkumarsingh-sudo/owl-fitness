@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.MonitorWeight
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,6 +46,7 @@ fun HomeScreen(
     val totalWorkouts by viewModel.totalWorkoutCount.collectAsStateWithLifecycle()
 
     val sessionDuration by viewModel.sessionDurationSeconds.collectAsStateWithLifecycle()
+    val sessionNotes by viewModel.currentSessionNotes.collectAsStateWithLifecycle()
     val exercisesThisSession by viewModel.exercisesThisSession.collectAsStateWithLifecycle()
     val lastSetLogged by viewModel.lastSetLogged.collectAsStateWithLifecycle()
 
@@ -80,8 +82,10 @@ fun HomeScreen(
             if (currentSessionId != null) {
                 ActiveSessionPanel(
                     sessionDuration = sessionDuration,
+                    sessionNotes = sessionNotes,
                     exercisesThisSession = exercisesThisSession,
                     lastSetLogged = lastSetLogged,
+                    onUpdateNotes = { viewModel.updateSessionNotes(it) },
                     onContinueWorkout = { nav.navigate("muscle") },
                     onFinishSession = { viewModel.endSession { id -> nav.navigate("summary/$id") } }
                 )
@@ -176,11 +180,40 @@ fun HomeScreen(
 @Composable
 fun ActiveSessionPanel(
     sessionDuration: Long,
+    sessionNotes: String?,
     exercisesThisSession: List<String>,
     lastSetLogged: WorkoutSet?,
+    onUpdateNotes: (String) -> Unit,
     onContinueWorkout: () -> Unit,
     onFinishSession: () -> Unit
 ) {
+    var showNotesDialog by remember { mutableStateOf(false) }
+
+    if (showNotesDialog) {
+        var tempNotes by remember { mutableStateOf(sessionNotes ?: "") }
+        AlertDialog(
+            onDismissRequest = { showNotesDialog = false },
+            title = { Text("Session Notes") },
+            text = {
+                OutlinedTextField(
+                    value = tempNotes,
+                    onValueChange = { tempNotes = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Write something about today's session...") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onUpdateNotes(tempNotes)
+                    showNotesDialog = false
+                }) { Text("SAVE") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNotesDialog = false }) { Text("CANCEL") }
+            }
+        )
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = OwlColors.CardBg,
@@ -202,7 +235,24 @@ fun ActiveSessionPanel(
                         fontWeight = FontWeight.Black
                     )
                 }
-                Icon(Icons.Default.Timer, contentDescription = null, tint = OwlColors.PurpleDim, modifier = Modifier.size(40.dp))
+                IconButton(onClick = { showNotesDialog = true }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Notes, 
+                        contentDescription = "Session Notes", 
+                        tint = if (sessionNotes.isNullOrBlank()) OwlColors.PurpleDim else OwlColors.Purple,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+            if (!sessionNotes.isNullOrBlank()) {
+                Text(
+                    text = sessionNotes,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OwlColors.TextMuted,
+                    modifier = Modifier.padding(top = 8.dp),
+                    maxLines = 2
+                )
             }
 
             Spacer(Modifier.height(24.dp))

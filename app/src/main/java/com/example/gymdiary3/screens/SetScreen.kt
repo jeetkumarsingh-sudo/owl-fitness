@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,6 +44,9 @@ fun SetScreen(
     var reps by remember { mutableIntStateOf(0) }
     var weight by remember { mutableDoubleStateOf(0.0) }
     var isAssisted by remember { mutableStateOf(false) }
+    var rpe by remember { mutableStateOf<Float?>(null) }
+    var setNotes by remember { mutableStateOf("") }
+    var showNotesInput by remember { mutableStateOf(false) }
 
     val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
@@ -241,6 +245,48 @@ fun SetScreen(
                     )
                     Text("Support / Assisted", style = MaterialTheme.typography.bodyMedium, color = OwlColors.TextSecondary)
                 }
+
+                Spacer(Modifier.height(16.dp))
+                
+                // RPE Selection
+                Text(
+                    "RPE (Effort: 1-10)", 
+                    style = MaterialTheme.typography.labelMedium, 
+                    color = OwlColors.PurpleSoft,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                RpeSelector(
+                    selectedRpe = rpe,
+                    onRpeSelected = { rpe = it }
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // Notes toggle
+                if (!showNotesInput) {
+                    TextButton(
+                        onClick = { showNotesInput = true },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Notes, null, modifier = Modifier.size(16.dp), tint = OwlColors.Purple)
+                        Spacer(Modifier.width(8.dp))
+                        Text("ADD SET NOTES", style = MaterialTheme.typography.labelLarge, color = OwlColors.Purple)
+                    }
+                } else {
+                    OutlinedTextField(
+                        value = setNotes,
+                        onValueChange = { setNotes = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Set notes...", color = OwlColors.TextMuted) },
+                        textStyle = TextStyle(color = OwlColors.TextPrimary),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = OwlColors.Purple,
+                            unfocusedBorderColor = OwlColors.BorderSubtle
+                        ),
+                        maxLines = 2,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
             }
         }
 
@@ -281,8 +327,20 @@ fun SetScreen(
         Button(
             onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                viewModel.insertWorkout(muscle, exercise, currentSet, reps, weight, isAssisted)
+                viewModel.insertWorkout(
+                    muscle = muscle,
+                    exercise = exercise,
+                    setNumber = currentSet,
+                    reps = reps,
+                    weight = weight,
+                    isAssisted = isAssisted,
+                    rpe = rpe,
+                    notes = setNotes.takeIf { it.isNotBlank() }
+                )
                 reps = 0
+                rpe = null
+                setNotes = ""
+                showNotesInput = false
             },
             modifier = Modifier.fillMaxWidth().height(60.dp),
             enabled = canLogSet,
@@ -305,6 +363,38 @@ fun SetScreen(
         }
         
         Spacer(Modifier.height(40.dp))
+    }
+}
+
+@Composable
+fun RpeSelector(
+    selectedRpe: Float?,
+    onRpeSelected: (Float?) -> Unit
+) {
+    val rpeValues = listOf(6.0f, 7.0f, 8.0f, 9.0f, 10.0f)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        rpeValues.forEach { value ->
+            val isSelected = selectedRpe == value
+            Surface(
+                onClick = { onRpeSelected(if (isSelected) null else value) },
+                modifier = Modifier.weight(1f).height(44.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = if (isSelected) OwlColors.Purple else OwlColors.CardBgAlt,
+                border = if (isSelected) null else BorderStroke(1.dp, OwlColors.BorderSubtle)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (value == 10f) "10" else value.toString(),
+                        color = if (isSelected) Color.White else OwlColors.TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
     }
 }
 
