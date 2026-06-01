@@ -6,7 +6,6 @@ import com.example.gymdiary3.core.database.entity.BodyWeightEntity
 
 @Dao
 interface BodyWeightDao {
-
     @Insert
     suspend fun insertWeight(weight: BodyWeightEntity)
 

@@ -27,7 +27,7 @@ class BodyWeightViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    val latestBodyWeight: StateFlow<com.example.gymdiary3.data.BodyWeight?> = bodyWeightRepository.getWeights()
+    val latestBodyWeight: StateFlow<BodyWeight?> = bodyWeightRepository.getWeights()
         .map { it.maxByOrNull { bw -> bw.timestamp } }
         .stateIn(
             scope = viewModelScope,

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "b445156ff15b2661b9ddb4aacccca921",
+    "identityHash": "c93d50834f08c4b3f5f9aa1578be79cf",
     "entities": [
       {
         "tableName": "WorkoutSet",
@@ -77,36 +77,7 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [
-          {
-            "name": "index_WorkoutSet_exercise",
-            "unique": false,
-            "columnNames": [
-              "exercise"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorkoutSet_exercise` ON `${TABLE_NAME}` (`exercise`)"
-          },
-          {
-            "name": "index_WorkoutSet_sessionId",
-            "unique": false,
-            "columnNames": [
-              "sessionId"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorkoutSet_sessionId` ON `${TABLE_NAME}` (`sessionId`)"
-          },
-          {
-            "name": "index_WorkoutSet_timestamp",
-            "unique": false,
-            "columnNames": [
-              "timestamp"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorkoutSet_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
-          }
-        ]
+        }
       },
       {
         "tableName": "BodyWeight",
@@ -196,36 +167,7 @@
           "columnNames": [
             "name"
           ]
-        },
-        "indices": [
-          {
-            "name": "index_Exercise_primaryMuscleGroup",
-            "unique": false,
-            "columnNames": [
-              "primaryMuscleGroup"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Exercise_primaryMuscleGroup` ON `${TABLE_NAME}` (`primaryMuscleGroup`)"
-          },
-          {
-            "name": "index_Exercise_equipment",
-            "unique": false,
-            "columnNames": [
-              "equipment"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Exercise_equipment` ON `${TABLE_NAME}` (`equipment`)"
-          },
-          {
-            "name": "index_Exercise_trackingType",
-            "unique": false,
-            "columnNames": [
-              "trackingType"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_Exercise_trackingType` ON `${TABLE_NAME}` (`trackingType`)"
-          }
-        ]
+        }
       },
       {
         "tableName": "session",
@@ -269,7 +211,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b445156ff15b2661b9ddb4aacccca921')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c93d50834f08c4b3f5f9aa1578be79cf')"
     ]
   }
 }

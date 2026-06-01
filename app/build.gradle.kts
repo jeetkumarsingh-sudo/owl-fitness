@@ -5,8 +5,10 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
 }
 
 android {

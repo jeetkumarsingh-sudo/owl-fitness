@@ -1,9 +1,5 @@
 package com.example.gymdiary3.domain.model
 
-import com.example.gymdiary3.core.database.entity.EquipmentType
-import com.example.gymdiary3.core.database.entity.MovementPattern
-import com.example.gymdiary3.core.database.entity.TrackingType
-
 data class Exercise(
     val name: String,
     val primaryMuscleGroup: String,
@@ -14,3 +10,15 @@ data class Exercise(
     val isCustom: Boolean = false,
     val isArchived: Boolean = false
 )
+
+enum class EquipmentType {
+    BARBELL, DUMBBELL, MACHINE, CABLE, BAND, BODYWEIGHT, ROPE, OTHER
+}
+
+enum class MovementPattern {
+    HORIZONTAL_PUSH, VERTICAL_PUSH, HORIZONTAL_PULL, VERTICAL_PULL, SQUAT, HIP_HINGE, ISOLATION, CORE, CARRY
+}
+
+enum class TrackingType {
+    WEIGHT_REPS, BODYWEIGHT_REPS, WEIGHT_REPS_RPE, TIME, DISTANCE, DISTANCE_TIME
+}

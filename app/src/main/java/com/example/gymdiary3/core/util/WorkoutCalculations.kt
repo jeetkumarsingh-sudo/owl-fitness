@@ -1,4 +1,4 @@
-package com.example.gymdiary3.domain.util
+package com.example.gymdiary3.core.util
 
 object WorkoutCalculations {
 

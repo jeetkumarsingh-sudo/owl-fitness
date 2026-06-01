@@ -2,7 +2,7 @@ package com.example.gymdiary3.system.export
 
 import com.example.gymdiary3.domain.model.SessionWithSets
 import com.example.gymdiary3.domain.model.BodyWeight
-import com.example.gymdiary3.domain.util.WorkoutCalculations
+import com.example.gymdiary3.core.util.WorkoutCalculations
 import java.text.SimpleDateFormat
 import java.util.*
 

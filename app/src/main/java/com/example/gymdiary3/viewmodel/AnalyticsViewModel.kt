@@ -4,15 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.domain.model.WorkoutSet
-import com.example.gymdiary3.database.WorkoutDao
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.service.RecommendationEngine
 import com.example.gymdiary3.presentation.state.ExerciseUiState
-import kotlinx.coroutines.flow.*
-
 import com.example.gymdiary3.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.*
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(

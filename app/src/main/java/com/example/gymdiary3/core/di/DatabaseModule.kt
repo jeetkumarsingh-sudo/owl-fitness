@@ -1,9 +1,9 @@
 package com.example.gymdiary3.core.di
 
 import android.content.Context
-import com.example.gymdiary3.database.WorkoutDatabase
-import com.example.gymdiary3.database.WorkoutDao
-import com.example.gymdiary3.database.BodyWeightDao
+import com.example.gymdiary3.core.database.WorkoutDatabase
+import com.example.gymdiary3.core.database.dao.WorkoutDao
+import com.example.gymdiary3.core.database.dao.BodyWeightDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

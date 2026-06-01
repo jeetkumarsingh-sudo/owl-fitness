@@ -1,6 +1,5 @@
 package com.example.gymdiary3.screens
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -31,8 +30,8 @@ import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
-
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymdiary3.domain.model.WorkoutSet
 
 @Composable
 fun HomeScreen(
@@ -43,7 +42,7 @@ fun HomeScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val currentSessionId by viewModel.sessionManager.currentSessionId.collectAsStateWithLifecycle()
     val latestWeight by bodyViewModel.latestBodyWeight.collectAsStateWithLifecycle()
-    val totalWorkouts by viewModel.totalWorkoutCount.collectAsStateWithLifecycle(0)
+    val totalWorkouts by viewModel.totalWorkoutCount.collectAsStateWithLifecycle()
 
     val sessionDuration by viewModel.sessionDurationSeconds.collectAsStateWithLifecycle()
     val exercisesThisSession by viewModel.exercisesThisSession.collectAsStateWithLifecycle()
@@ -178,7 +177,7 @@ fun HomeScreen(
 fun ActiveSessionPanel(
     sessionDuration: Long,
     exercisesThisSession: List<String>,
-    lastSetLogged: com.example.gymdiary3.data.WorkoutSet?,
+    lastSetLogged: WorkoutSet?,
     onContinueWorkout: () -> Unit,
     onFinishSession: () -> Unit
 ) {

@@ -1,6 +1,6 @@
 package com.example.gymdiary3.domain.model
 
-import com.example.gymdiary3.domain.util.WorkoutCalculations
+import com.example.gymdiary3.core.util.WorkoutCalculations
 
 data class SessionWithSets(
     val session: WorkoutSession,
