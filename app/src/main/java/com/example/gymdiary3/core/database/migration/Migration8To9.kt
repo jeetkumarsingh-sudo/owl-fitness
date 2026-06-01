@@ -6,9 +6,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 val MIGRATION_8_9 = object : Migration(8, 9) {
     override fun migrate(db: SupportSQLiteDatabase) {
 
-        // --- session: add notes (nullable text) ---
-        db.execSQL("ALTER TABLE session ADD COLUMN notes TEXT")
-
         // --- WorkoutSet: add rpe (nullable float) and notes (nullable text) ---
         db.execSQL("ALTER TABLE WorkoutSet ADD COLUMN rpe REAL")
         db.execSQL("ALTER TABLE WorkoutSet ADD COLUMN notes TEXT")

@@ -5,7 +5,12 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "WorkoutSet"
+    tableName = "WorkoutSet",
+    indices = [
+        Index("exercise"),
+        Index("sessionId"),
+        Index("timestamp")
+    ]
 )
 data class WorkoutSetEntity(
     @PrimaryKey(autoGenerate = true)

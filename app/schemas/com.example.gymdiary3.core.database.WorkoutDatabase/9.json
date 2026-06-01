@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "c93d50834f08c4b3f5f9aa1578be79cf",
+    "identityHash": "5b9634c99bb3cd1eed1bd440ba303d78",
     "entities": [
       {
         "tableName": "WorkoutSet",
@@ -77,7 +77,36 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_WorkoutSet_exercise",
+            "unique": false,
+            "columnNames": [
+              "exercise"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorkoutSet_exercise` ON `${TABLE_NAME}` (`exercise`)"
+          },
+          {
+            "name": "index_WorkoutSet_sessionId",
+            "unique": false,
+            "columnNames": [
+              "sessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorkoutSet_sessionId` ON `${TABLE_NAME}` (`sessionId`)"
+          },
+          {
+            "name": "index_WorkoutSet_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorkoutSet_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          }
+        ]
       },
       {
         "tableName": "BodyWeight",
@@ -111,7 +140,7 @@
       },
       {
         "tableName": "Exercise",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `primaryMuscleGroup` TEXT NOT NULL, `secondaryMuscleGroups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `movementPattern` TEXT NOT NULL, `trackingType` TEXT NOT NULL, `isCustom` INTEGER NOT NULL, `isArchived` INTEGER NOT NULL, PRIMARY KEY(`name`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `primaryMuscleGroup` TEXT NOT NULL DEFAULT '', `secondaryMuscleGroups` TEXT NOT NULL DEFAULT '', `equipment` TEXT NOT NULL DEFAULT 'OTHER', `movementPattern` TEXT NOT NULL DEFAULT 'ISOLATION', `trackingType` TEXT NOT NULL DEFAULT 'WEIGHT_REPS', `isCustom` INTEGER NOT NULL DEFAULT 0, `isArchived` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`name`))",
         "fields": [
           {
             "fieldPath": "name",
@@ -123,43 +152,50 @@
             "fieldPath": "primaryMuscleGroup",
             "columnName": "primaryMuscleGroup",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "''"
           },
           {
             "fieldPath": "secondaryMuscleGroups",
             "columnName": "secondaryMuscleGroups",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "''"
           },
           {
             "fieldPath": "equipment",
             "columnName": "equipment",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "'OTHER'"
           },
           {
             "fieldPath": "movementPattern",
             "columnName": "movementPattern",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "'ISOLATION'"
           },
           {
             "fieldPath": "trackingType",
             "columnName": "trackingType",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "'WEIGHT_REPS'"
           },
           {
             "fieldPath": "isCustom",
             "columnName": "isCustom",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "0"
           },
           {
             "fieldPath": "isArchived",
             "columnName": "isArchived",
             "affinity": "INTEGER",
-            "notNull": true
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -167,7 +203,27 @@
           "columnNames": [
             "name"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "idx_exercise_equipment",
+            "unique": false,
+            "columnNames": [
+              "equipment"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_exercise_equipment` ON `${TABLE_NAME}` (`equipment`)"
+          },
+          {
+            "name": "idx_exercise_muscle",
+            "unique": false,
+            "columnNames": [
+              "primaryMuscleGroup"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `idx_exercise_muscle` ON `${TABLE_NAME}` (`primaryMuscleGroup`)"
+          }
+        ]
       },
       {
         "tableName": "session",
@@ -211,7 +267,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c93d50834f08c4b3f5f9aa1578be79cf')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5b9634c99bb3cd1eed1bd440ba303d78')"
     ]
   }
 }

@@ -22,7 +22,7 @@ import com.example.gymdiary3.core.database.migration.MIGRATION_8_9
         WorkoutSessionEntity::class,
     ],
     version = 9,
-    exportSchema = true
+    exportSchema = true,
 )
 abstract class WorkoutDatabase : RoomDatabase() {
 
@@ -37,6 +37,7 @@ abstract class WorkoutDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE WorkoutSet RENAME COLUMN date TO timestamp")
                 db.execSQL("ALTER TABLE session ADD COLUMN name TEXT")
+                db.execSQL("ALTER TABLE session ADD COLUMN notes TEXT")
                 db.execSQL("ALTER TABLE WorkoutSet RENAME COLUMN support TO isAssisted")
                 db.execSQL("ALTER TABLE BodyWeight RENAME COLUMN date TO timestamp")
             }
