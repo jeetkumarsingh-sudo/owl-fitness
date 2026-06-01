@@ -33,4 +33,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSyncRepository(impl: com.example.gymdiary3.data.repository.SyncRepositoryStub): com.example.gymdiary3.domain.repository.SyncRepository
 }
