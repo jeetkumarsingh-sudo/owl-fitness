@@ -29,21 +29,18 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymdiary3.domain.model.SessionWithSets
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun SessionHistoryScreen(
-    nav: NavHostController,
+    nav: NavHostController, 
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val sessionsWithSets by viewModel.sessionsWithSets.collectAsStateWithLifecycle()
     val sdf = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()) }
     val timeSdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-
-    var isVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { isVisible = true }
 
     var showDeleteDialog by remember { mutableStateOf<Int?>(null) }
 
@@ -119,7 +116,7 @@ fun SessionHistoryScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SessionCard(
-    sessionWithSets: com.example.gymdiary3.data.SessionWithSets,
+    sessionWithSets: SessionWithSets,
     nav: NavHostController,
     sdf: SimpleDateFormat,
     timeSdf: SimpleDateFormat,

@@ -34,13 +34,12 @@ import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BodyWeightScreen(
-    nav: NavHostController,
+    nav: NavHostController, 
     viewModel: BodyWeightViewModel = hiltViewModel()
 ) {
 
@@ -275,7 +274,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
 }
 
 @Composable
-fun WeightCard(item: com.example.gymdiary3.data.BodyWeight, sdf: SimpleDateFormat, unit: String) {
+fun WeightCard(item: BodyWeight, sdf: SimpleDateFormat, unit: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = OwlColors.CardBg,

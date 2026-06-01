@@ -1,10 +1,7 @@
 package com.example.gymdiary3.data.mapper
 
-import com.example.gymdiary3.core.database.entity.EquipmentType
 import com.example.gymdiary3.core.database.entity.ExerciseEntity
-import com.example.gymdiary3.core.database.entity.MovementPattern
-import com.example.gymdiary3.core.database.entity.TrackingType
-import com.example.gymdiary3.domain.model.Exercise
+import com.example.gymdiary3.domain.model.*
 
 fun ExerciseEntity.toDomain(): Exercise = Exercise(
     name = name,

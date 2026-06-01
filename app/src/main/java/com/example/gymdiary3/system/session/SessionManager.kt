@@ -2,13 +2,11 @@ package com.example.gymdiary3.system.session
 
 import com.example.gymdiary3.domain.model.WorkoutSession
 import com.example.gymdiary3.domain.model.SessionWithSets
-import com.example.gymdiary3.database.WorkoutDao
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
+import com.example.gymdiary3.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-import com.example.gymdiary3.domain.repository.WorkoutRepository
 
 class SessionManager(private val workoutRepository: WorkoutRepository) {
     private val _currentSessionId = MutableStateFlow<Int?>(null)

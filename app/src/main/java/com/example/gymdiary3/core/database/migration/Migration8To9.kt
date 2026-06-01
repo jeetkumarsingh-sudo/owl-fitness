@@ -4,14 +4,17 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 val MIGRATION_8_9 = object : Migration(8, 9) {
-    override fun migrate(database: SupportSQLiteDatabase) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+
+        // --- session: add notes (nullable text) ---
+        db.execSQL("ALTER TABLE session ADD COLUMN notes TEXT")
 
         // --- WorkoutSet: add rpe (nullable float) and notes (nullable text) ---
-        database.execSQL("ALTER TABLE WorkoutSet ADD COLUMN rpe REAL")
-        database.execSQL("ALTER TABLE WorkoutSet ADD COLUMN notes TEXT")
+        db.execSQL("ALTER TABLE WorkoutSet ADD COLUMN rpe REAL")
+        db.execSQL("ALTER TABLE WorkoutSet ADD COLUMN notes TEXT")
 
         // --- Exercise: expansion via recreate ---
-        database.execSQL("""
+        db.execSQL("""
             CREATE TABLE IF NOT EXISTS Exercise_new (
                 name TEXT NOT NULL PRIMARY KEY,
                 primaryMuscleGroup TEXT NOT NULL DEFAULT '',
@@ -25,7 +28,7 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         """.trimIndent())
 
         // Copy data: muscle -> primaryMuscleGroup
-        database.execSQL("""
+        db.execSQL("""
             INSERT INTO Exercise_new 
                 (name, primaryMuscleGroup, secondaryMuscleGroups, equipment, movementPattern, trackingType, isCustom, isArchived)
             SELECT 
@@ -43,10 +46,10 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
             FROM Exercise
         """.trimIndent())
 
-        database.execSQL("DROP TABLE IF EXISTS Exercise")
-        database.execSQL("ALTER TABLE Exercise_new RENAME TO Exercise")
+        db.execSQL("DROP TABLE IF EXISTS Exercise")
+        db.execSQL("ALTER TABLE Exercise_new RENAME TO Exercise")
 
-        database.execSQL("CREATE INDEX IF NOT EXISTS idx_exercise_equipment ON Exercise(equipment)")
-        database.execSQL("CREATE INDEX IF NOT EXISTS idx_exercise_muscle ON Exercise(primaryMuscleGroup)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_exercise_equipment ON Exercise(equipment)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_exercise_muscle ON Exercise(primaryMuscleGroup)")
     }
 }
