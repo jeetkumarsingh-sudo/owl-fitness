@@ -2,7 +2,10 @@ package com.example.gymdiary3.core.database.dao
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
-import com.example.gymdiary3.core.database.entity.*
+import com.example.gymdiary3.core.database.entity.WorkoutSetEntity
+import com.example.gymdiary3.core.database.entity.WorkoutSessionEntity
+import com.example.gymdiary3.core.database.entity.ExerciseEntity
+import com.example.gymdiary3.core.database.entity.BodyWeightEntity
 import com.example.gymdiary3.core.database.relation.SessionWithSets
 
 @Dao
@@ -42,7 +45,7 @@ interface WorkoutDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertExercise(exercise: ExerciseEntity)
 
-    @Query("SELECT * FROM Exercise WHERE muscle = :muscle")
+    @Query("SELECT * FROM Exercise WHERE primaryMuscleGroup = :muscle")
     fun getExercisesByMuscle(muscle: String): Flow<List<ExerciseEntity>>
 
     @Query("SELECT * FROM Exercise")

@@ -5,29 +5,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
-import com.example.gymdiary3.domain.service.RecommendationEngine
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.domain.repository.WorkoutRepository
+import com.example.gymdiary3.domain.usecase.analytics.GenerateFitnessInsightsUseCase
+import com.example.gymdiary3.intelligence.model.FitnessInsight
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.*
 
 @HiltViewModel
-class AnalyticsViewModel @Inject constructor(
+class ProgressViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val generateFitnessInsightsUseCase: GenerateFitnessInsightsUseCase
 ) : ViewModel() {
 
     val exerciseName: String = savedStateHandle["exercise"] ?: ""
 
-    init {
-        if (exerciseName.isEmpty()) {
-            android.util.Log.e("AnalyticsVM", "Missing exercise argument")
-        }
-    }
-
     // Single source of truth — one DB subscription
-    private val exerciseSets: StateFlow<List<WorkoutSet>> = workoutRepository.getWorkouts()
+    private val exerciseSets: StateFlow<List<WorkoutSet>> = workoutRepository.getAllSets()
         .map { allSets -> allSets.filter { it.exercise == exerciseName } }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -42,7 +38,7 @@ class AnalyticsViewModel @Inject constructor(
                     trend = stats.trend,
                     trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
                     isPR = stats.isPR,
-                    recommendation = RecommendationEngine.getRecommendation(stats),
+                    recommendation = "",
                     best1RM = stats.best1RM,
                     totalVolume = stats.totalVolume
                 )
@@ -60,5 +56,8 @@ class AnalyticsViewModel @Inject constructor(
 
     val globalVolumeHistory: StateFlow<List<Pair<String, Double>>> = workoutRepository.getSessionsWithSets()
         .map { WorkoutAnalyzer.getVolumeHistory(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val fitnessInsights: StateFlow<List<FitnessInsight>> = generateFitnessInsightsUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

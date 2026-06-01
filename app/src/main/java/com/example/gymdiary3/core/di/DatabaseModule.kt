@@ -4,6 +4,12 @@ import android.content.Context
 import com.example.gymdiary3.core.database.WorkoutDatabase
 import com.example.gymdiary3.core.database.dao.WorkoutDao
 import com.example.gymdiary3.core.database.dao.BodyWeightDao
+import com.example.gymdiary3.domain.repository.WorkoutRepository
+import com.example.gymdiary3.system.session.SessionManager
+import com.example.gymdiary3.system.timer.RestTimerManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,4 +33,14 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideBodyWeightDao(db: WorkoutDatabase): BodyWeightDao = db.bodyWeightDao()
+
+    @Provides
+    @Singleton
+    fun provideSessionManager(workoutRepository: WorkoutRepository): SessionManager =
+        SessionManager(workoutRepository)
+
+    @Provides
+    @Singleton
+    fun provideRestTimerManager(): RestTimerManager =
+        RestTimerManager(CoroutineScope(SupervisorJob() + Dispatchers.Main))
 }

@@ -28,6 +28,9 @@ import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.ui.components.EmptyState
 import com.example.gymdiary3.ui.components.PrBadge
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.viewmodel.ProgressViewModel
+import com.example.gymdiary3.intelligence.model.FitnessInsight
+import com.example.gymdiary3.intelligence.model.InsightSeverity
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,7 +40,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun ProgressScreen(
     nav: NavHostController,
-    viewModel: WorkoutViewModel = hiltViewModel()
+    viewModel: WorkoutViewModel = hiltViewModel(),
+    progressViewModel: ProgressViewModel = hiltViewModel()
 ) {
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
@@ -74,6 +78,10 @@ fun ProgressScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
+                InsightsSection(progressViewModel)
+            }
+            
+            item {
                 WeeklyVolumeAnalysisCard(sessions, userSettings.weightUnit)
             }
 
@@ -96,6 +104,63 @@ fun ProgressScreen(
                 ExerciseProgressCard(exercise, uiState, sets, sdf, userSettings.weightUnit) {
                     nav.navigate("analytics/${Uri.encode(exercise)}")
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun InsightsSection(viewModel: ProgressViewModel) {
+    val insights by viewModel.fitnessInsights.collectAsStateWithLifecycle()
+
+    if (insights.isEmpty()) return
+
+    Column {
+        Text(
+            "INTELLIGENCE",
+            color = OwlColors.PurpleSoft,
+            style = MaterialTheme.typography.labelMedium,
+            letterSpacing = 1.sp
+        )
+        Spacer(Modifier.height(12.dp))
+        insights.take(5).forEach { insight ->
+            InsightCard(insight)
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+fun InsightCard(insight: FitnessInsight) {
+    val borderColor = when (insight.severity) {
+        InsightSeverity.POSITIVE -> OwlColors.GreenPositive
+        InsightSeverity.WARNING -> Color(0xFFFFA000) // Amber
+        InsightSeverity.ACTION_REQUIRED -> OwlColors.RedNegative
+        InsightSeverity.INFO -> OwlColors.BorderSubtle
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = OwlColors.CardBg,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Row(
+            Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            val icon = when (insight.severity) {
+                InsightSeverity.POSITIVE -> "↑"
+                InsightSeverity.WARNING -> "⚠"
+                InsightSeverity.ACTION_REQUIRED -> "!"
+                InsightSeverity.INFO -> "·"
+            }
+            Text(icon, color = borderColor, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp, top = 2.dp))
+            Column {
+                insight.exerciseName?.let {
+                    Text(it.uppercase(), color = OwlColors.PurpleSoft, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Spacer(Modifier.height(4.dp))
+                }
+                Text(insight.message, color = OwlColors.TextPrimary, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

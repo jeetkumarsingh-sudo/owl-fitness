@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.ui.components.EmptyState
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.domain.model.*
 
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -46,6 +47,10 @@ fun ExerciseScreen(
 
     var showAddDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
+    
+    var selectedEquipment by remember { mutableStateOf(EquipmentType.OTHER) }
+    var selectedPattern by remember { mutableStateOf(MovementPattern.ISOLATION) }
+    var selectedTracking by remember { mutableStateOf(TrackingType.WEIGHT_REPS) }
 
     Scaffold(
         containerColor = OwlColors.DeepBg,
@@ -154,7 +159,13 @@ fun ExerciseScreen(
                             .split(" ")
                             .joinToString(" ") { word -> word.lowercase().replaceFirstChar { it.uppercase() } }
                         if (sanitized.isNotEmpty()) {
-                            viewModel.addExercise(sanitized, muscle)
+                            viewModel.addExercise(
+                                name = sanitized,
+                                muscle = muscle,
+                                equipment = selectedEquipment,
+                                movementPattern = selectedPattern,
+                                trackingType = selectedTracking
+                            )
                             newExerciseName = ""
                             showAddDialog = false
                         }
@@ -170,26 +181,94 @@ fun ExerciseScreen(
             },
             title = { Text("Add $muscle Exercise", color = OwlColors.TextPrimary) },
             text = {
-                OutlinedTextField(
-                    value = newExerciseName,
-                    onValueChange = { newExerciseName = it },
-                    label = { Text("Exercise Name", color = OwlColors.TextMuted) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(color = OwlColors.TextPrimary),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = OwlColors.TextPrimary,
-                        unfocusedTextColor = OwlColors.TextPrimary,
-                        focusedBorderColor = OwlColors.Purple,
-                        unfocusedBorderColor = OwlColors.BorderSubtle,
-                        focusedLabelColor = OwlColors.Purple,
-                        unfocusedLabelColor = OwlColors.TextMuted,
-                        cursorColor = OwlColors.Purple,
-                        focusedContainerColor = OwlColors.InputBg,
-                        unfocusedContainerColor = OwlColors.InputBg
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = newExerciseName,
+                        onValueChange = { newExerciseName = it },
+                        label = { Text("Exercise Name", color = OwlColors.TextMuted) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(color = OwlColors.TextPrimary),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = OwlColors.TextPrimary,
+                            unfocusedTextColor = OwlColors.TextPrimary,
+                            focusedBorderColor = OwlColors.Purple,
+                            unfocusedBorderColor = OwlColors.BorderSubtle,
+                            focusedLabelColor = OwlColors.Purple,
+                            unfocusedLabelColor = OwlColors.TextMuted,
+                            cursorColor = OwlColors.Purple,
+                            focusedContainerColor = OwlColors.InputBg,
+                            unfocusedContainerColor = OwlColors.InputBg
+                        )
                     )
-                )
+                    
+                    // Simple selection for Equipment
+                    ClassificationDropdown(
+                        label = "Equipment",
+                        options = EquipmentType.entries,
+                        selected = selectedEquipment,
+                        onSelected = { selectedEquipment = it }
+                    )
+
+                    ClassificationDropdown(
+                        label = "Tracking Type",
+                        options = TrackingType.entries,
+                        selected = selectedTracking,
+                        onSelected = { selectedTracking = it }
+                    )
+                }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T : Enum<T>> ClassificationDropdown(
+    label: String,
+    options: List<T>,
+    selected: T,
+    onSelected: (T) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selected.name.replace("_", " "),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label, color = OwlColors.TextMuted) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = OwlColors.TextPrimary,
+                unfocusedTextColor = OwlColors.TextPrimary,
+                focusedBorderColor = OwlColors.Purple,
+                unfocusedBorderColor = OwlColors.BorderSubtle,
+                focusedLabelColor = OwlColors.Purple,
+                unfocusedLabelColor = OwlColors.TextMuted,
+                focusedContainerColor = OwlColors.InputBg,
+                unfocusedContainerColor = OwlColors.InputBg
+            )
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(OwlColors.CardBg)
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.name.replace("_", " "), color = OwlColors.TextPrimary) },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }

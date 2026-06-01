@@ -92,62 +92,65 @@ class MainActivity : ComponentActivity() {
                     ) {
 
                         composable("home") {
-                            HomeScreen(nav)
+                            HomeScreen(nav = nav)
                         }
 
                         composable("muscle") {
-                            MuscleScreen(nav)
+                            MuscleScreen(nav = nav)
                         }
 
                         composable("exercise/{muscle}") { back ->
                             val muscle = back.arguments?.getString("muscle") ?: ""
-                            ExerciseScreen(nav, muscle)
+                            ExerciseScreen(nav = nav, muscle = muscle)
                         }
 
                         composable("set/{muscle}/{exercise}") { back ->
                             val muscle = back.arguments?.getString("muscle") ?: ""
                             val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
-                            SetScreen(nav, muscle, exercise)
+                            SetScreen(nav = nav, muscle = muscle, exercise = exercise)
                         }
 
                         composable("history") {
-                            SessionHistoryScreen(nav)
+                            SessionHistoryScreen(nav = nav)
                         }
 
                         composable("summary/{sessionId}") { back ->
                             val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
-                            SessionSummaryScreen(nav, sessionId)
+                            SessionSummaryScreen(nav = nav, sessionId = sessionId)
                         }
 
                         composable("weight") {
-                            BodyWeightScreen(nav)
+                            BodyWeightScreen(nav = nav)
                         }
 
                         composable("progress") {
-                            ProgressScreen(nav)
+                            ProgressScreen(nav = nav)
                         }
 
                         composable("analytics/{exercise}") {
-                            AnalyticsScreen(nav)
+                            AnalyticsScreen(nav = nav)
                         }
 
                         composable("settings") {
                             val workoutViewModel: WorkoutViewModel = hiltViewModel()
-                            SettingsScreen(nav) {
-                                lifecycleScope.launch {
-                                    val uri = workoutViewModel.exportAllDataToCsv(applicationContext)
-                                    if (uri != null) {
-                                        val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/csv"
-                                            putExtra(Intent.EXTRA_STREAM, uri)
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            SettingsScreen(
+                                nav = nav,
+                                onExportClick = {
+                                    lifecycleScope.launch {
+                                        val uri = workoutViewModel.exportAllDataToCsv(applicationContext)
+                                        if (uri != null) {
+                                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                                type = "text/csv"
+                                                putExtra(Intent.EXTRA_STREAM, uri)
+                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            }
+                                            startActivity(Intent.createChooser(intent, "Export CSV"))
+                                        } else {
+                                            Toast.makeText(applicationContext, "No data to export", Toast.LENGTH_SHORT).show()
                                         }
-                                        startActivity(Intent.createChooser(intent, "Export CSV"))
-                                    } else {
-                                        Toast.makeText(applicationContext, "No data to export", Toast.LENGTH_SHORT).show()
                                     }
                                 }
-                            }
+                            )
                         }
                     }
                 }

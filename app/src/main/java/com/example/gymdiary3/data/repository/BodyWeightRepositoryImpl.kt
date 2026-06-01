@@ -20,5 +20,5 @@ class BodyWeightRepositoryImpl @Inject constructor(
     override fun getWeights(): Flow<List<BodyWeight>> = bodyWeightDao.getWeights().map { list -> list.map { it.toDomain() } }
     override suspend fun getWeightBetween(start: Long, end: Long): List<BodyWeight> = bodyWeightDao.getWeightBetween(start, end).map { it.toDomain() }
     override fun getLatestBodyWeightFlow(): Flow<Double?> = workoutDao.getLatestBodyWeightFlow()
-    override suspend fun getAllBodyWeightsList(): List<BodyWeight> = workoutDao.getAllBodyWeightsList().map { it.toDomain() }
+    override suspend fun getAllWeights(): List<BodyWeight> = workoutDao.getAllBodyWeightsList().map { it.toDomain() }
 }

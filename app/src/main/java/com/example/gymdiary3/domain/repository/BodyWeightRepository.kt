@@ -10,5 +10,5 @@ interface BodyWeightRepository {
     fun getWeights(): Flow<List<BodyWeight>>
     suspend fun getWeightBetween(start: Long, end: Long): List<BodyWeight>
     fun getLatestBodyWeightFlow(): Flow<Double?>
-    suspend fun getAllBodyWeightsList(): List<BodyWeight>
+    suspend fun getAllWeights(): List<BodyWeight>
 }

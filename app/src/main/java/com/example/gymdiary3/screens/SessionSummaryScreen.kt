@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -223,6 +224,21 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets, unit: String) {
                     SummaryStat("VOLUME", "${s.totalVolume.toInt()}$unit")
                     SummaryStat("TIME", "${s.duration / 60000}m")
                 }
+
+                if (!s.session.notes.isNullOrBlank()) {
+                    Spacer(Modifier.height(16.dp))
+                    Surface(
+                        color = OwlColors.CardBgAlt,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(12.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.Notes, null, tint = OwlColors.PurpleSoft, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(s.session.notes, style = MaterialTheme.typography.bodySmall, color = OwlColors.TextSecondary)
+                        }
+                    }
+                }
             }
         }
     }
@@ -318,16 +334,36 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
 
                 Spacer(Modifier.height(12.dp))
                 sets.forEach { set ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = OwlColors.TextMuted)
-                        Text(
-                            "${set.weight}$unit × ${set.reps}",
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                            color = OwlColors.TextPrimary
-                        )
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Set ${set.setNumber}", style = MaterialTheme.typography.bodyLarge, color = OwlColors.TextMuted)
+                                if (set.rpe != null) {
+                                    Text(
+                                        " · RPE ${set.rpe}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = OwlColors.PurpleSoft,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                "${set.weight}$unit × ${set.reps}",
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                                color = OwlColors.TextPrimary
+                            )
+                        }
+                        if (!set.notes.isNullOrBlank()) {
+                            Text(
+                                set.notes,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OwlColors.TextMuted,
+                                modifier = Modifier.padding(start = 0.dp, top = 2.dp)
+                            )
+                        }
                     }
                 }
             }
