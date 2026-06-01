@@ -1,7 +1,7 @@
 package com.example.gymdiary3.domain.analyzer
 
-import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.data.WorkoutSet
+import com.example.gymdiary3.domain.model.SessionWithSets
+import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.model.ExerciseStats
 import com.example.gymdiary3.domain.util.WorkoutCalculations
 import java.text.SimpleDateFormat

@@ -4,9 +4,9 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gymdiary3.data.Exercise
-import com.example.gymdiary3.data.WorkoutSet
-import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.domain.model.Exercise
+import com.example.gymdiary3.domain.model.WorkoutSet
+import com.example.gymdiary3.domain.model.SessionWithSets
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.service.RecommendationEngine
 import com.example.gymdiary3.presentation.state.ExerciseUiState
@@ -270,7 +270,7 @@ class WorkoutViewModel @Inject constructor(
 
     fun addExercise(name: String, muscle: String) {
         viewModelScope.launch {
-            exerciseRepository.insertExercise(Exercise(name, muscle, true))
+            exerciseRepository.insertExercise(Exercise(name, muscle, isCustom = true))
         }
     }
 

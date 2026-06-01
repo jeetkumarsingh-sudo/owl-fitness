@@ -24,7 +24,7 @@ import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.ui.theme.OwlColors
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.gymdiary3.data.BodyWeight
+import com.example.gymdiary3.domain.model.BodyWeight
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
 import com.github.tehras.charts.line.renderer.line.SolidLineDrawer

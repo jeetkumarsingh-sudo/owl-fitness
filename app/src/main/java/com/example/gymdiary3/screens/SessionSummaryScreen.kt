@@ -24,8 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.data.WorkoutSet
+import com.example.gymdiary3.domain.model.SessionWithSets
+import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.ui.components.PrBadge
 import com.example.gymdiary3.viewmodel.WorkoutViewModel

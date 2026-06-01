@@ -2,7 +2,7 @@ package com.example.gymdiary3.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gymdiary3.data.BodyWeight
+import com.example.gymdiary3.domain.model.BodyWeight
 import com.example.gymdiary3.domain.repository.BodyWeightRepository
 import com.example.gymdiary3.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
