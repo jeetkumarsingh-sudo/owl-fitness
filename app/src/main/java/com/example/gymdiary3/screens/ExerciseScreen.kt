@@ -211,6 +211,13 @@ fun ExerciseScreen(
                     )
 
                     ClassificationDropdown(
+                        label = "Movement Pattern",
+                        options = MovementPattern.entries,
+                        selected = selectedPattern,
+                        onSelected = { selectedPattern = it }
+                    )
+
+                    ClassificationDropdown(
                         label = "Tracking Type",
                         options = TrackingType.entries,
                         selected = selectedTracking,

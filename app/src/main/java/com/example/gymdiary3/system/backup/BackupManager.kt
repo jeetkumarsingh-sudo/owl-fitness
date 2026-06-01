@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import com.example.gymdiary3.domain.repository.BodyWeightRepository
 import com.example.gymdiary3.domain.repository.ExerciseRepository
 import com.example.gymdiary3.domain.repository.WorkoutRepository
+import com.example.gymdiary3.domain.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -69,8 +70,42 @@ class BackupManager @Inject constructor(
 
             val backup = json.decodeFromString<GymDiaryBackup>(content)
             
-            // TODO: Implementation of merging data
-            // This would involve batch inserts into repositories
+            // Merge Exercises
+            backup.exercises.forEach { e ->
+                exerciseRepository.insertExercise(
+                    Exercise(
+                        name = e.name,
+                        primaryMuscleGroup = e.primaryMuscleGroup,
+                        secondaryMuscleGroups = emptyList(),
+                        equipment = EquipmentType.valueOf(e.equipment),
+                        movementPattern = MovementPattern.valueOf(e.movementPattern),
+                        trackingType = TrackingType.valueOf(e.trackingType),
+                        isCustom = e.isCustom
+                    )
+                )
+            }
+
+            // Merge BodyWeights
+            backup.bodyWeights.forEach { bw ->
+                bodyWeightRepository.insertWeight(BodyWeight(0, bw.timestamp, bw.weight))
+            }
+
+            // Merge Sessions & Sets
+            backup.sessions.forEach { s ->
+                val sessionId = workoutRepository.insertSession(
+                    WorkoutSession(0, s.startTime, s.endTime, s.name, s.notes)
+                ).toInt()
+                
+                s.sets.forEach { set ->
+                    workoutRepository.insertSet(
+                        WorkoutSet(
+                            0, set.timestamp, set.muscle, set.exercise,
+                            set.setNumber, set.reps, set.weight, set.isAssisted,
+                            sessionId, set.rpe, set.notes
+                        )
+                    )
+                }
+            }
             
             Result.success(Unit)
         } catch (e: Exception) {

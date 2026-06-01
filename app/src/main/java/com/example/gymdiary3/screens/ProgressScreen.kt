@@ -66,8 +66,10 @@ fun ProgressScreen(
     ) { padding ->
         val exercisesList = remember(grouped) {
             grouped.entries
+                .asSequence()
                 .sortedByDescending { (_, sets) -> sets.maxOfOrNull { it.timestamp } ?: 0L }
                 .map { it.key }
+                .toList()
         }
         
         LazyColumn(

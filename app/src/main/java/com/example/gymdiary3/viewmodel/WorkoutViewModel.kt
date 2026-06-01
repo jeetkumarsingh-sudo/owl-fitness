@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,7 +38,6 @@ class WorkoutViewModel @Inject constructor(
     private val logSetUseCase: LogSetUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val endSessionUseCase: EndSessionUseCase,
-    private val getExerciseStatsUseCase: GetExerciseStatsUseCase,
     private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase
 ) : ViewModel() {
 
@@ -337,11 +335,13 @@ class WorkoutViewModel @Inject constructor(
 
     fun getRecentExercises(): List<Pair<String, String>> {
         return sessions.value
+            .asSequence()
             .sortedByDescending { it.session.startTime }
             .take(10)
             .flatMap { it.sets }
             .map { it.exercise to it.muscle }
             .distinctBy { it.first }
+            .toList()
     }
 
     fun getMuscleGroups(): List<String> {
