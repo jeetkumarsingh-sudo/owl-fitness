@@ -1,6 +1,6 @@
 package com.example.gymdiary3.domain
 
-import com.example.gymdiary3.data.BodyWeight
+import com.example.gymdiary3.domain.model.BodyWeight
 
 data class BodyWeightStats(
     val latestWeight: Double,

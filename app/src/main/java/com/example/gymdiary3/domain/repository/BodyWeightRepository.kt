@@ -1,6 +1,6 @@
 package com.example.gymdiary3.domain.repository
 
-import com.example.gymdiary3.data.BodyWeight
+import com.example.gymdiary3.domain.model.BodyWeight
 import kotlinx.coroutines.flow.Flow
 
 interface BodyWeightRepository {

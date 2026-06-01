@@ -1,6 +1,6 @@
 package com.example.gymdiary3.domain.repository
 
-import com.example.gymdiary3.data.Exercise
+import com.example.gymdiary3.domain.model.Exercise
 import kotlinx.coroutines.flow.Flow
 
 interface ExerciseRepository {

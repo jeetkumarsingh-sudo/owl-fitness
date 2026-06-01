@@ -6,7 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import androidx.core.content.FileProvider
-import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.domain.model.SessionWithSets
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat

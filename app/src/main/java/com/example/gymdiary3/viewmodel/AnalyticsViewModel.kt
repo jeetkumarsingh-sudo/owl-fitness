@@ -3,7 +3,7 @@ package com.example.gymdiary3.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gymdiary3.data.WorkoutSet
+import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.database.WorkoutDao
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.service.RecommendationEngine

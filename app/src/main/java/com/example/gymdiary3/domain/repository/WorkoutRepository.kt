@@ -1,8 +1,8 @@
 package com.example.gymdiary3.domain.repository
 
-import com.example.gymdiary3.data.WorkoutSet
-import com.example.gymdiary3.data.WorkoutSession
-import com.example.gymdiary3.data.SessionWithSets
+import com.example.gymdiary3.domain.model.WorkoutSet
+import com.example.gymdiary3.domain.model.WorkoutSession
+import com.example.gymdiary3.domain.model.SessionWithSets
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
