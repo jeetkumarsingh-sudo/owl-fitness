@@ -32,13 +32,15 @@ import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @Composable
 fun HomeScreen(
     nav: NavHostController,
-    viewModel: WorkoutViewModel,
-    bodyViewModel: BodyWeightViewModel,
-    context: Context
+    viewModel: WorkoutViewModel = hiltViewModel(),
+    bodyViewModel: BodyWeightViewModel = hiltViewModel()
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val currentSessionId by viewModel.sessionManager.currentSessionId.collectAsStateWithLifecycle()
     val latestWeight by bodyViewModel.latestBodyWeight.collectAsStateWithLifecycle()
     val totalWorkouts by viewModel.totalWorkoutCount.collectAsStateWithLifecycle(0)

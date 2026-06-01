@@ -10,9 +10,14 @@ import com.example.gymdiary3.domain.service.RecommendationEngine
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import kotlinx.coroutines.flow.*
 
-class AnalyticsViewModel(
+import com.example.gymdiary3.domain.repository.WorkoutRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+
+@HiltViewModel
+class AnalyticsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
 
     val exerciseName: String = savedStateHandle["exercise"] ?: ""
@@ -24,7 +29,7 @@ class AnalyticsViewModel(
     }
 
     // Single source of truth — one DB subscription
-    private val exerciseSets: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
+    private val exerciseSets: StateFlow<List<WorkoutSet>> = workoutRepository.getWorkouts()
         .map { allSets -> allSets.filter { it.exercise == exerciseName } }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -55,7 +60,7 @@ class AnalyticsViewModel(
         .map { sets -> WorkoutAnalyzer.getExerciseVolumeHistory(exerciseName, sets) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val globalVolumeHistory: StateFlow<List<Pair<String, Double>>> = workoutDao.getSessionsWithSets()
+    val globalVolumeHistory: StateFlow<List<Pair<String, Double>>> = workoutRepository.getSessionsWithSets()
         .map { WorkoutAnalyzer.getVolumeHistory(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

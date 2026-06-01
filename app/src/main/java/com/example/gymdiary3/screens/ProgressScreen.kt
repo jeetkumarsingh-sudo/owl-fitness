@@ -31,9 +31,14 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProgressScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
+fun ProgressScreen(
+    nav: NavHostController,
+    viewModel: WorkoutViewModel = hiltViewModel()
+) {
     val workouts by viewModel.workouts.collectAsStateWithLifecycle()
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val exerciseUiStates by viewModel.exerciseUiStates.collectAsStateWithLifecycle()

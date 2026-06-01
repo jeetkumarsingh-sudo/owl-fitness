@@ -30,13 +30,15 @@ import androidx.navigation.NavHostController
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SetScreen(
     nav: NavHostController,
     muscle: String,
     exercise: String,
-    viewModel: WorkoutViewModel
+    viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     var reps by remember { mutableIntStateOf(0) }
     var weight by remember { mutableDoubleStateOf(0.0) }

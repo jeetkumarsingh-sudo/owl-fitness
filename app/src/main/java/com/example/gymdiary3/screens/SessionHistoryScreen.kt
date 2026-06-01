@@ -30,9 +30,14 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun SessionHistoryScreen(nav: NavHostController, viewModel: WorkoutViewModel) {
+fun SessionHistoryScreen(
+    nav: NavHostController,
+    viewModel: WorkoutViewModel = hiltViewModel()
+) {
     val sessionsWithSets by viewModel.sessionsWithSets.collectAsStateWithLifecycle()
     val sdf = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()) }
     val timeSdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }

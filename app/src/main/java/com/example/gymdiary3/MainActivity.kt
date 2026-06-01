@@ -7,7 +7,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
@@ -21,18 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.*
 import androidx.navigation.compose.*
-import com.example.gymdiary3.database.WorkoutDatabase
-import com.example.gymdiary3.domain.settings.UserSettingsRepository
 import com.example.gymdiary3.screens.*
+import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.ui.theme.OwlFitnessTheme
-import com.example.gymdiary3.viewmodel.*
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
@@ -42,41 +38,11 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
     object Weight : BottomNavItem("weight", Icons.Default.MonitorWeight, "WEIGHT")
 }
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val database = WorkoutDatabase.getDatabase(this)
-        val workoutDao = database.workoutDao()
-        val bodyDao = database.bodyWeightDao()
-
-        val workoutViewModel by viewModels<WorkoutViewModel> {
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return WorkoutViewModel(workoutDao, UserSettingsRepository(applicationContext)) as T
-                }
-            }
-        }
-
-        val bodyWeightViewModel by viewModels<BodyWeightViewModel> {
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return BodyWeightViewModel(bodyDao, UserSettingsRepository(applicationContext)) as T
-                }
-            }
-        }
-
-        val settingsViewModel by viewModels<SettingsViewModel> {
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SettingsViewModel(UserSettingsRepository(applicationContext)) as T
-                }
-            }
-        }
 
         setContent {
             OwlFitnessTheme {
@@ -126,7 +92,7 @@ class MainActivity : ComponentActivity() {
                     ) {
 
                         composable("home") {
-                            HomeScreen(nav, workoutViewModel, bodyWeightViewModel, applicationContext)
+                            HomeScreen(nav)
                         }
 
                         composable("muscle") {
@@ -135,46 +101,39 @@ class MainActivity : ComponentActivity() {
 
                         composable("exercise/{muscle}") { back ->
                             val muscle = back.arguments?.getString("muscle") ?: ""
-                            ExerciseScreen(nav, muscle, workoutViewModel)
+                            ExerciseScreen(nav, muscle)
                         }
 
                         composable("set/{muscle}/{exercise}") { back ->
                             val muscle = back.arguments?.getString("muscle") ?: ""
                             val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
-                            SetScreen(nav, muscle, exercise, workoutViewModel)
+                            SetScreen(nav, muscle, exercise)
                         }
 
                         composable("history") {
-                            SessionHistoryScreen(nav, workoutViewModel)
+                            SessionHistoryScreen(nav)
                         }
 
                         composable("summary/{sessionId}") { back ->
                             val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
-                            SessionSummaryScreen(nav, workoutViewModel, sessionId)
+                            SessionSummaryScreen(nav, sessionId)
                         }
 
                         composable("weight") {
-                            BodyWeightScreen(nav, bodyWeightViewModel)
+                            BodyWeightScreen(nav)
                         }
 
                         composable("progress") {
-                            ProgressScreen(nav, workoutViewModel)
+                            ProgressScreen(nav)
                         }
 
-                        composable("analytics/{exercise}") { backStackEntry ->
-                            val analyticsViewModel = viewModel<AnalyticsViewModel>(
-                                factory = object : ViewModelProvider.Factory {
-                                    @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                                        return AnalyticsViewModel(backStackEntry.savedStateHandle, workoutDao) as T
-                                    }
-                                }
-                            )
-                            AnalyticsScreen(nav, analyticsViewModel)
+                        composable("analytics/{exercise}") {
+                            AnalyticsScreen(nav)
                         }
 
                         composable("settings") {
-                            SettingsScreen(nav, settingsViewModel) {
+                            val workoutViewModel: WorkoutViewModel = hiltViewModel()
+                            SettingsScreen(nav) {
                                 lifecycleScope.launch {
                                     val uri = workoutViewModel.exportAllDataToCsv(applicationContext)
                                     if (uri != null) {

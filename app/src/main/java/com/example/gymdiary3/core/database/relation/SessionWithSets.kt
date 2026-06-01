@@ -1,22 +1,22 @@
-package com.example.gymdiary3.data
+package com.example.gymdiary3.core.database.relation
 
-import androidx.compose.runtime.Immutable
 import androidx.room.Embedded
 import androidx.room.Relation
+import com.example.gymdiary3.core.database.entity.WorkoutSessionEntity
+import com.example.gymdiary3.core.database.entity.WorkoutSetEntity
 import com.example.gymdiary3.domain.util.WorkoutCalculations
 
-@Immutable
 data class SessionWithSets(
-    @Embedded val session: WorkoutSession,
+    @Embedded val session: WorkoutSessionEntity,
     @Relation(
         parentColumn = "id",
         entityColumn = "sessionId"
     )
-    val sets: List<WorkoutSet>
+    val sets: List<WorkoutSetEntity>
 ) {
     val date: Long get() = session.startTime
     
-    val exercises: Map<String, List<WorkoutSet>> 
+    val exercises: Map<String, List<WorkoutSetEntity>> 
         get() = sets.groupBy { it.exercise }
         
     val totalVolume: Double 

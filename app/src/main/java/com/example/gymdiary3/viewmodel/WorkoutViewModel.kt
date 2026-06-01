@@ -7,14 +7,18 @@ import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.data.Exercise
 import com.example.gymdiary3.data.WorkoutSet
 import com.example.gymdiary3.data.SessionWithSets
-import com.example.gymdiary3.database.WorkoutDao
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.service.RecommendationEngine
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.system.session.SessionManager
 import com.example.gymdiary3.system.timer.RestTimerManager
 import com.example.gymdiary3.system.export.ExportFormatter
-import com.example.gymdiary3.domain.settings.UserSettingsRepository
+import com.example.gymdiary3.domain.repository.WorkoutRepository
+import com.example.gymdiary3.domain.repository.ExerciseRepository
+import com.example.gymdiary3.domain.repository.SettingsRepository
+import com.example.gymdiary3.domain.repository.BodyWeightRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -25,17 +29,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WorkoutViewModel(
-    private val workoutDao: WorkoutDao,
-    val settingsRepository: UserSettingsRepository
+@HiltViewModel
+class WorkoutViewModel @Inject constructor(
+    private val workoutRepository: WorkoutRepository,
+    private val exerciseRepository: ExerciseRepository,
+    private val bodyWeightRepository: BodyWeightRepository,
+    val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     // System Managers
-    val sessionManager = SessionManager(workoutDao)
+    val sessionManager = SessionManager(workoutRepository)
     val restTimerManager = RestTimerManager(viewModelScope)
 
     // Data Pipeline
-    val workouts: StateFlow<List<WorkoutSet>> = workoutDao.getWorkouts()
+    val workouts: StateFlow<List<WorkoutSet>> = workoutRepository.getWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Exercises logged in current session  
@@ -61,7 +68,8 @@ class WorkoutViewModel(
         .flatMapLatest { sessionId ->
             if (sessionId == null) flowOf(0L)
             else flow {
-                val startTime = workoutDao.getSessionById(sessionId).startTime
+                val session = workoutRepository.getSessionById(sessionId)
+                val startTime = session.startTime
                 while (true) {
                     emit((System.currentTimeMillis() - startTime) / 1000)
                     kotlinx.coroutines.delay(1000)
@@ -70,7 +78,7 @@ class WorkoutViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
-    val sessions: StateFlow<List<SessionWithSets>> = workoutDao.getSessionsWithSets()
+    val sessions: StateFlow<List<SessionWithSets>> = workoutRepository.getSessionsWithSets()
         .map { WorkoutAnalyzer.filterValidSessions(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -101,7 +109,7 @@ class WorkoutViewModel(
     val exercisesByMuscle: StateFlow<List<Exercise>> = _selectedMuscle
         .flatMapLatest { muscle ->
             if (muscle.isEmpty()) flowOf(emptyList())
-            else workoutDao.getExercisesByMuscle(muscle)
+            else exerciseRepository.getExercisesByMuscle(muscle)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -116,30 +124,30 @@ class WorkoutViewModel(
     private val _currentSet = MutableStateFlow(1)
     val currentSet: StateFlow<Int> = _currentSet.asStateFlow()
 
-    val latestBodyWeight: StateFlow<Double?> = workoutDao.getLatestBodyWeightFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
     val isRestTimerRunning: StateFlow<Boolean> = restTimerManager.isRestTimerRunning
     val restTimerSeconds: StateFlow<Int> = restTimerManager.restTimerSeconds
+
+    val latestBodyWeight: StateFlow<Double?> = bodyWeightRepository.getLatestBodyWeightFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     fun skipRestTimer() {
         restTimerManager.skipTimer()
     }
 
     fun getLastThreeSets(exercise: String): Flow<List<WorkoutSet>> {
-        return workoutDao.getLastThreeSets(exercise)
+        return workoutRepository.getLastThreeSets(exercise)
     }
 
     init {
         insertDefaultWorkouts()
         viewModelScope.launch {
-            workoutDao.deleteEmptySessions()
+            workoutRepository.deleteEmptySessions()
         }
     }
 
     fun loadLastSet(exerciseName: String) {
         viewModelScope.launch {
-            _lastSet.value = workoutDao.getLastSet(exerciseName)
+            _lastSet.value = workoutRepository.getLastSet(exerciseName)
         }
     }
 
@@ -151,7 +159,7 @@ class WorkoutViewModel(
             }
             val dayStart = cal.timeInMillis
             val dayEnd = dayStart + 86_400_000L
-            val count = workoutDao.getTodaySetCount(exerciseName, dayStart, dayEnd)
+            val count = workoutRepository.getTodaySetCount(exerciseName, dayStart, dayEnd)
             _currentSet.value = count + 1
         }
     }
@@ -181,15 +189,15 @@ class WorkoutViewModel(
         cal.set(Calendar.MILLISECOND, 0)
         val thisWeekStart = cal.timeInMillis
         val lastWeekStart = thisWeekStart - 7L * 24 * 60 * 60 * 1000
-        return workoutDao.getSetsForExerciseInDateRange(exerciseName, lastWeekStart, thisWeekStart)
+        return workoutRepository.getSetsForExerciseInDateRange(exerciseName, lastWeekStart, thisWeekStart)
     }
 
     fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>> {
-        return workoutDao.getLastSessionSetsForExercise(exerciseName, currentSessionId)
+        return workoutRepository.getLastSessionSetsForExercise(exerciseName, currentSessionId)
     }
 
     suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double {
-        return workoutDao.getHistoricBest1RM(exerciseName, excludeSessionId) ?: 0.0
+        return workoutRepository.getHistoricBest1RM(exerciseName, excludeSessionId) ?: 0.0
     }
 
     fun startRestTimer(seconds: Int) {
@@ -215,7 +223,7 @@ class WorkoutViewModel(
         if (!WorkoutAnalyzer.isValidSet(weight, reps)) return
         
         viewModelScope.launch {
-            workoutDao.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, isAssisted, sessionId))
+            workoutRepository.insertWorkout(WorkoutSet(0, System.currentTimeMillis(), muscle, exercise, setNumber, reps, weight, isAssisted, sessionId))
             updateSetNumber(exercise)
             
             val defaultRest = settingsRepository.userSettingsFlow.firstOrNull()?.defaultRestSeconds ?: 90
@@ -225,26 +233,26 @@ class WorkoutViewModel(
 
     fun deleteSession(id: Int) {
         viewModelScope.launch {
-            workoutDao.deleteSessionById(id)
+            workoutRepository.deleteSessionById(id)
         }
     }
 
     fun deleteEmptySessions() {
         viewModelScope.launch {
-            workoutDao.deleteEmptySessions()
+            workoutRepository.deleteEmptySessions()
         }
     }
 
     suspend fun exportAllDataToCsv(context: Context): Uri? = withContext(Dispatchers.IO) {
         if (sessions.value.isEmpty()) return@withContext null
-        val bodyWeights = workoutDao.getAllBodyWeightsList()
+        val bodyWeights = bodyWeightRepository.getAllBodyWeightsList()
         val csvContent = ExportFormatter.buildCsv(sessions.value, bodyWeights)
         return@withContext com.example.gymdiary3.data.FileHandler.writeToCache(context, csvContent)
     }
 
     private fun insertDefaultWorkouts() {
         viewModelScope.launch {
-            val existing = workoutDao.getAllExercisesList()
+            val existing = exerciseRepository.getAllExercisesList()
             if (existing.isEmpty()) {
                 val defaults = listOf(
                     Exercise("Bench Press", "Chest"), Exercise("Incline Bench Press", "Chest"),
@@ -255,20 +263,20 @@ class WorkoutViewModel(
                     Exercise("Triceps Pushdown", "Triceps"), Exercise("Dips", "Triceps"),
                     Exercise("Plank", "Abs"), Exercise("Crunches", "Abs")
                 )
-                defaults.forEach { workoutDao.insertExercise(it) }
+                defaults.forEach { exerciseRepository.insertExercise(it) }
             }
         }
     }
 
     fun addExercise(name: String, muscle: String) {
         viewModelScope.launch {
-            workoutDao.insertExercise(Exercise(name, muscle, true))
+            exerciseRepository.insertExercise(Exercise(name, muscle, true))
         }
     }
 
     fun deleteExercise(exercise: Exercise) {
         viewModelScope.launch {
-            workoutDao.deleteExercise(exercise)
+            exerciseRepository.deleteExercise(exercise)
         }
     }
 

@@ -28,9 +28,15 @@ import com.example.gymdiary3.ui.components.EmptyState
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 
+import androidx.hilt.navigation.compose.hiltViewModel
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ExerciseScreen(nav: NavHostController, muscle: String, viewModel: WorkoutViewModel) {
+fun ExerciseScreen(
+    nav: NavHostController,
+    muscle: String,
+    viewModel: WorkoutViewModel = hiltViewModel()
+) {
 
     val exercises by viewModel.exercisesByMuscle.collectAsStateWithLifecycle()
 
