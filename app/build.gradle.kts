@@ -45,6 +45,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -68,6 +72,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+    androidTestImplementation("androidx.room:room-testing:2.8.4")
 
     // Navigation
     implementation(libs.androidx.navigation.compose)

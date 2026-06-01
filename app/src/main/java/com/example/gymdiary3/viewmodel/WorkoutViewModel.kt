@@ -307,6 +307,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun addExercise(
+
         name: String, 
         muscle: String,
         equipment: com.example.gymdiary3.domain.model.EquipmentType = com.example.gymdiary3.domain.model.EquipmentType.OTHER,
