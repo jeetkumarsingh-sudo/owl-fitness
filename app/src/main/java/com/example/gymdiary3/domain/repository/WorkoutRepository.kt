@@ -14,7 +14,7 @@ interface WorkoutRepository {
     suspend fun deleteSession(session: WorkoutSession)
     suspend fun deleteEmptySessions()
     suspend fun getSessionWithSetsById(sessionId: Int): SessionWithSets?
-    suspend fun getSessionById(sessionId: Int): WorkoutSession
+    suspend fun getSessionById(sessionId: Int): WorkoutSession?
     suspend fun deleteSessionById(id: Int)
     suspend fun getLastSet(exerciseName: String): WorkoutSet?
     fun getLastThreeSets(exerciseName: String): Flow<List<WorkoutSet>>

@@ -73,10 +73,12 @@ class WorkoutViewModel @Inject constructor(
             if (sessionId == null) flowOf(0L)
             else flow {
                 val session = workoutRepository.getSessionById(sessionId)
-                val startTime = session.startTime
-                while (true) {
-                    emit((System.currentTimeMillis() - startTime) / 1000)
-                    kotlinx.coroutines.delay(1000)
+                if (session != null) {
+                    val startTime = session.startTime
+                    while (true) {
+                        emit((System.currentTimeMillis() - startTime) / 1000)
+                        kotlinx.coroutines.delay(1000)
+                    }
                 }
             }
         }
@@ -91,7 +93,7 @@ class WorkoutViewModel @Inject constructor(
         .flatMapLatest { sessionId ->
             if (sessionId == null) flowOf(null)
             else flow<String?> {
-                emit(workoutRepository.getSessionById(sessionId).notes)
+                emit(workoutRepository.getSessionById(sessionId)?.notes)
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -100,7 +102,9 @@ class WorkoutViewModel @Inject constructor(
         val sessionId = sessionManager.currentSessionId.value ?: return
         viewModelScope.launch {
             val session = workoutRepository.getSessionById(sessionId)
-            workoutRepository.updateSession(session.copy(notes = notes))
+            if (session != null) {
+                workoutRepository.updateSession(session.copy(notes = notes))
+            }
         }
     }
 

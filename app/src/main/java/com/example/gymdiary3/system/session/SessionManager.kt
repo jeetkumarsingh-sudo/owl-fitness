@@ -27,21 +27,20 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
 
     suspend fun endSession(onComplete: (Int) -> Unit) {
         val id = _currentSessionId.value ?: return
-        
+
         val sessionWithSets = workoutRepository.getSessionWithSetsById(id)
         if (sessionWithSets == null || !WorkoutAnalyzer.isValidSession(sessionWithSets)) {
             val session = sessionWithSets?.session ?: workoutRepository.getSessionById(id)
-            workoutRepository.deleteSession(session)
+            if (session != null) {
+                workoutRepository.deleteSession(session)
+            }
             _currentSessionId.value = null
             currentStartTime = 0L
             return
         }
 
-        val session = WorkoutSession(
-            id = id,
-            startTime = currentStartTime,
-            endTime = System.currentTimeMillis()
-        )
+        val existingSession = sessionWithSets.session
+        val session = existingSession.copy(endTime = System.currentTimeMillis())
         workoutRepository.updateSession(session)
         _currentSessionId.value = null
         currentStartTime = 0L
