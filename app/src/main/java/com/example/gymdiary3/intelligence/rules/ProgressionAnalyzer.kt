@@ -25,8 +25,13 @@ class ProgressionAnalyzer : IntelligenceRule {
             val firstHalf = sessions.take(sessions.size / 2)
             val secondHalf = sessions.drop(sessions.size / 2)
 
-            val avgFirst = firstHalf.mapNotNull { it.maxOfOrNull { s -> s.weight } }.average()
-            val avgSecond = secondHalf.mapNotNull { it.maxOfOrNull { s -> s.weight } }.average()
+            val firstHalfWeights = firstHalf.mapNotNull { it.maxOfOrNull { s -> s.weight } }
+            val secondHalfWeights = secondHalf.mapNotNull { it.maxOfOrNull { s -> s.weight } }
+
+            if (firstHalfWeights.isEmpty() || secondHalfWeights.isEmpty()) continue
+
+            val avgFirst = firstHalfWeights.average()
+            val avgSecond = secondHalfWeights.average()
 
             val progressPercent = if (avgFirst > 0) ((avgSecond - avgFirst) / avgFirst) * 100 else 0.0
 

@@ -30,7 +30,8 @@ class FatigueEstimator : IntelligenceRule {
                 session.sumOf { it.weight * it.reps }
             }
 
-            val weightDecline = maxWeights.last() < maxWeights[maxWeights.size / 2]
+            val peak = maxWeights.maxOrNull() ?: continue
+            val weightDecline = maxWeights.last() < peak
             val volumeIncreasing = volumePerSession.last() > volumePerSession.first()
 
             if (weightDecline && volumeIncreasing) {

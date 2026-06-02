@@ -197,9 +197,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
     val latestWeight = weights.maxByOrNull { it.timestamp }
-    val previousWeight = if (weights.size >= 2) {
-        weights.sortedByDescending { it.timestamp }[1]
-    } else null
+    val previousWeight = weights.sortedByDescending { it.timestamp }.getOrNull(1)
 
     val weightChange = (latestWeight?.weight ?: 0.0) - (previousWeight?.weight ?: 0.0)
 

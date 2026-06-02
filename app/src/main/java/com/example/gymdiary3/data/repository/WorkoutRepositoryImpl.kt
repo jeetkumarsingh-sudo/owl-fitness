@@ -37,8 +37,8 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun getSessionWithSetsById(sessionId: Int): SessionWithSets? = 
         workoutDao.getSessionWithSetsById(sessionId)?.toDomain()
     
-    override suspend fun getSessionById(sessionId: Int): WorkoutSession = 
-        workoutDao.getSessionById(sessionId).toDomain()
+    override suspend fun getSessionById(sessionId: Int): WorkoutSession? =
+        workoutDao.getSessionById(sessionId)?.toDomain()
     
     override suspend fun deleteSessionById(id: Int) = workoutDao.deleteSessionById(id)
     

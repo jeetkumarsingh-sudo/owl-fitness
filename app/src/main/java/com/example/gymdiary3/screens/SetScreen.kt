@@ -309,7 +309,11 @@ fun SetScreen(
                         style = MaterialTheme.typography.headlineLarge.copy(fontSize = 40.sp),
                         color = OwlColors.TextPrimary
                     )
-                    val progress = if (timerInitialSeconds > 0) timerSeconds.toFloat() / timerInitialSeconds.toFloat() else 0f
+                    val progress = when {
+                        timerInitialSeconds <= 0 -> 0f
+                        timerSeconds <= 0 -> 1f
+                        else -> timerSeconds.toFloat() / timerInitialSeconds.toFloat()
+                    }
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier.fillMaxWidth().height(4.dp),
