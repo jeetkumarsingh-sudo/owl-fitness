@@ -33,6 +33,8 @@ import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.launch
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gymdiary3.domain.model.WorkoutSet
+import java.util.Calendar
+import androidx.compose.foundation.clickable
 
 @Composable
 fun HomeScreen(
@@ -52,6 +54,57 @@ fun HomeScreen(
 
     var isVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { isVisible = true }
+
+    var showSessionDateDialog by remember { mutableStateOf(false) }
+    var selectedSessionDate by remember { mutableStateOf(0L) }
+
+    if (showSessionDateDialog) {
+        AlertDialog(
+            onDismissRequest = { showSessionDateDialog = false },
+            title = { Text("When did you work out?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val cal = Calendar.getInstance()
+                    cal.set(Calendar.HOUR_OF_DAY, 0)
+                    cal.set(Calendar.MINUTE, 0)
+                    cal.set(Calendar.SECOND, 0)
+                    cal.set(Calendar.MILLISECOND, 0)
+                    val todayMillis = cal.timeInMillis
+                    cal.add(Calendar.DAY_OF_MONTH, -1)
+                    val yesterdayMillis = cal.timeInMillis
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            selectedSessionDate = todayMillis
+                            showSessionDateDialog = false
+                            viewModel.startSession(selectedSessionDate)
+                        },
+                        color = OwlColors.CardBgAlt,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Today", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            selectedSessionDate = yesterdayMillis
+                            showSessionDateDialog = false
+                            viewModel.startSession(selectedSessionDate)
+                        },
+                        color = OwlColors.CardBgAlt,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Yesterday", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showSessionDateDialog = false }) { Text("CANCEL") }
+            }
+        )
+    }
+
 
     Box(Modifier.fillMaxSize().background(OwlColors.DeepBg)) {
         Column(
@@ -112,11 +165,11 @@ fun HomeScreen(
                             Spacer(Modifier.height(12.dp))
 
                             Button(
-                                onClick = { viewModel.startSession() },
+                                onClick = { showSessionDateDialog = true },
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
                                 shape = RoundedCornerShape(12.dp)
-                            ) { 
+                            ) {
                                 Text("START NEW SESSION", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             }
                         }

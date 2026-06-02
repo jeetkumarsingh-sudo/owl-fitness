@@ -14,9 +14,9 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
 
     private var currentStartTime: Long = 0L
 
-    suspend fun startSession() {
+    suspend fun startSession(sessionDateMillis: Long = System.currentTimeMillis()) {
         if (_currentSessionId.value != null) return
-        currentStartTime = System.currentTimeMillis()
+        currentStartTime = sessionDateMillis
         val session = WorkoutSession(
             startTime = currentStartTime,
             endTime = null

@@ -6,7 +6,7 @@ import javax.inject.Inject
 class StartSessionUseCase @Inject constructor(
     private val sessionManager: SessionManager
 ) {
-    suspend operator fun invoke() {
-        sessionManager.startSession()
+    suspend operator fun invoke(sessionDateMillis: Long = System.currentTimeMillis()) {
+        sessionManager.startSession(sessionDateMillis)
     }
 }
