@@ -38,11 +38,11 @@ class WorkoutViewModel @Inject constructor(
     private val logSetUseCase: LogSetUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val endSessionUseCase: EndSessionUseCase,
-    private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase
+    private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase,
+    val sessionManager: SessionManager
 ) : ViewModel() {
 
     // System Managers
-    val sessionManager = SessionManager(workoutRepository)
     val restTimerManager = RestTimerManager(viewModelScope)
 
     // Data Pipeline
@@ -194,9 +194,9 @@ class WorkoutViewModel @Inject constructor(
         _selectedMuscle.value = muscle
     }
 
-    fun startSession() {
+    fun startSession(sessionDateMillis: Long = System.currentTimeMillis()) {
         viewModelScope.launch {
-            startSessionUseCase()
+            startSessionUseCase(sessionDateMillis)
         }
     }
 
