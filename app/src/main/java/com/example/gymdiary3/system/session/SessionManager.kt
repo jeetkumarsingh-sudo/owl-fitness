@@ -14,6 +14,15 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
 
     private var currentStartTime: Long = 0L
 
+    suspend fun initialize() {
+        if (_currentSessionId.value != null) return
+        val activeSession = workoutRepository.getActiveSession()
+        if (activeSession != null) {
+            _currentSessionId.value = activeSession.id
+            currentStartTime = activeSession.startTime
+        }
+    }
+
     suspend fun startSession(sessionDateMillis: Long = System.currentTimeMillis()) {
         if (_currentSessionId.value != null) return
         currentStartTime = sessionDateMillis
@@ -25,17 +34,24 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
         _currentSessionId.value = id
     }
 
+    fun clearSessionManually() {
+        _currentSessionId.value = null
+        currentStartTime = 0L
+    }
+
     suspend fun endSession(onComplete: (Int) -> Unit) {
         val id = _currentSessionId.value ?: return
 
         val sessionWithSets = workoutRepository.getSessionWithSetsById(id)
         if (sessionWithSets == null || !WorkoutAnalyzer.isValidSession(sessionWithSets)) {
+            // Delete empty or invalid session
             val session = sessionWithSets?.session ?: workoutRepository.getSessionById(id)
             if (session != null) {
                 workoutRepository.deleteSession(session)
             }
             _currentSessionId.value = null
             currentStartTime = 0L
+            onComplete(-1) // Notify UI with a special ID indicating deletion
             return
         }
 

@@ -36,6 +36,15 @@ class WorkoutRepositoryImpl @Inject constructor(
     
     override suspend fun getSessionWithSetsById(sessionId: Int): SessionWithSets? = 
         workoutDao.getSessionWithSetsById(sessionId)?.toDomain()
+
+    override fun getSessionWithSetsFlowById(sessionId: Int): Flow<SessionWithSets?> =
+        workoutDao.getSessionWithSetsFlowById(sessionId).map { it?.toDomain() }
+
+    override fun getSessionFlowById(sessionId: Int): Flow<WorkoutSession?> =
+        workoutDao.getSessionFlowById(sessionId).map { it?.toDomain() }
+
+    override suspend fun getActiveSession(): WorkoutSession? =
+        workoutDao.getActiveSession()?.toDomain()
     
     override suspend fun getSessionById(sessionId: Int): WorkoutSession? =
         workoutDao.getSessionById(sessionId)?.toDomain()
@@ -50,6 +59,9 @@ class WorkoutRepositoryImpl @Inject constructor(
     
     override suspend fun getTodaySetCount(exerciseName: String, dayStart: Long, dayEnd: Long): Int = 
         workoutDao.getTodaySetCount(exerciseName, dayStart, dayEnd)
+
+    override suspend fun getSessionSetCount(exerciseName: String, sessionId: Int): Int =
+        workoutDao.getSessionSetCount(exerciseName, sessionId)
     
     override fun getSetsForExerciseInDateRange(exerciseName: String, weekStart: Long, weekEnd: Long): Flow<List<WorkoutSet>> = 
         workoutDao.getSetsForExerciseInDateRange(exerciseName, weekStart, weekEnd).map { list -> list.map { it.toDomain() } }

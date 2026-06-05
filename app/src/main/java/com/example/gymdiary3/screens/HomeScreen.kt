@@ -64,20 +64,22 @@ fun HomeScreen(
             title = { Text("When did you work out?") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val now = System.currentTimeMillis()
                     val cal = Calendar.getInstance()
+                    cal.timeInMillis = now
                     cal.set(Calendar.HOUR_OF_DAY, 0)
                     cal.set(Calendar.MINUTE, 0)
                     cal.set(Calendar.SECOND, 0)
                     cal.set(Calendar.MILLISECOND, 0)
-                    val todayMillis = cal.timeInMillis
+                    val todayStartMillis = cal.timeInMillis
+                    
                     cal.add(Calendar.DAY_OF_MONTH, -1)
-                    val yesterdayMillis = cal.timeInMillis
+                    val yesterdayStartMillis = cal.timeInMillis
 
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable {
-                            selectedSessionDate = todayMillis
                             showSessionDateDialog = false
-                            viewModel.startSession(selectedSessionDate)
+                            viewModel.startSession(now) // Use actual current time
                         },
                         color = OwlColors.CardBgAlt,
                         shape = RoundedCornerShape(8.dp)
@@ -87,9 +89,8 @@ fun HomeScreen(
 
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable {
-                            selectedSessionDate = yesterdayMillis
                             showSessionDateDialog = false
-                            viewModel.startSession(selectedSessionDate)
+                            viewModel.startSession(yesterdayStartMillis) // Start at beginning of yesterday
                         },
                         color = OwlColors.CardBgAlt,
                         shape = RoundedCornerShape(8.dp)
@@ -140,7 +141,15 @@ fun HomeScreen(
                     lastSetLogged = lastSetLogged,
                     onUpdateNotes = { viewModel.updateSessionNotes(it) },
                     onContinueWorkout = { nav.navigate("muscle") },
-                    onFinishSession = { viewModel.endSession { id -> nav.navigate("summary/$id") } }
+                    onFinishSession = { 
+                        viewModel.endSession { id -> 
+                            if (id != -1) {
+                                nav.navigate("summary/$id")
+                            } else {
+                                Toast.makeText(context, "Empty session deleted", Toast.LENGTH_SHORT).show()
+                            }
+                        } 
+                    }
                 )
             } else {
                 // Session Card

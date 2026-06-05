@@ -15,5 +15,5 @@ data class SessionWithSets(
     val sets: List<WorkoutSetEntity>
 ) {
     val totalVolume: Double 
-        get() = sets.sumOf { it.weight * it.reps } // simple version to avoid WorkoutCalculations confusion
+        get() = sets.sumOf { it.weight * it.reps }
 }

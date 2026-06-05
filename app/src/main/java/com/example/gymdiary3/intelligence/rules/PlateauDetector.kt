@@ -15,30 +15,37 @@ class PlateauDetector : IntelligenceRule {
             val sessionMaxWeights = sets
                 .filter { it.weight > 0 }
                 .groupBy { it.sessionId ?: (it.timestamp / 86_400_000) }
-                .values
-                .map { it.maxOf { s -> s.weight } }
-                .takeLast(6)
+                .entries
+                .sortedBy { it.value.first().timestamp }
+                .map { it.value.maxOf { s -> s.weight } }
 
             if (sessionMaxWeights.size < MIN_SESSIONS_FOR_PLATEAU) return@mapNotNull null
 
             val recentSessions = sessionMaxWeights.takeLast(MIN_SESSIONS_FOR_PLATEAU)
             val allSameWeight = recentSessions.all { it == recentSessions.first() }
-            val noWeightIncrease = sessionMaxWeights.last() <= sessionMaxWeights.first()
+            
+            if (allSameWeight) {
+                // Count consecutive stagnant sessions from the end
+                var stagnantSessions = 0
+                val lastWeight = sessionMaxWeights.last()
+                for (weight in sessionMaxWeights.reversed()) {
+                    if (weight == lastWeight) stagnantSessions++ else break
+                }
 
-            if (allSameWeight && noWeightIncrease) {
-                val stagnantSessions = sessionMaxWeights.count { it == sessionMaxWeights.last() }
-                FitnessInsight(
-                    type = InsightType.PLATEAU_DETECTED,
-                    message = "$exercise has stalled at ${sessionMaxWeights.last().toInt()}kg " +
-                              "for $stagnantSessions sessions. " +
-                              "Consider adding reps, tempo, or a technique variation.",
-                    exerciseName = exercise,
-                    severity = if (stagnantSessions >= 4) InsightSeverity.WARNING else InsightSeverity.INFO,
-                    dataPoints = mapOf(
-                        "stagnant_sessions" to stagnantSessions.toDouble(),
-                        "current_max_weight" to sessionMaxWeights.last()
+                if (stagnantSessions >= MIN_SESSIONS_FOR_PLATEAU) {
+                    FitnessInsight(
+                        type = InsightType.PLATEAU_DETECTED,
+                        message = "$exercise has stalled at ${lastWeight.toInt()}kg " +
+                                  "for $stagnantSessions sessions. " +
+                                  "Consider adding reps, tempo, or a technique variation.",
+                        exerciseName = exercise,
+                        severity = if (stagnantSessions >= 4) InsightSeverity.WARNING else InsightSeverity.INFO,
+                        dataPoints = mapOf(
+                            "stagnant_sessions" to stagnantSessions.toDouble(),
+                            "current_max_weight" to lastWeight
+                        )
                     )
-                )
+                } else null
             } else null
         }
     }

@@ -375,47 +375,54 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
 fun ShareableSummary(sessionWithSets: SessionWithSets, unit: String) {
     Column(
         modifier = Modifier
-            .width(400.dp)
+            .width(600.dp) // Increased width for better proportions
             .background(Color.White)
-            .padding(24.dp)
+            .padding(32.dp)
     ) {
         Text(
-            "Gym Diary Summary",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
+            "WORKOUT SUMMARY",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.Black,
+            letterSpacing = 2.sp
         )
         Text(
-            "Owl Fitness",
-            fontSize = 20.sp,
+            "OWL FITNESS",
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Black
+            color = Color(0xFF6200EE) // Use a theme color for the brand
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
-        val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-        Text("Date: ${sdf.format(Date(sessionWithSets.date))}", color = Color.Black)
+        val sdf = SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault())
+        Text("Date: ${sdf.format(Date(sessionWithSets.date))}", color = Color.Gray, fontSize = 14.sp)
+        Text("Duration: ${sessionWithSets.duration / 60000} min", color = Color.Gray, fontSize = 14.sp)
         
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         sessionWithSets.exercises.forEach { (exercise, sets) ->
-            Text(exercise, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
+            Text(exercise.uppercase(), fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = Color.Black)
             sets.forEach {
-                Text("Set ${it.setNumber}: ${it.weight}$unit x ${it.reps}", color = Color.Black)
+                Text("Set ${it.setNumber}: ${it.weight}$unit x ${it.reps}", color = Color.DarkGray, fontSize = 14.sp)
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
         }
 
+        Spacer(Modifier.height(24.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color.LightGray))
         Spacer(Modifier.height(16.dp))
-        HorizontalDivider(color = Color.LightGray)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Total Volume: ${sessionWithSets.totalVolume.toInt()} $unit",
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            color = Color.Black
-        )
+        
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("TOTAL VOLUME", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text("${sessionWithSets.totalVolume.toInt()} $unit", fontWeight = FontWeight.Black, fontSize = 24.sp, color = Color.Black)
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text("TOTAL SETS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text("${sessionWithSets.sets.size}", fontWeight = FontWeight.Black, fontSize = 24.sp, color = Color.Black)
+            }
+        }
     }
 }
 
