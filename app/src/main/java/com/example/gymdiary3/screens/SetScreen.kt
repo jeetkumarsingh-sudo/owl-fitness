@@ -75,7 +75,6 @@ fun SetScreen(
 
     LaunchedEffect(exercise) {
         viewModel.loadLastSet(exercise)
-        viewModel.updateSetNumber(exercise)
     }
 
     LaunchedEffect(lastSet) {

@@ -52,9 +52,17 @@ class PlateauDetectorTest {
     }
 
     @Test
-    fun `no plateau when weight is progressing`() {
-        val snapshot = snapshotWithExercise("Bench Press", listOf(75.0, 77.5, 80.0))
+    fun `no plateau trigger if same weight not consecutive`() {
+        val snapshot = snapshotWithExercise("Bench Press", listOf(80.0, 80.0, 82.5, 80.0))
         val insights = detector.evaluate(snapshot)
         assertTrue(insights.isEmpty())
+    }
+
+    @Test
+    fun `plateau trigger with 4 consecutive sessions`() {
+        val snapshot = snapshotWithExercise("Bench Press", listOf(80.0, 80.0, 80.0, 80.0))
+        val insights = detector.evaluate(snapshot)
+        assertEquals(1, insights.size)
+        assertTrue(insights.first().message.contains("4 sessions"))
     }
 }

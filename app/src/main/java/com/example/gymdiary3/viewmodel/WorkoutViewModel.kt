@@ -39,11 +39,9 @@ class WorkoutViewModel @Inject constructor(
     private val startSessionUseCase: StartSessionUseCase,
     private val endSessionUseCase: EndSessionUseCase,
     private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase,
-    val sessionManager: SessionManager
+    val sessionManager: SessionManager,
+    val restTimerManager: RestTimerManager
 ) : ViewModel() {
-
-    // System Managers
-    val restTimerManager = RestTimerManager(viewModelScope)
 
     // Data Pipeline
     val workouts: StateFlow<List<WorkoutSet>> = workoutRepository.getAllSets()
@@ -75,10 +73,12 @@ class WorkoutViewModel @Inject constructor(
                 val session = workoutRepository.getSessionById(sessionId)
                 if (session != null) {
                     val startTime = session.startTime
-                    while (true) {
+                    while (currentSessionId.value == sessionId) {
                         emit((System.currentTimeMillis() - startTime) / 1000)
                         kotlinx.coroutines.delay(1000)
                     }
+                } else {
+                    emit(0L)
                 }
             }
         }
@@ -92,9 +92,7 @@ class WorkoutViewModel @Inject constructor(
     val currentSessionNotes: StateFlow<String?> = sessionManager.currentSessionId
         .flatMapLatest { sessionId ->
             if (sessionId == null) flowOf(null)
-            else flow<String?> {
-                emit(workoutRepository.getSessionById(sessionId)?.notes)
-            }
+            else workoutRepository.getSessionFlowById(sessionId).map { it?.notes }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -147,8 +145,17 @@ class WorkoutViewModel @Inject constructor(
         .map { it?.let { WorkoutAnalyzer.getSuggestedWeight(it.weight) } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    private val _currentSet = MutableStateFlow(1)
-    val currentSet: StateFlow<Int> = _currentSet.asStateFlow()
+    val currentSet: StateFlow<Int> = combine(
+        sessionManager.currentSessionId,
+        workouts,
+        _lastSet // Using this to know which exercise we are currently logging
+    ) { sessionId, allSets, lastSet ->
+        val exerciseName = lastSet?.exercise
+        if (sessionId == null || exerciseName == null) 1
+        else {
+            allSets.count { it.sessionId == sessionId && it.exercise == exerciseName } + 1
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
     val isRestTimerRunning: StateFlow<Boolean> = restTimerManager.isRestTimerRunning
     val restTimerSeconds: StateFlow<Int> = restTimerManager.restTimerSeconds
@@ -167,7 +174,7 @@ class WorkoutViewModel @Inject constructor(
     init {
         insertDefaultWorkouts()
         viewModelScope.launch {
-            workoutRepository.deleteEmptySessions()
+            sessionManager.initialize()
         }
     }
 
@@ -178,16 +185,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun updateSetNumber(exerciseName: String) {
-        viewModelScope.launch {
-            val cal = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-            }
-            val dayStart = cal.timeInMillis
-            val dayEnd = dayStart + 86_400_000L
-            val count = workoutRepository.getTodaySetCount(exerciseName, dayStart, dayEnd)
-            _currentSet.value = count + 1
-        }
+        // No-op, currentSet is now reactive
     }
 
     fun selectMuscle(muscle: String) {
@@ -269,12 +267,15 @@ class WorkoutViewModel @Inject constructor(
                 rpe = rpe,
                 notes = notes
             )
-            updateSetNumber(exercise)
+            loadLastSet(exercise)
         }
     }
 
     fun deleteSession(id: Int) {
         viewModelScope.launch {
+            if (sessionManager.currentSessionId.value == id) {
+                sessionManager.clearSessionManually()
+            }
             workoutRepository.deleteSessionById(id)
         }
     }
@@ -288,7 +289,8 @@ class WorkoutViewModel @Inject constructor(
     suspend fun exportAllDataToCsv(context: Context): Uri? = withContext(Dispatchers.IO) {
         if (sessions.value.isEmpty()) return@withContext null
         val bodyWeights = bodyWeightRepository.getAllWeights()
-        val csvContent = ExportFormatter.buildCsv(sessions.value, bodyWeights)
+        val unit = settingsRepository.userSettingsFlow.firstOrNull()?.weightUnit ?: "kg"
+        val csvContent = ExportFormatter.buildCsv(sessions.value, bodyWeights, unit)
         return@withContext com.example.gymdiary3.data.FileHandler.writeToCache(context, csvContent)
     }
 

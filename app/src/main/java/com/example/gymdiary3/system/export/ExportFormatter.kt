@@ -7,12 +7,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object ExportFormatter {
-    fun buildCsv(sessions: List<SessionWithSets>, bodyWeights: List<BodyWeight>): String {
+    fun buildCsv(sessions: List<SessionWithSets>, bodyWeights: List<BodyWeight>, unit: String = "kg"): String {
         val sb = StringBuilder()
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
-        // SECTION 1: Sets (the most important data — put first)
-        sb.appendLine("Date,Session ID,Exercise,Muscle Group,Set #,Weight (kg),Reps,Volume (kg),Est 1RM (kg)")
+        // SECTION 1: Sets
+        sb.appendLine("Date,Session ID,Exercise,Muscle Group,Set #,Weight ($unit),Reps,Volume ($unit),Est 1RM ($unit)")
 
         for (sessionWithSets in sessions.sortedByDescending { it.session.startTime }) {
             val dateStr = dateFormat.format(Date(sessionWithSets.session.startTime))
@@ -20,7 +20,6 @@ object ExportFormatter {
                 val volume = WorkoutCalculations.calculateVolume(set.weight, set.reps)
                 val est1rm = WorkoutCalculations.calculate1RM(set.weight, set.reps)
                 val est1rmStr = if (est1rm > 0) "%.1f".format(est1rm) else "0"
-                // Escape quotes in exercise/muscle names
                 val exercise = set.exercise.replace("\"", "\"\"")
                 val muscle = set.muscle.replace("\"", "\"\"")
                 sb.appendLine(
@@ -37,12 +36,11 @@ object ExportFormatter {
             }
         }
 
-        // Blank line separator — valid in CSV as a visual break
         sb.appendLine()
 
-        // SECTION 2: Body weight — separate header block
+        // SECTION 2: Body weight
         sb.appendLine("Body Weight Log")
-        sb.appendLine("Date,Weight (kg)")
+        sb.appendLine("Date,Weight ($unit)")
         for (bw in bodyWeights.sortedByDescending { it.timestamp }) {
             sb.appendLine("\"${dateFormat.format(Date(bw.timestamp))}\",${bw.weight}")
         }

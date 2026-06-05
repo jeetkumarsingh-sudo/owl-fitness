@@ -36,8 +36,21 @@ interface WorkoutDao {
     @Query("SELECT * FROM session WHERE id = :sessionId")
     suspend fun getSessionWithSetsById(sessionId: Int): SessionWithSets?
 
+    @Transaction
     @Query("SELECT * FROM session WHERE id = :sessionId")
-    suspend fun getSessionById(sessionId: Int): WorkoutSessionEntity
+    fun getSessionWithSetsFlowById(sessionId: Int): Flow<SessionWithSets?>
+
+    @Query("SELECT * FROM session WHERE id = :sessionId")
+    fun getSessionFlowById(sessionId: Int): Flow<WorkoutSessionEntity?>
+
+    @Query("SELECT * FROM session WHERE endTime IS NULL ORDER BY startTime DESC LIMIT 1")
+    suspend fun getActiveSession(): WorkoutSessionEntity?
+
+    @Query("SELECT * FROM session WHERE id = :sessionId")
+    suspend fun getSessionById(sessionId: Int): WorkoutSessionEntity?
+
+    @Query("SELECT COUNT(*) FROM WorkoutSet WHERE exercise = :exerciseName AND sessionId = :sessionId")
+    suspend fun getSessionSetCount(exerciseName: String, sessionId: Int): Int
 
     @Query("DELETE FROM session WHERE id = :id")
     suspend fun deleteSessionById(id: Int)
