@@ -216,6 +216,14 @@ fun HomeScreen(
                 ) {
                     item {
                         MenuButton(
+                            text = "GYM TRACKER",
+                            icon = Icons.Default.DateRange,
+                            color = OwlColors.Purple,
+                            onClick = { nav.navigate("program_tracker") }
+                        )
+                    }
+                    item {
+                        MenuButton(
                             text = "LOG WORKOUT",
                             icon = Icons.Default.Add,
                             color = OwlColors.Purple,

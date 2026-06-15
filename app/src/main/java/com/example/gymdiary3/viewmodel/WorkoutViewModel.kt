@@ -73,7 +73,7 @@ class WorkoutViewModel @Inject constructor(
                 val session = workoutRepository.getSessionById(sessionId)
                 if (session != null) {
                     val startTime = session.startTime
-                    while (currentSessionId.value == sessionId) {
+                    while (true) {
                         emit((System.currentTimeMillis() - startTime) / 1000)
                         kotlinx.coroutines.delay(1000)
                     }
@@ -115,12 +115,18 @@ class WorkoutViewModel @Inject constructor(
             allSets.groupBy { it.exercise }
                 .mapValues { (exercise, sets) ->
                     val stats = WorkoutAnalyzer.getExerciseStats(exercise, sets)
+                    val recommendation = when {
+                        stats.isPR -> "New personal record! Consider increasing weight next session."
+                        stats.trend > 0 -> "Progressing well. Maintain current overload strategy."
+                        stats.trend < 0 -> "Slight regression. Check recovery and nutrition."
+                        else -> "Weight stable. Try increasing reps or weight next session."
+                    }
                     ExerciseUiState(
                         exercise = stats.exercise,
                         trend = stats.trend,
                         trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
                         isPR = stats.isPR,
-                        recommendation = "", // Will be replaced by intelligence insights
+                        recommendation = recommendation,
                         best1RM = stats.best1RM,
                         totalVolume = stats.totalVolume
                     )
@@ -184,10 +190,6 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    fun updateSetNumber(exerciseName: String) {
-        // No-op, currentSet is now reactive
-    }
-
     fun selectMuscle(muscle: String) {
         _selectedMuscle.value = muscle
     }
@@ -220,7 +222,7 @@ class WorkoutViewModel @Inject constructor(
         return getLastSessionSetsUseCase(exerciseName, currentSessionId)
     }
 
-    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double {
+    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Int): Double {
         return workoutRepository.getHistoricBest1RM(exerciseName, excludeSessionId) ?: 0.0
     }
 
@@ -228,15 +230,20 @@ class WorkoutViewModel @Inject constructor(
         restTimerManager.startTimer(seconds)
     }
 
-    // Task 3 & 4: Delegate to Analyzer and UseCase
     fun getExerciseUiState(exercise: String): ExerciseUiState {
         val stats = WorkoutAnalyzer.getExerciseStats(exercise, workouts.value.filter { it.exercise == exercise })
+        val recommendation = when {
+            stats.isPR -> "New personal record! Consider increasing weight next session."
+            stats.trend > 0 -> "Progressing well. Maintain current overload strategy."
+            stats.trend < 0 -> "Slight regression. Check recovery and nutrition."
+            else -> "Weight stable. Try increasing reps or weight next session."
+        }
         return ExerciseUiState(
             exercise = stats.exercise,
             trend = stats.trend,
             trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
             isPR = stats.isPR,
-            recommendation = "",
+            recommendation = recommendation,
             best1RM = stats.best1RM,
             totalVolume = stats.totalVolume
         )
@@ -254,7 +261,7 @@ class WorkoutViewModel @Inject constructor(
     ) {
         val sessionId = sessionManager.currentSessionId.value ?: return 
         if (!WorkoutAnalyzer.isValidSet(weight, reps)) return
-        
+
         viewModelScope.launch {
             logSetUseCase(
                 sessionId = sessionId,
@@ -265,7 +272,8 @@ class WorkoutViewModel @Inject constructor(
                 weight = weight,
                 isAssisted = isAssisted,
                 rpe = rpe,
-                notes = notes
+                notes = notes,
+                scope = viewModelScope
             )
             loadLastSet(exercise)
         }
