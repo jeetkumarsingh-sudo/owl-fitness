@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.Flow
 import com.example.gymdiary3.core.database.entity.WorkoutSetEntity
 import com.example.gymdiary3.core.database.entity.WorkoutSessionEntity
 import com.example.gymdiary3.core.database.entity.ExerciseEntity
-import com.example.gymdiary3.core.database.entity.BodyWeightEntity
 import com.example.gymdiary3.core.database.relation.SessionWithSets
 
 @Dao
@@ -52,6 +51,15 @@ interface WorkoutDao {
     @Query("SELECT COUNT(*) FROM WorkoutSet WHERE exercise = :exerciseName AND sessionId = :sessionId")
     suspend fun getSessionSetCount(exerciseName: String, sessionId: Int): Int
 
+    @Query("DELETE FROM WorkoutSet WHERE sessionId = :id")
+    suspend fun deleteSetsBySessionId(id: Int)
+
+    @Transaction
+    suspend fun deleteSessionCascade(id: Int) {
+        deleteSetsBySessionId(id)
+        deleteSessionById(id)
+    }
+
     @Query("DELETE FROM session WHERE id = :id")
     suspend fun deleteSessionById(id: Int)
 
@@ -80,7 +88,7 @@ interface WorkoutDao {
     fun getSetsForExerciseInDateRange(exerciseName: String, weekStart: Long, weekEnd: Long): Flow<List<WorkoutSetEntity>>
 
     @Query("SELECT MAX(weight * (1 + reps / 30.0)) FROM WorkoutSet WHERE exercise = :exerciseName AND sessionId != :excludeSessionId AND weight > 0")
-    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double?
+    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Int): Double?
 
     @Query("""
         SELECT * FROM WorkoutSet 
@@ -97,9 +105,4 @@ interface WorkoutDao {
     """)
     fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSetEntity>>
 
-    @Query("SELECT weight FROM BodyWeight ORDER BY timestamp DESC LIMIT 1")
-    fun getLatestBodyWeightFlow(): Flow<Double?>
-
-    @Query("SELECT * FROM BodyWeight ORDER BY timestamp DESC")
-    suspend fun getAllBodyWeightsList(): List<BodyWeightEntity>
 }

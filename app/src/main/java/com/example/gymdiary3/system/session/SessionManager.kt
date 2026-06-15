@@ -43,7 +43,12 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
         val id = _currentSessionId.value ?: return
 
         val sessionWithSets = workoutRepository.getSessionWithSetsById(id)
-        if (sessionWithSets == null || !WorkoutAnalyzer.isValidSession(sessionWithSets)) {
+        
+        // Safety: If duration is > 24 hours, don't delete it even if empty, something is weird
+        val duration = System.currentTimeMillis() - currentStartTime
+        val isExtremelyLong = duration > 24 * 60 * 60 * 1000
+        
+        if (!isExtremelyLong && (sessionWithSets == null || !WorkoutAnalyzer.isValidSession(sessionWithSets))) {
             // Delete empty or invalid session
             val session = sessionWithSets?.session ?: workoutRepository.getSessionById(id)
             if (session != null) {
@@ -51,13 +56,16 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
             }
             _currentSessionId.value = null
             currentStartTime = 0L
-            onComplete(-1) // Notify UI with a special ID indicating deletion
+            onComplete(-1) 
             return
         }
 
-        val existingSession = sessionWithSets.session
-        val session = existingSession.copy(endTime = System.currentTimeMillis())
-        workoutRepository.updateSession(session)
+        val existingSession = sessionWithSets?.session ?: workoutRepository.getSessionById(id)
+        if (existingSession != null) {
+            val session = existingSession.copy(endTime = System.currentTimeMillis())
+            workoutRepository.updateSession(session)
+        }
+
         _currentSessionId.value = null
         currentStartTime = 0L
         onComplete(id)

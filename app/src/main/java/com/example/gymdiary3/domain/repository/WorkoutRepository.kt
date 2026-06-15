@@ -19,11 +19,12 @@ interface WorkoutRepository {
     suspend fun getActiveSession(): WorkoutSession?
     suspend fun getSessionById(sessionId: Int): WorkoutSession?
     suspend fun deleteSessionById(id: Int)
+    suspend fun deleteSetsBySessionId(id: Int)
     suspend fun getLastSet(exerciseName: String): WorkoutSet?
     fun getLastThreeSets(exerciseName: String): Flow<List<WorkoutSet>>
     suspend fun getTodaySetCount(exerciseName: String, dayStart: Long, dayEnd: Long): Int
     suspend fun getSessionSetCount(exerciseName: String, sessionId: Int): Int
     fun getSetsForExerciseInDateRange(exerciseName: String, weekStart: Long, weekEnd: Long): Flow<List<WorkoutSet>>
     fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>>
-    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double?
+    suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Int): Double?
 }

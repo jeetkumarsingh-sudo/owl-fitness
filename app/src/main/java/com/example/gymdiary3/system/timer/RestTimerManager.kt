@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class RestTimerManager(private val scope: CoroutineScope) {
+class RestTimerManager {
     private val _restTimerSeconds = MutableStateFlow(0)
     val restTimerSeconds: StateFlow<Int> = _restTimerSeconds.asStateFlow()
 
@@ -14,7 +14,7 @@ class RestTimerManager(private val scope: CoroutineScope) {
 
     private var restTimerJob: Job? = null
 
-    fun startTimer(seconds: Int = 90) {
+    fun startTimer(seconds: Int = 90, scope: CoroutineScope) {
         restTimerJob?.cancel()
         _restTimerSeconds.value = seconds
         _isRestTimerRunning.value = true
