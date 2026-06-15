@@ -33,12 +33,18 @@ class ProgressViewModel @Inject constructor(
             if (sets.isEmpty()) null
             else {
                 val stats = WorkoutAnalyzer.getExerciseStats(exerciseName, sets)
+                val recommendation = when {
+                    stats.isPR -> "New personal record! Consider increasing weight next session."
+                    stats.trend > 0 -> "Progressing well. Maintain current overload strategy."
+                    stats.trend < 0 -> "Slight regression. Check recovery and nutrition."
+                    else -> "Weight stable. Try increasing reps or weight next session."
+                }
                 ExerciseUiState(
                     exercise = stats.exercise,
                     trend = stats.trend,
                     trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
                     isPR = stats.isPR,
-                    recommendation = "",
+                    recommendation = recommendation,
                     best1RM = stats.best1RM,
                     totalVolume = stats.totalVolume
                 )

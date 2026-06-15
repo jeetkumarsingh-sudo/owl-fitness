@@ -49,7 +49,9 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun getSessionById(sessionId: Int): WorkoutSession? =
         workoutDao.getSessionById(sessionId)?.toDomain()
     
-    override suspend fun deleteSessionById(id: Int) = workoutDao.deleteSessionById(id)
+    override suspend fun deleteSessionById(id: Int) = workoutDao.deleteSessionCascade(id)
+
+    override suspend fun deleteSetsBySessionId(id: Int) = workoutDao.deleteSetsBySessionId(id)
     
     override suspend fun getLastSet(exerciseName: String): WorkoutSet? = 
         workoutDao.getLastSet(exerciseName)?.toDomain()
@@ -69,6 +71,6 @@ class WorkoutRepositoryImpl @Inject constructor(
     override fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>> = 
         workoutDao.getLastSessionSetsForExercise(exerciseName, currentSessionId).map { list -> list.map { it.toDomain() } }
     
-    override suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Long): Double? = 
+    override suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Int): Double? = 
         workoutDao.getHistoricBest1RM(exerciseName, excludeSessionId)
 }
