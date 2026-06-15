@@ -18,6 +18,12 @@ interface BodyWeightDao {
     @Query("SELECT * FROM BodyWeight ORDER BY timestamp DESC")
     fun getWeights(): Flow<List<BodyWeightEntity>>
 
+    @Query("SELECT * FROM BodyWeight ORDER BY timestamp DESC")
+    suspend fun getAllBodyWeightsList(): List<BodyWeightEntity>
+
+    @Query("SELECT weight FROM BodyWeight ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestBodyWeightFlow(): Flow<Double?>
+
     @Query("SELECT * FROM BodyWeight WHERE timestamp >= :start AND timestamp < :end")
     suspend fun getWeightBetween(start: Long, end: Long): List<BodyWeightEntity>
 }

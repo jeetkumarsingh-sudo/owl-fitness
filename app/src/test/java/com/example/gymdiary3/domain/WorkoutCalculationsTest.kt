@@ -15,10 +15,49 @@ class WorkoutCalculationsTest {
     }
 
     @Test
+    fun `calculate1RM returns 0 for zero weight`() {
+        assertEquals(0.0, WorkoutCalculations.calculate1RM(0.0, 10), 0.01)
+    }
+
+    @Test
+    fun `calculate1RM returns 0 for zero reps`() {
+        assertEquals(0.0, WorkoutCalculations.calculate1RM(100.0, 0), 0.01)
+    }
+
+    @Test
+    fun `calculate1RM returns 0 for negative weight`() {
+        assertEquals(0.0, WorkoutCalculations.calculate1RM(-10.0, 10), 0.01)
+    }
+
+    @Test
+    fun `calculate1RM equals weight for 1 rep`() {
+        assertEquals(103.33, WorkoutCalculations.calculate1RM(100.0, 1), 0.01)
+    }
+
+    @Test
     fun `calculateVolume is correct`() {
         val weight = 100.0
         val reps = 10
-        val expected = 1000.0
-        assertEquals(expected, WorkoutCalculations.calculateVolume(weight, reps), 0.01)
+        assertEquals(1000.0, WorkoutCalculations.calculateVolume(weight, reps), 0.01)
+    }
+
+    @Test
+    fun `calculateVolume returns 0 for zero weight`() {
+        assertEquals(0.0, WorkoutCalculations.calculateVolume(0.0, 10), 0.01)
+    }
+
+    @Test
+    fun `calculateVolume returns 0 for zero reps`() {
+        assertEquals(0.0, WorkoutCalculations.calculateVolume(100.0, 0), 0.01)
+    }
+
+    @Test
+    fun `calculateVolume returns 0 for negative weight`() {
+        assertEquals(0.0, WorkoutCalculations.calculateVolume(-10.0, 10), 0.01)
+    }
+
+    @Test
+    fun `calculateVolume returns 0 for bodyweight exercise`() {
+        assertEquals(0.0, WorkoutCalculations.calculateVolume(0.0, 10), 0.01)
     }
 }

@@ -42,7 +42,7 @@ fun AnalyticsScreen(
     val oneRMHistory by viewModel.oneRMHistory.collectAsStateWithLifecycle()
     val volumeHistory by viewModel.volumeHistory.collectAsStateWithLifecycle()
     
-    val exerciseName = viewModel.exerciseName
+    val exerciseName = viewModel.exerciseName.ifEmpty { "Exercise" }
 
     Scaffold(
         containerColor = OwlColors.DeepBg,

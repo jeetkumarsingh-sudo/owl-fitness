@@ -3,7 +3,6 @@ package com.example.gymdiary3
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -125,6 +124,15 @@ class MainActivity : ComponentActivity() {
 
                         composable("progress") {
                             ProgressScreen(nav = nav)
+                        }
+
+                        composable("program_tracker") {
+                            ProgramTrackerScreen(nav = nav)
+                        }
+
+                        composable("program_log/{sessionId}") { back ->
+                            val sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0
+                            ProgramSessionLogScreen(nav = nav, sessionId = sessionId)
                         }
 
                         composable("analytics/{exercise}") {

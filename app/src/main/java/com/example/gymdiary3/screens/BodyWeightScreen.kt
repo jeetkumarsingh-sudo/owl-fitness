@@ -24,6 +24,7 @@ import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.ui.theme.OwlColors
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.gymdiary3.domain.BodyWeightAnalyzer
 import com.example.gymdiary3.domain.model.BodyWeight
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
@@ -193,7 +194,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
         return
     }
 
-    val stats = com.example.gymdiary3.domain.BodyWeightAnalyzer.getStats(weights) ?: return
+    val stats = BodyWeightAnalyzer.getStats(weights) ?: return
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
     val latestWeight = weights.maxByOrNull { it.timestamp }
