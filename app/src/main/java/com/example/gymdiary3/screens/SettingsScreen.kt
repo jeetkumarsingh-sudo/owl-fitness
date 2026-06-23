@@ -1,6 +1,11 @@
 package com.example.gymdiary3.screens
 
+import android.content.Intent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,6 +36,24 @@ fun SettingsScreen(
     onExportClick: () -> Unit
 ) {
     val settings by viewModel.userSettings.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            uri?.let {
+                scope.launch {
+                    val result = viewModel.importJson(context, it)
+                    if (result.isSuccess) {
+                        Toast.makeText(context, "Backup imported successfully", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "Import failed: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    )
 
     Scaffold(
         containerColor = OwlColors.DeepBg,
@@ -126,12 +149,12 @@ fun SettingsScreen(
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    text = "${seconds} seconds",
+                                    text = "$seconds seconds",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = OwlColors.TextPrimary
                                 )
                             }
-                            if (index < timerOptions.size - 1) {
+                            if (index < (timerOptions.size - 1)) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                     color = OwlColors.BorderSubtle
@@ -143,16 +166,84 @@ fun SettingsScreen(
             }
 
             item {
+                Text(
+                    text = "BAR WEIGHT",
+                    color = OwlColors.PurpleSoft,
+                    style = MaterialTheme.typography.labelMedium,
+                    letterSpacing = 1.2.sp
+                )
+                Spacer(Modifier.height(16.dp))
+                Surface(
+                    color = OwlColors.CardBg,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
+                ) {
+                    val barOptions = listOf(10.0, 15.0, 20.0)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        barOptions.forEach { weight ->
+                            UnitButton(
+                                label = "${weight.toInt()}kg",
+                                isSelected = settings.barWeight == weight,
+                                modifier = Modifier.weight(1f),
+                                onClick = { viewModel.updateBarWeight(weight) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
                 Text("DATA", color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.2.sp)
                 Spacer(Modifier.height(16.dp))
-                OutlinedButton(
-                    onClick = { onExportClick() },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
-                ) {
-                    Text("EXPORT ALL DATA (CSV)", style = MaterialTheme.typography.labelLarge)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = { onExportClick() },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
+                    ) {
+                        Text("EXPORT ALL DATA (CSV)", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                val uri = viewModel.exportJson(context)
+                                if (uri != null) {
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/json"
+                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    context.startActivity(Intent.createChooser(intent, "Export JSON Backup"))
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
+                    ) {
+                        Text("BACKUP DATA (JSON)", style = MaterialTheme.typography.labelLarge)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            importLauncher.launch(arrayOf("application/json"))
+                        },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
+                    ) {
+                        Text("RESTORE FROM BACKUP", style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
         }

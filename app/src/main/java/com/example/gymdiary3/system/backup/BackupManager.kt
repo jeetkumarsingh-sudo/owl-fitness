@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.text.SimpleDateFormat
+import android.util.Log
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -58,7 +59,7 @@ class BackupManager @Inject constructor(
             file.writeText(json.encodeToString(backup))
             FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("BackupManager", "Failed to export JSON backup", e)
             null
         }
     }
@@ -70,6 +71,9 @@ class BackupManager @Inject constructor(
 
             val backup = json.decodeFromString<GymDiaryBackup>(content)
             
+            val existingSessions = workoutRepository.getSessionsWithSets().firstOrNull() ?: emptyList()
+            val existingWeights = bodyWeightRepository.getAllWeights()
+
             // Merge Exercises
             backup.exercises.forEach { e ->
                 exerciseRepository.insertExercise(
@@ -87,23 +91,28 @@ class BackupManager @Inject constructor(
 
             // Merge BodyWeights
             backup.bodyWeights.forEach { bw ->
-                bodyWeightRepository.insertWeight(BodyWeight(0, bw.timestamp, bw.weight))
+                if (existingWeights.none { it.timestamp == bw.timestamp }) {
+                    bodyWeightRepository.insertWeight(BodyWeight(0, bw.timestamp, bw.weight))
+                }
             }
 
             // Merge Sessions & Sets
             backup.sessions.forEach { s ->
-                val sessionId = workoutRepository.insertSession(
-                    WorkoutSession(0, s.startTime, s.endTime, s.name, s.notes)
-                ).toInt()
-                
-                s.sets.forEach { set ->
-                    workoutRepository.insertSet(
-                        WorkoutSet(
-                            0, set.timestamp, set.muscle, set.exercise,
-                            set.setNumber, set.reps, set.weight, set.isAssisted,
-                            sessionId, set.rpe, set.notes
+                val alreadyExists = existingSessions.any { it.session.startTime == s.startTime }
+                if (!alreadyExists) {
+                    val sessionId = workoutRepository.insertSession(
+                        WorkoutSession(0, s.startTime, s.endTime, s.name, s.notes)
+                    ).toInt()
+                    
+                    s.sets.forEach { set ->
+                        workoutRepository.insertSet(
+                            WorkoutSet(
+                                0, set.timestamp, set.muscle, set.exercise,
+                                set.setNumber, set.reps, set.weight, set.isAssisted,
+                                sessionId, set.rpe, set.notes
+                            )
                         )
-                    )
+                    }
                 }
             }
             

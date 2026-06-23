@@ -80,6 +80,41 @@ fun ExerciseLogRow(
 ) {
     var showDetails by remember { mutableStateOf(false) }
 
+    // Local state for weights and reps strings to avoid DB writes on every keystroke
+    val localWeights = remember(log.id) {
+        mutableStateMapOf<Int, String>().apply {
+            put(1, log.set1Weight?.toString() ?: "")
+            put(2, log.set2Weight?.toString() ?: "")
+            put(3, log.set3Weight?.toString() ?: "")
+            put(4, log.set4Weight?.toString() ?: "")
+            put(5, log.set5Weight?.toString() ?: "")
+        }
+    }
+    val localReps = remember(log.id) {
+        mutableStateMapOf<Int, String>().apply {
+            put(1, log.set1Reps?.toString() ?: "")
+            put(2, log.set2Reps?.toString() ?: "")
+            put(3, log.set3Reps?.toString() ?: "")
+            put(4, log.set4Reps?.toString() ?: "")
+            put(5, log.set5Reps?.toString() ?: "")
+        }
+    }
+
+    // Effect to handle sync when parent log changes externally (e.g. initial load)
+    LaunchedEffect(log) {
+        if (localWeights[1] != (log.set1Weight?.toString() ?: "")) localWeights[1] = log.set1Weight?.toString() ?: ""
+        if (localWeights[2] != (log.set2Weight?.toString() ?: "")) localWeights[2] = log.set2Weight?.toString() ?: ""
+        if (localWeights[3] != (log.set3Weight?.toString() ?: "")) localWeights[3] = log.set3Weight?.toString() ?: ""
+        if (localWeights[4] != (log.set4Weight?.toString() ?: "")) localWeights[4] = log.set4Weight?.toString() ?: ""
+        if (localWeights[5] != (log.set5Weight?.toString() ?: "")) localWeights[5] = log.set5Weight?.toString() ?: ""
+
+        if (localReps[1] != (log.set1Reps?.toString() ?: "")) localReps[1] = log.set1Reps?.toString() ?: ""
+        if (localReps[2] != (log.set2Reps?.toString() ?: "")) localReps[2] = log.set2Reps?.toString() ?: ""
+        if (localReps[3] != (log.set3Reps?.toString() ?: "")) localReps[3] = log.set3Reps?.toString() ?: ""
+        if (localReps[4] != (log.set4Reps?.toString() ?: "")) localReps[4] = log.set4Reps?.toString() ?: ""
+        if (localReps[5] != (log.set5Reps?.toString() ?: "")) localReps[5] = log.set5Reps?.toString() ?: ""
+    }
+
     Surface(
         color = OwlColors.CardBg,
         shape = RoundedCornerShape(16.dp),
@@ -112,9 +147,6 @@ fun ExerciseLogRow(
                             color = OwlColors.TextSecondary
                         )
                     }
-                    // We need to fetch the progression rule from the ProgramExercise model.
-                    // For now, let's assume we want to show a generic placeholder if it's missing,
-                    // but we should ideally pass it in the SessionExerciseLog if we want it visible here.
                     Text(
                         text = "Goal: Follow prescribed reps and RIR targets.",
                         style = MaterialTheme.typography.bodySmall,
@@ -127,19 +159,15 @@ fun ExerciseLogRow(
             // Set headers
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 repeat(5) { i ->
+                    val setNum = i + 1
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("SET ${i + 1}", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextMuted)
+                        Text("SET $setNum", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextMuted)
                         
-                        val weight = when(i) {
-                            0 -> log.set1Weight; 1 -> log.set2Weight; 2 -> log.set3Weight; 3 -> log.set4Weight; else -> log.set5Weight
-                        }
-                        val reps = when(i) {
-                            0 -> log.set1Reps; 1 -> log.set2Reps; 2 -> log.set3Reps; 3 -> log.set4Reps; else -> log.set5Reps
-                        }
-
                         OutlinedTextField(
-                            value = weight?.toString() ?: "",
-                            onValueChange = { val w = it.toDoubleOrNull(); onUpdate(updateSetWeight(log, i + 1, w)) },
+                            value = localWeights[setNum] ?: "",
+                            onValueChange = { 
+                                localWeights[setNum] = it
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             placeholder = { Text("kg", fontSize = 10.sp) },
@@ -148,8 +176,10 @@ fun ExerciseLogRow(
                         )
                         Spacer(Modifier.height(4.dp))
                         OutlinedTextField(
-                            value = reps?.toString() ?: "",
-                            onValueChange = { val r = it.toIntOrNull(); onUpdate(updateSetReps(log, i + 1, r)) },
+                            value = localReps[setNum] ?: "",
+                            onValueChange = { 
+                                localReps[setNum] = it
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             placeholder = { Text("reps", fontSize = 10.sp) },
@@ -158,6 +188,23 @@ fun ExerciseLogRow(
                         )
                     }
                 }
+            }
+            
+            // Explicit SAVE button to avoid high-frequency DB writes
+            Button(
+                onClick = {
+                    var updated = log
+                    for (i in 1..5) {
+                        updated = updateSetWeight(updated, i, localWeights[i]?.toDoubleOrNull())
+                        updated = updateSetReps(updated, i, localReps[i]?.toIntOrNull())
+                    }
+                    onUpdate(updated)
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.PurpleDim.copy(alpha = 0.3f), contentColor = OwlColors.Purple)
+            ) {
+                Text("SAVE EXERCISE", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

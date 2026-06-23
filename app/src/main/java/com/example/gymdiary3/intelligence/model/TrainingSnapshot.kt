@@ -22,11 +22,6 @@ data class TrainingSnapshot(
             val allSets = sessions.flatMap { it.sets }
             val sdf = java.text.SimpleDateFormat("yyyy-'W'ww", java.util.Locale.getDefault())
 
-            val weeksCovered = if (sessions.isNotEmpty()) {
-                val earliest = sessions.minOf { it.session.startTime }
-                maxOf(1.0, (now - earliest) / (7.0 * 24 * 60 * 60 * 1000))
-            } else 1.0
-
             return TrainingSnapshot(
                 allSessions = sessions,
                 recentSessions = recent,
@@ -34,7 +29,7 @@ data class TrainingSnapshot(
                 sessionsByWeek = sessions.groupBy { sdf.format(java.util.Date(it.session.startTime)) },
                 totalSetsAllTime = allSets.size,
                 trainingDaysLast28 = recent.size,
-                averageSessionsPerWeek = if (recent.isEmpty()) 0.0 else recent.size / weeksCovered,
+                averageSessionsPerWeek = recent.size / 4.0,
                 now = now
             )
         }

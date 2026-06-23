@@ -13,7 +13,7 @@ object FileHandler {
             file.writeText(content)
             FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("FileHandler", "Failed to write cache file", e)
             null
         }
     }
