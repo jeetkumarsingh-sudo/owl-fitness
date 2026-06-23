@@ -9,6 +9,7 @@ import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.model.SessionWithSets
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.usecase.workout.*
+import com.example.gymdiary3.domain.usecase.analytics.GetExerciseStatsUseCase
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.system.session.SessionManager
 import com.example.gymdiary3.system.timer.RestTimerManager
@@ -22,6 +23,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import java.util.Calendar
+import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -35,6 +38,7 @@ class WorkoutViewModel @Inject constructor(
     private val logSetUseCase: LogSetUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val endSessionUseCase: EndSessionUseCase,
+    private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase,
     val sessionManager: SessionManager,
     val restTimerManager: RestTimerManager
 ) : ViewModel() {
@@ -71,11 +75,7 @@ class WorkoutViewModel @Inject constructor(
                     val startTime = session.startTime
                     while (true) {
                         emit((System.currentTimeMillis() - startTime) / 1000)
-                        try {
-                            kotlinx.coroutines.delay(1000)
-                        } catch (e: kotlinx.coroutines.CancellationException) {
-                            throw e
-                        }
+                        kotlinx.coroutines.delay(1000)
                     }
                 } else {
                     emit(0L)
@@ -166,8 +166,15 @@ class WorkoutViewModel @Inject constructor(
     val isRestTimerRunning: StateFlow<Boolean> = restTimerManager.isRestTimerRunning
     val restTimerSeconds: StateFlow<Int> = restTimerManager.restTimerSeconds
 
+    val latestBodyWeight: StateFlow<Double?> = bodyWeightRepository.getLatestBodyWeightFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     fun skipRestTimer() {
         restTimerManager.skipTimer()
+    }
+
+    fun getLastThreeSets(exercise: String): Flow<List<WorkoutSet>> {
+        return workoutRepository.getLastThreeSets(exercise)
     }
 
     init {
@@ -199,12 +206,47 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
+    fun getLastWeekSetsForExercise(exerciseName: String): Flow<List<WorkoutSet>> {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val thisWeekStart = cal.timeInMillis
+        val lastWeekStart = thisWeekStart - 7L * 24 * 60 * 60 * 1000
+        return workoutRepository.getSetsForExerciseInDateRange(exerciseName, lastWeekStart, thisWeekStart)
+    }
+
     fun getLastSessionSetsForExercise(exerciseName: String, currentSessionId: Int): Flow<List<WorkoutSet>> {
-        return workoutRepository.getLastSessionSetsForExercise(exerciseName, currentSessionId)
+        return getLastSessionSetsUseCase(exerciseName, currentSessionId)
     }
 
     suspend fun getHistoricBest1RM(exerciseName: String, excludeSessionId: Int): Double {
         return workoutRepository.getHistoricBest1RM(exerciseName, excludeSessionId) ?: 0.0
+    }
+
+    fun startRestTimer(seconds: Int) {
+        restTimerManager.startTimer(seconds)
+    }
+
+    fun getExerciseUiState(exercise: String): ExerciseUiState {
+        val stats = WorkoutAnalyzer.getExerciseStats(exercise, workouts.value.filter { it.exercise == exercise })
+        val recommendation = when {
+            stats.isPR -> "New personal record! Consider increasing weight next session."
+            stats.trend > 0 -> "Progressing well. Maintain current overload strategy."
+            stats.trend < 0 -> "Slight regression. Check recovery and nutrition."
+            else -> "Weight stable. Try increasing reps or weight next session."
+        }
+        return ExerciseUiState(
+            exercise = stats.exercise,
+            trend = stats.trend,
+            trendLabel = WorkoutAnalyzer.getTrendLabel(stats.trend),
+            isPR = stats.isPR,
+            recommendation = recommendation,
+            best1RM = stats.best1RM,
+            totalVolume = stats.totalVolume
+        )
     }
 
     fun insertWorkout(
@@ -304,5 +346,48 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             exerciseRepository.deleteExercise(exercise)
         }
+    }
+
+    fun getRecentExercises(): List<Pair<String, String>> {
+        return sessions.value
+            .asSequence()
+            .sortedByDescending { it.session.startTime }
+            .take(10)
+            .flatMap { it.sets }
+            .map { it.exercise to it.muscle }
+            .distinctBy { it.first }
+            .toList()
+    }
+
+    fun getMuscleGroups(): List<String> {
+        return sessions.value
+            .flatMap { it.sets }
+            .map { it.muscle }
+            .distinct()
+            .sorted()
+    }
+
+    fun getExercisesByMuscle(muscle: String): List<String> {
+        return sessions.value
+            .flatMap { it.sets }
+            .filter { it.muscle == muscle }
+            .map { it.exercise }
+            .distinct()
+            .sorted()
+    }
+
+    suspend fun getExerciseByName(name: String): Exercise? {
+        return exerciseRepository.getAllExercises().find { it.name == name }
+    }
+
+    // New optimized helpers for Analytics
+    fun get1RMHistoryForExercise(exercise: String): List<Pair<Long, Double>> {
+        val exerciseSets = workouts.value.filter { it.exercise == exercise }
+        return WorkoutAnalyzer.get1RMHistory(exercise, exerciseSets)
+    }
+
+    fun getVolumeHistoryForExercise(exercise: String): List<Pair<String, Double>> {
+        val exerciseSets = workouts.value.filter { it.exercise == exercise }
+        return WorkoutAnalyzer.getExerciseVolumeHistory(exercise, exerciseSets)
     }
 }
