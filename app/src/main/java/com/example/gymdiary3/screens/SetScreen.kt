@@ -1,8 +1,9 @@
 package com.example.gymdiary3.screens
 
 import androidx.compose.foundation.*
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,7 +71,7 @@ fun SetScreen(
     }
 
     val canLogSet = remember(reps, weight) {
-        reps > 0 && weight >= 0
+        (reps > 0) && (weight > 0)
     }
 
     LaunchedEffect(exercise) {
@@ -187,7 +188,7 @@ fun SetScreen(
                 }
 
                 if (showPlates) {
-                    PlateCalculatorCard(weight)
+                    PlateCalculatorCard(weight, barWeight = userSettings.barWeight)
                     Spacer(Modifier.height(16.dp))
                 }
 
@@ -224,7 +225,7 @@ fun SetScreen(
                             contentPadding = PaddingValues(0.dp)
                         ) {
                             Text(
-                                text = "Next: ${suggestion}${userSettings.weightUnit}",
+                                text = "Next: $suggestion${userSettings.weightUnit}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = OwlColors.Purple,
                                 fontWeight = FontWeight.Bold
@@ -574,7 +575,8 @@ fun PlateCalculatorCard(targetWeight: Double, barWeight: Double = 20.0) {
             Text("PLATES PER SIDE (${barWeight.toInt()}kg Bar)", color = OwlColors.PurpleSoft, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             var remaining = sideLoad
             for (plate in plates) {
-                val count = (remaining / plate).toInt()
+                // Use epsilon to avoid precision issues
+                val count = ((remaining + 0.001) / plate).toInt()
                 if (count > 0) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("${plate}kg", color = OwlColors.TextSecondary, fontSize = 13.sp)

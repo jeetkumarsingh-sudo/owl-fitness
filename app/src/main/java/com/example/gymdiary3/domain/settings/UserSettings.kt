@@ -11,5 +11,6 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "us
 
 data class UserSettings(
     val weightUnit: String = "kg",
-    val defaultRestSeconds: Int = 90
+    val defaultRestSeconds: Int = 90,
+    val barWeight: Double = 20.0
 )

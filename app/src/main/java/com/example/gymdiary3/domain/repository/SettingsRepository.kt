@@ -7,4 +7,5 @@ interface SettingsRepository {
     val userSettingsFlow: Flow<UserSettings>
     suspend fun updateWeightUnit(unit: String)
     suspend fun updateDefaultRestSeconds(seconds: Int)
+    suspend fun updateBarWeight(weight: Double)
 }

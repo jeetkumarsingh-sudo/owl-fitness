@@ -37,18 +37,26 @@ object WorkoutAnalyzer {
             .values
             .sortedBy { it.first().timestamp }
 
-        val last = sessions.lastOrNull()?.maxOfOrNull { it.weight } ?: 0.0
-        val previous = if (sessions.size >= 2) {
-            sessions[sessions.size - 2].maxOfOrNull { it.weight } ?: 0.0
-        } else 0.0
+        val lastSession = sessions.lastOrNull() ?: emptyList()
+        val previousSessions = sessions.dropLast(1)
+        
+        val last = lastSession.maxOfOrNull { it.weight } ?: 0.0
+        val previous = previousSessions.lastOrNull()?.maxOfOrNull { it.weight } ?: 0.0
+        
+        val historicBestWeight = previousSessions.flatten().maxOfOrNull { it.weight } ?: 0.0
+        val historicBest1RM = previousSessions.flatten().maxOfOrNull { 
+            WorkoutCalculations.calculate1RM(it.weight, it.reps) 
+        } ?: 0.0
+
+        val current1RM = lastSession.maxOfOrNull { WorkoutCalculations.calculate1RM(it.weight, it.reps) } ?: 0.0
 
         val trend = if (previous > 0) last - previous else 0.0
-        val isPR = last >= bestWeight && last > 0 && sessions.size > 1 && last > previous
+        val isPR = (last > historicBestWeight || current1RM > historicBest1RM) && last > 0 && sessions.size > 1
 
         return ExerciseStats(
             exercise = exercise,
-            bestWeight = bestWeight,
-            best1RM = best1RM,
+            bestWeight = maxOf(bestWeight, last),
+            best1RM = maxOf(best1RM, current1RM),
             totalVolume = totalVolume,
             lastSessionWeight = last,
             previousSessionWeight = previous,
@@ -68,7 +76,7 @@ object WorkoutAnalyzer {
     fun getSuggestedWeight(lastWeight: Double): Double {
         return when {
             lastWeight < 20 -> lastWeight + 1.25
-            lastWeight < 50 -> lastWeight + 2.5
+            lastWeight <= 50 -> lastWeight + 2.5
             else -> lastWeight + 5
         }
     }

@@ -1,6 +1,7 @@
 package com.example.gymdiary3.data.repository
 
 import android.content.Context
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -20,13 +21,15 @@ class SettingsRepositoryImpl @Inject constructor(
     private object PreferencesKeys {
         val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
         val DEFAULT_REST_SECONDS = intPreferencesKey("default_rest_seconds")
+        val BAR_WEIGHT = doublePreferencesKey("bar_weight")
     }
 
     override val userSettingsFlow: Flow<UserSettings> = context.dataStore.data
         .map { preferences ->
             UserSettings(
                 weightUnit = preferences[PreferencesKeys.WEIGHT_UNIT] ?: "kg",
-                defaultRestSeconds = preferences[PreferencesKeys.DEFAULT_REST_SECONDS] ?: 90
+                defaultRestSeconds = preferences[PreferencesKeys.DEFAULT_REST_SECONDS] ?: 90,
+                barWeight = preferences[PreferencesKeys.BAR_WEIGHT] ?: 20.0
             )
         }
 
@@ -39,6 +42,12 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun updateDefaultRestSeconds(seconds: Int) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.DEFAULT_REST_SECONDS] = seconds
+        }
+    }
+
+    override suspend fun updateBarWeight(weight: Double) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.BAR_WEIGHT] = weight
         }
     }
 }
