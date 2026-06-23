@@ -99,12 +99,12 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable("exercise/{muscle}") { back ->
-                            val muscle = back.arguments?.getString("muscle") ?: ""
+                            val muscle = Uri.decode(back.arguments?.getString("muscle") ?: "")
                             ExerciseScreen(nav = nav, muscle = muscle)
                         }
 
                         composable("set/{muscle}/{exercise}") { back ->
-                            val muscle = back.arguments?.getString("muscle") ?: ""
+                            val muscle = Uri.decode(back.arguments?.getString("muscle") ?: "")
                             val exercise = Uri.decode(back.arguments?.getString("exercise") ?: "")
                             SetScreen(nav = nav, muscle = muscle, exercise = exercise)
                         }

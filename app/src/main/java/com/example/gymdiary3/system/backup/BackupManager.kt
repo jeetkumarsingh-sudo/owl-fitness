@@ -14,7 +14,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Date
+import android.util.Log
 import java.util.Locale
 import javax.inject.Inject
 
@@ -58,7 +58,7 @@ class BackupManager @Inject constructor(
             file.writeText(json.encodeToString(backup))
             FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("BackupManager", "Failed to export JSON backup", e)
             null
         }
     }

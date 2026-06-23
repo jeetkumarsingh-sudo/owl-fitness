@@ -75,7 +75,11 @@ class WorkoutViewModel @Inject constructor(
                     val startTime = session.startTime
                     while (true) {
                         emit((System.currentTimeMillis() - startTime) / 1000)
-                        kotlinx.coroutines.delay(1000)
+                        try {
+                            kotlinx.coroutines.delay(1000)
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        }
                     }
                 } else {
                     emit(0L)
@@ -227,7 +231,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun startRestTimer(seconds: Int) {
-        restTimerManager.startTimer(seconds)
+        restTimerManager.startTimer(seconds, viewModelScope)
     }
 
     fun getExerciseUiState(exercise: String): ExerciseUiState {

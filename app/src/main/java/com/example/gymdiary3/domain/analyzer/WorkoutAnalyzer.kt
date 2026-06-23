@@ -43,7 +43,7 @@ object WorkoutAnalyzer {
         } else 0.0
 
         val trend = if (previous > 0) last - previous else 0.0
-        val isPR = last >= bestWeight && last > 0 && sessions.size > 1 && last > previous
+        val isPR = last > previous && last > 0 && sessions.size > 1
 
         return ExerciseStats(
             exercise = exercise,
@@ -78,7 +78,7 @@ object WorkoutAnalyzer {
     }
 
     fun isValidSet(weight: Double, reps: Int): Boolean {
-        return weight >= 0 && reps > 0
+        return weight > 0 && reps > 0
     }
 
     fun filterValidSessions(sessions: List<SessionWithSets>): List<SessionWithSets> {

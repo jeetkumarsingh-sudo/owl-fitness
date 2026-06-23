@@ -25,7 +25,7 @@ class LogSetUseCase @Inject constructor(
         rpe: Float? = null,
         notes: String? = null
     ) {
-        if (reps <= 0 || weight < 0) return
+        if (reps <= 0 || weight <= 0) return
 
         val set = WorkoutSet(
             id = 0,
