@@ -70,7 +70,7 @@ fun SetScreen(
     }
 
     val canLogSet = remember(reps, weight) {
-        reps > 0 && weight >= 0
+        reps > 0 && weight > 0
     }
 
     LaunchedEffect(exercise) {
