@@ -17,8 +17,22 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
         if (_currentSessionId.value != null) return
         val activeSession = workoutRepository.getActiveSession()
         if (activeSession != null) {
-            _currentSessionId.value = activeSession.id
-            currentStartTime = activeSession.startTime
+            // Safety: If an active session is found but it's older than 12 hours, clear it
+            val isStale = (System.currentTimeMillis() - activeSession.startTime) > 12 * 60 * 60 * 1000
+            if (isStale) {
+                // End it automatically or delete if empty
+                val sessionWithSets = workoutRepository.getSessionWithSetsById(activeSession.id)
+                if (sessionWithSets == null || sessionWithSets.sets.isEmpty()) {
+                    workoutRepository.deleteSession(activeSession)
+                } else {
+                    workoutRepository.updateSession(activeSession.copy(endTime = activeSession.startTime + 60 * 60 * 1000))
+                }
+                _currentSessionId.value = null
+                currentStartTime = 0L
+            } else {
+                _currentSessionId.value = activeSession.id
+                currentStartTime = activeSession.startTime
+            }
         }
     }
 
