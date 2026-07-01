@@ -18,7 +18,8 @@ class MigrationTest {
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
-        WorkoutDatabase::class.java.canonicalName,
+        WorkoutDatabase::class.java,
+        emptyList(),
         FrameworkSQLiteOpenHelperFactory()
     )
 
@@ -91,8 +92,59 @@ class MigrationTest {
 
     @Test
     fun testFreshInstallV9() {
-        // Create database with current version (9)
-        val db = helper.createDatabase(TEST_DB, 9)
+        // Create database with current version
+        val db = helper.createDatabase(TEST_DB, 11)
+        db.close()
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate9To10() {
+        var db = helper.createDatabase(TEST_DB, 9)
+        db.execSQL("INSERT INTO session (startTime, endTime, name, notes) VALUES (3000, 3600, 'Test Session', 'notes')")
+        db.close()
+
+        db = helper.runMigrationsAndValidate(TEST_DB, 10, true, WorkoutDatabase.MIGRATION_9_10)
+        db.query("SELECT * FROM program_days").close()
+        db.query("SELECT * FROM program_exercises").close()
+        db.query("SELECT * FROM session_schedule").close()
+        db.query("SELECT * FROM session_exercise_logs").close()
+        db.close()
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate10To11() {
+        var db = helper.createDatabase(TEST_DB, 10)
+        db.execSQL("INSERT INTO session (startTime, endTime, name, notes) VALUES (4000, 4600, 'Test Session', 'notes')")
+        db.execSQL("INSERT INTO WorkoutSet (timestamp, muscle, exercise, setNumber, reps, weight, isAssisted, sessionId, rpe, notes) VALUES (4000, 'Chest', 'Bench Press', 1, 8, 80.0, 0, 1, NULL, NULL)")
+        db.close()
+
+        db = helper.runMigrationsAndValidate(TEST_DB, 11, true, WorkoutDatabase.MIGRATION_10_11)
+        val workoutSetIndexCursor = db.query("PRAGMA index_list('WorkoutSet')")
+        var hasExerciseIndex = false
+        var hasSessionIdIndex = false
+        var hasTimestampIndex = false
+        while (workoutSetIndexCursor.moveToNext()) {
+            val indexName = workoutSetIndexCursor.getString(workoutSetIndexCursor.getColumnIndex("name"))
+            if (indexName == "index_WorkoutSet_exercise") hasExerciseIndex = true
+            if (indexName == "index_WorkoutSet_sessionId") hasSessionIdIndex = true
+            if (indexName == "index_WorkoutSet_timestamp") hasTimestampIndex = true
+        }
+        workoutSetIndexCursor.close()
+
+        val sessionIndexCursor = db.query("PRAGMA index_list('session')")
+        var hasStartTimeIndex = false
+        while (sessionIndexCursor.moveToNext()) {
+            val indexName = sessionIndexCursor.getString(sessionIndexCursor.getColumnIndex("name"))
+            if (indexName == "index_session_startTime") hasStartTimeIndex = true
+        }
+        sessionIndexCursor.close()
+
+        assert(hasExerciseIndex)
+        assert(hasSessionIdIndex)
+        assert(hasTimestampIndex)
+        assert(hasStartTimeIndex)
         db.close()
     }
 }

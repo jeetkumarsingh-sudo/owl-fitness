@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.ProgressViewModel
+import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
 import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
@@ -31,10 +32,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun AnalyticsScreen(
     nav: NavHostController,
     viewModel: ProgressViewModel = hiltViewModel(),
+    workoutViewModel: WorkoutViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.exerciseUiState.collectAsStateWithLifecycle()
     val oneRMHistory by viewModel.oneRMHistory.collectAsStateWithLifecycle()
     val volumeHistory by viewModel.volumeHistory.collectAsStateWithLifecycle()
+    val userSettings by workoutViewModel.settingsRepository.userSettingsFlow
+        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
     
     val exerciseName = viewModel.exerciseName.ifEmpty { "Exercise" }
 
@@ -76,8 +80,8 @@ fun AnalyticsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    AnalyticsStatCard("Best 1RM", "${state.best1RM.toInt()} kg", Modifier.weight(1f))
-                    AnalyticsStatCard("Total Volume", "${state.totalVolume.toInt()} kg", Modifier.weight(1f))
+                    AnalyticsStatCard("Best 1RM", "${state.best1RM.toInt()} ${userSettings.weightUnit}", Modifier.weight(1f))
+                    AnalyticsStatCard("Total Volume", "${state.totalVolume.toInt()} ${userSettings.weightUnit}", Modifier.weight(1f))
                 }
             }
 
@@ -105,7 +109,7 @@ fun AnalyticsScreen(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} kg since last session",
+                                text = (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} ${userSettings.weightUnit} since last session",
                                 color = if (state.trend > 0) OwlColors.GreenPositive 
                                         else if (state.trend < 0) OwlColors.RedNegative 
                                         else OwlColors.TextSecondary,

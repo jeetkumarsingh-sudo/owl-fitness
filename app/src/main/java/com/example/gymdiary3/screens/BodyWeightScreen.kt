@@ -26,6 +26,7 @@ import com.example.gymdiary3.ui.theme.OwlColors
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.domain.BodyWeightAnalyzer
 import com.example.gymdiary3.domain.model.BodyWeight
+import com.example.gymdiary3.domain.settings.WeightFormatter
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
 import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
@@ -48,6 +49,7 @@ fun BodyWeightScreen(
     val weights by viewModel.allWeights.collectAsStateWithLifecycle()
     
     val userSettings by viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    val weightUnit = userSettings.weightUnit
 
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val scope = rememberCoroutineScope()
@@ -89,7 +91,7 @@ fun BodyWeightScreen(
                         OutlinedTextField(
                             value = weightInput,
                             onValueChange = { weightInput = it },
-                            label = { Text("Current Weight (${userSettings.weightUnit})", color = OwlColors.TextMuted) },
+                            label = { Text("Current Weight (${WeightFormatter.label(weightUnit)})", color = OwlColors.TextMuted) },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
@@ -114,7 +116,7 @@ fun BodyWeightScreen(
                                     logScale.animateTo(1f, tween(100))
                                 }
                                 val w = weightInput.toDoubleOrNull() ?: return@Button
-                                viewModel.insertWeight(w)
+                                viewModel.insertWeight(WeightFormatter.toKilograms(w, weightUnit))
                                 weightInput = ""
                             },
                             modifier = Modifier.fillMaxWidth().height(64.dp).scale(logScale.value),
@@ -127,7 +129,7 @@ fun BodyWeightScreen(
                 }
             }
 
-            BodyWeightChart(weights, userSettings.weightUnit)
+            BodyWeightChart(weights, weightUnit)
 
             Text("HISTORY", color = OwlColors.Purple, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
 
@@ -162,7 +164,7 @@ fun BodyWeightScreen(
                             }
                         }
                     ) {
-                        WeightCard(item, sdf, userSettings.weightUnit)
+                        WeightCard(item, sdf, weightUnit)
                     }
                 }
             }
@@ -172,7 +174,12 @@ fun BodyWeightScreen(
 
 @Composable
 fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
-    if (weights.size < 2) {
+    val unitLabel = WeightFormatter.label(unit)
+    val displayWeights = remember(weights, unit) {
+        weights.map { it.copy(weight = WeightFormatter.fromKilograms(it.weight, unit)) }
+    }
+
+    if (displayWeights.size < 2) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -194,17 +201,17 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
         return
     }
 
-    val stats = BodyWeightAnalyzer.getStats(weights) ?: return
+    val stats = BodyWeightAnalyzer.getStats(displayWeights) ?: return
     val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
-    val latestWeight = weights.maxByOrNull { it.timestamp }
-    val previousWeight = weights.sortedByDescending { it.timestamp }.getOrNull(1)
+    val latestWeight = displayWeights.maxByOrNull { it.timestamp }
+    val previousWeight = displayWeights.sortedByDescending { it.timestamp }.getOrNull(1)
 
     val weightChange = (latestWeight?.weight ?: 0.0) - (previousWeight?.weight ?: 0.0)
 
-    val recentAvg = remember(weights) {
+    val recentAvg = remember(displayWeights) {
         val cutoff = System.currentTimeMillis() - 14L * 24 * 60 * 60 * 1000
-        val recent = weights.filter { it.timestamp >= cutoff }
+        val recent = displayWeights.filter { it.timestamp >= cutoff }
         if (recent.isEmpty()) null else recent.map { it.weight }.average()
     }
 
@@ -215,7 +222,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
     }
 
     val trendPrefix = if (weightChange > 0) "+" else ""
-    val trendText = "${trendPrefix}${"%.2f".format(weightChange)}$unit"
+    val trendText = "${trendPrefix}${WeightFormatter.formatNumber(weightChange, 2)} $unitLabel"
 
     Column {
         Row(
@@ -226,7 +233,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
         ) {
             Column {
                 Text("CURRENT", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text("${stats.latestWeight}$unit", color = OwlColors.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text("${WeightFormatter.formatNumber(stats.latestWeight, 1)} $unitLabel", color = OwlColors.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("CHANGE", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
@@ -240,7 +247,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
             Column(horizontalAlignment = Alignment.End) {
                 Text("AVG (14 DAYS)", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                 Text(
-                    text = if (recentAvg != null) "${"%.1f".format(recentAvg)}$unit" else "--",
+                    text = if (recentAvg != null) "${WeightFormatter.formatNumber(recentAvg, 1)} $unitLabel" else "--",
                     color = OwlColors.TextPrimary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
@@ -251,7 +258,7 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
         LineChart(
             linesChartData = listOf(
                 LineChartData(
-                    points = weights.sortedBy { it.timestamp }.map { bw ->
+                    points = displayWeights.sortedBy { it.timestamp }.map { bw ->
                         LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.timestamp)))
                     },
                     lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 2.dp)
@@ -287,7 +294,7 @@ fun WeightCard(item: BodyWeight, sdf: SimpleDateFormat, unit: String) {
         ) {
             Text(sdf.format(Date(item.timestamp)), color = OwlColors.TextMuted, fontSize = 14.sp)
             Text(
-                "${item.weight}$unit",
+                WeightFormatter.formatFromKilograms(item.weight, unit),
                 color = OwlColors.TextPrimary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp

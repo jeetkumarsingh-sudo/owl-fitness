@@ -3,24 +3,23 @@ package com.example.gymdiary3.ui.theme
 import androidx.compose.ui.graphics.Color
 
 object OwlColors {
-    val DeepBg      = Color(0xFF0A0A15)   // page background
-    val CardBg      = Color(0xFF13131F)   // card surface
-    val CardBgAlt   = Color(0xFF1A1A2E)   // elevated / inner card
-    val InputBg     = Color(0xFF1E1E32)   // text field background
+    // Apex Fitness Design System - Carbon & Crimson (Palette 1)
+    val DeepBg      = Color(0xFF000000)   // True OLED black page background
+    val CardBg      = Color(0xFF18181B)   // Zinc 900 main surface
+    val CardBgAlt   = Color(0xFF27272A)   // Zinc 800 elevated / inner card
+    val InputBg     = Color(0xFF27272A)   // Text field background
 
-    val Purple      = Color(0xFF7B68EE)   // primary accent
-    val PurpleSoft  = Color(0xFF9D8FFF)   // secondary labels
-    val PurpleDim   = Color(0xFF3D3570)   // inactive borders
+    val Crimson      = Color(0xFFE11D48)   // Crimson red primary brand accent
+    val CrimsonSoft  = Color(0xFFF43F5E)   // Rose red secondary/highlights
+    val CrimsonDim   = Color(0xFF9F1239)   // Darker red for inactive borders/backgrounds (Rose 800)
 
-    // IMPORTANT: user is bulking — weight gain is GOOD
-    val GreenPositive = Color(0xFF4CAF93) // gains, progress up (teal-green, not harsh)
-    val GreenBulk     = Color(0xFF56C596) // body weight increase = good for bulking
-    val RedNegative   = Color(0xFFE05C6C) // regression, loss
-    val AmberWarn     = Color(0xFFF0A500) // warnings, "no progress" flags
+    val GreenPositive = Color(0xFF10B981) // Emerald green success/gains
+    val AmberWarn     = Color(0xFFF59E0B) // Amber warnings
+    val RedNegative   = Color(0xFFEF4444) // Red error/regression
 
-    val TextPrimary   = Color(0xFFEEEEFF)
-    val TextSecondary = Color(0xFF9090B0)
-    val TextMuted     = Color(0xFF5A5A7A)
-    val BorderSubtle  = Color(0xFF252538)
-    val BorderActive  = Color(0xFF4A4870)
+    val TextPrimary   = Color(0xFFFFFFFF) // Pure white text
+    val TextSecondary = Color(0xFFA1A1AA) // Zinc 400 secondary text
+    val TextMuted     = Color(0xFF71717A) // Zinc 500 muted text
+    val BorderSubtle  = Color(0xFF27272A) // Very subtle borders
+    val BorderActive  = Color(0xFF3F3F46) // Slightly lighter for active elements
 }

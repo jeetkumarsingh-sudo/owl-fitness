@@ -1,40 +1,35 @@
 package com.example.gymdiary3.screens
 
-import android.widget.Toast
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.MonitorWeight
-import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.domain.settings.UserSettings
+import com.example.gymdiary3.domain.settings.WeightFormatter
+import com.example.gymdiary3.ui.components.ApexCard
+import com.example.gymdiary3.ui.components.ApexPrimaryButton
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import kotlinx.coroutines.launch
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.gymdiary3.domain.model.WorkoutSet
 import java.util.Calendar
-import androidx.compose.foundation.clickable
 
 @Composable
 fun HomeScreen(
@@ -42,398 +37,241 @@ fun HomeScreen(
     viewModel: WorkoutViewModel = hiltViewModel(),
     bodyViewModel: BodyWeightViewModel = hiltViewModel()
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
     val currentSessionId by viewModel.sessionManager.currentSessionId.collectAsStateWithLifecycle()
     val latestWeight by bodyViewModel.latestBodyWeight.collectAsStateWithLifecycle()
     val totalWorkouts by viewModel.totalWorkoutCount.collectAsStateWithLifecycle()
+    val userSettings by viewModel.settingsRepository.userSettingsFlow
+        .collectAsStateWithLifecycle(UserSettings())
 
     val sessionDuration by viewModel.sessionDurationSeconds.collectAsStateWithLifecycle()
-    val sessionNotes by viewModel.currentSessionNotes.collectAsStateWithLifecycle()
     val exercisesThisSession by viewModel.exercisesThisSession.collectAsStateWithLifecycle()
-    val lastSetLogged by viewModel.lastSetLogged.collectAsStateWithLifecycle()
-
-    var isVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { isVisible = true }
 
     var showSessionDateDialog by remember { mutableStateOf(false) }
 
     if (showSessionDateDialog) {
         AlertDialog(
             onDismissRequest = { showSessionDateDialog = false },
-            title = { Text("When did you work out?") },
+            containerColor = OwlColors.CardBg,
+            title = {
+                Text(
+                    text = "START EMPTY WORKOUT",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = OwlColors.TextPrimary,
+                    letterSpacing = 1.sp
+                )
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val now = System.currentTimeMillis()
-                    val cal = Calendar.getInstance()
-                    
-                    cal.timeInMillis = now
-                    cal.add(Calendar.DAY_OF_MONTH, -1)
+                    val cal = Calendar.getInstance().apply { timeInMillis = now; add(Calendar.DAY_OF_MONTH, -1) }
                     val yesterdayStartMillis = cal.timeInMillis
 
                     Surface(
-                        modifier = Modifier.fillMaxWidth().clickable {
-                            showSessionDateDialog = false
-                            viewModel.startSession(now) // Use actual current time
-                        },
-                        color = OwlColors.CardBgAlt,
-                        shape = RoundedCornerShape(8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showSessionDateDialog = false
+                                viewModel.startSession(now)
+                            },
+                        color = OwlColors.Purple,
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Today", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "Start Now",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = OwlColors.TextPrimary,
+                            textAlign = TextAlign.Center
+                        )
                     }
 
                     Surface(
-                        modifier = Modifier.fillMaxWidth().clickable {
-                            showSessionDateDialog = false
-                            viewModel.startSession(yesterdayStartMillis) // Start at beginning of yesterday
-                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                showSessionDateDialog = false
+                                viewModel.startSession(yesterdayStartMillis)
+                            },
                         color = OwlColors.CardBgAlt,
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
                     ) {
-                        Text("Yesterday", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = "Log Yesterday",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = OwlColors.TextSecondary,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { showSessionDateDialog = false }) { Text("CANCEL") }
+                TextButton(onClick = { showSessionDateDialog = false }) {
+                    Text("CANCEL", color = OwlColors.TextMuted, letterSpacing = 1.sp)
+                }
             }
         )
     }
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OwlColors.DeepBg)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+    ) {
+        Spacer(Modifier.height(48.dp))
+        
+        Text("APEX FITNESS", style = MaterialTheme.typography.labelMedium, color = OwlColors.Purple, letterSpacing = 1.sp)
+        Spacer(Modifier.height(4.dp))
+        Text("Ready to work.", style = MaterialTheme.typography.headlineLarge, color = OwlColors.TextPrimary)
+        
+        Spacer(Modifier.height(40.dp))
 
-    Box(Modifier.fillMaxSize().background(OwlColors.DeepBg)) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        if (currentSessionId != null) {
+            Surface(
+                color = OwlColors.CardBg,
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, OwlColors.GreenPositive.copy(alpha = 0.3f))
             ) {
-                Text(
-                    text = "OWL FITNESS",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = OwlColors.TextPrimary,
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier.alpha(animateFloatAsState(if (isVisible) 1f else 0f, tween(300)).value)
-                )
-
-                IconButton(onClick = { nav.navigate("settings") }) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = OwlColors.TextSecondary)
+                Column(Modifier.padding(24.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(8.dp)
+                                .background(OwlColors.GreenPositive, CircleShape)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "WORKOUT IN PROGRESS",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = OwlColors.GreenPositive,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                    
+                    Spacer(Modifier.height(24.dp))
+                    
+                    Row(Modifier.fillMaxWidth()) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "%02d:%02d".format(sessionDuration / 60, sessionDuration % 60),
+                                style = MaterialTheme.typography.displaySmall,
+                                color = OwlColors.TextPrimary,
+                                fontWeight = FontWeight.Light
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text("DURATION", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "${exercisesThisSession.size}",
+                                style = MaterialTheme.typography.displaySmall,
+                                color = OwlColors.TextPrimary,
+                                fontWeight = FontWeight.Light
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text("EXERCISES", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
+                        }
+                    }
+                    
+                    Spacer(Modifier.height(32.dp))
+                    ApexPrimaryButton(text = "RESUME WORKOUT", onClick = { nav.navigate("muscle") })
+                    
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(
+                        onClick = { viewModel.endSession { nav.navigate("history") } },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "FINISH SESSION",
+                            color = OwlColors.TextSecondary,
+                            style = MaterialTheme.typography.labelLarge,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
             }
-
-            if (currentSessionId != null) {
-                ActiveSessionPanel(
-                    sessionDuration = sessionDuration,
-                    sessionNotes = sessionNotes,
-                    exercisesThisSession = exercisesThisSession,
-                    lastSetLogged = lastSetLogged,
-                    onUpdateNotes = { viewModel.updateSessionNotes(it) },
-                    onContinueWorkout = { nav.navigate("muscle") },
-                    onFinishSession = { 
-                        viewModel.endSession { id -> 
-                            if (id != -1) {
-                                nav.navigate("summary/$id")
-                            } else {
-                                Toast.makeText(context, "Empty session deleted", Toast.LENGTH_SHORT).show()
-                            }
-                        } 
-                    }
-                )
-            } else {
-                // Session Card
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
+        } else {
+            ApexPrimaryButton(
+                text = "START EMPTY WORKOUT",
+                onClick = { showSessionDateDialog = true }
+            )
+            Spacer(Modifier.height(16.dp))
+            ApexCard(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { nav.navigate("program_tracker") }
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = OwlColors.CardBg,
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                    ) {
-                        Column(Modifier.padding(20.dp)) {
+                    Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = OwlColors.Purple)
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text("Program Routines", style = MaterialTheme.typography.titleMedium, color = OwlColors.TextPrimary)
+                        Text("Follow a structured plan", style = MaterialTheme.typography.labelMedium, color = OwlColors.TextSecondary)
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = OwlColors.TextSecondary)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(48.dp))
+        Text("LIFETIME STATS", style = MaterialTheme.typography.labelMedium, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            ApexCard(
+                modifier = Modifier.weight(1f),
+                onClick = { nav.navigate("history") }
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Text("WORKOUTS", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = totalWorkouts.toString(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = OwlColors.TextPrimary
+                    )
+                }
+            }
+            
+            ApexCard(
+                modifier = Modifier.weight(1f),
+                onClick = { nav.navigate("weight") }
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Text("BODY WEIGHT", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
+                    Spacer(Modifier.height(12.dp))
+                    val weightText = latestWeight?.let { 
+                        WeightFormatter.formatFromKilograms(it.weight, userSettings.weightUnit) 
+                    } ?: "--"
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = weightText,
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = OwlColors.TextPrimary
+                        )
+                        if (latestWeight != null) {
                             Text(
-                                text = "READY FOR GYM?",
+                                text = " ${WeightFormatter.label(userSettings.weightUnit).uppercase()}",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = OwlColors.TextSecondary,
-                                letterSpacing = 1.sp
+                                modifier = Modifier.padding(bottom = 4.dp)
                             )
-                            
-                            Spacer(Modifier.height(12.dp))
-
-                            Button(
-                                onClick = { showSessionDateDialog = true },
-                                modifier = Modifier.fillMaxWidth().height(56.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("START NEW SESSION", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            }
                         }
                     }
                 }
-
-                // Quick Stats
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(tween(500)) + slideInVertically(tween(500)) { it / 2 }
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().height(80.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        HomeQuickStatCard(
-                            label = "WORKOUTS",
-                            value = totalWorkouts.toString(),
-                            modifier = Modifier.weight(1f)
-                        )
-                        HomeQuickStatCard(
-                            label = "BODY WEIGHT",
-                            value = latestWeight?.let { "${it.weight}kg" } ?: "--",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                // Menu Grid (Modified to 2 items)
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item {
-                        MenuButton(
-                            text = "GYM TRACKER",
-                            icon = Icons.Default.DateRange,
-                            color = OwlColors.Purple,
-                            onClick = { nav.navigate("program_tracker") }
-                        )
-                    }
-                    item {
-                        MenuButton(
-                            text = "LOG WORKOUT",
-                            icon = Icons.Default.Add,
-                            color = OwlColors.Purple,
-                            onClick = {
-                                nav.navigate("muscle")
-                            }
-                        )
-                    }
-                    item {
-                        MenuButton(
-                            text = "BODY WEIGHT",
-                            icon = Icons.Default.MonitorWeight,
-                            color = OwlColors.GreenBulk,
-                            onClick = { nav.navigate("weight") }
-                        )
-                    }
-                }
             }
         }
-    }
-}
-
-@Composable
-fun ActiveSessionPanel(
-    sessionDuration: Long,
-    sessionNotes: String?,
-    exercisesThisSession: List<String>,
-    lastSetLogged: WorkoutSet?,
-    onUpdateNotes: (String) -> Unit,
-    onContinueWorkout: () -> Unit,
-    onFinishSession: () -> Unit
-) {
-    var showNotesDialog by remember { mutableStateOf(false) }
-
-    if (showNotesDialog) {
-        var tempNotes by remember { mutableStateOf(sessionNotes ?: "") }
-        AlertDialog(
-            onDismissRequest = { showNotesDialog = false },
-            title = { Text("Session Notes") },
-            text = {
-                OutlinedTextField(
-                    value = tempNotes,
-                    onValueChange = { tempNotes = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Write something about today's session...") }
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    onUpdateNotes(tempNotes)
-                    showNotesDialog = false
-                }) { Text("SAVE") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showNotesDialog = false }) { Text("CANCEL") }
-            }
-        )
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, OwlColors.PurpleDim)
-    ) {
-        Column(Modifier.padding(24.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("ACTIVE SESSION", color = OwlColors.Purple, style = MaterialTheme.typography.labelLarge, letterSpacing = 1.sp)
-                    Text(
-                        text = "%02d:%02d:%02d".format(sessionDuration / 3600, (sessionDuration % 3600) / 60, sessionDuration % 60),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = OwlColors.TextPrimary,
-                        fontWeight = FontWeight.Black
-                    )
-                }
-                IconButton(onClick = { showNotesDialog = true }) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Notes, 
-                        contentDescription = "Session Notes", 
-                        tint = if (sessionNotes.isNullOrBlank()) OwlColors.PurpleDim else OwlColors.Purple,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            }
-
-            if (!sessionNotes.isNullOrBlank()) {
-                Text(
-                    text = sessionNotes,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OwlColors.TextMuted,
-                    modifier = Modifier.padding(top = 8.dp),
-                    maxLines = 2
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            if (exercisesThisSession.isNotEmpty()) {
-                Text("EXERCISES LOGGED", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelSmall)
-                Text(
-                    text = exercisesThisSession.joinToString(" · "),
-                    color = OwlColors.TextPrimary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp),
-                    maxLines = 2
-                )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            if (lastSetLogged != null) {
-                Surface(
-                    color = OwlColors.CardBgAlt,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.History, null, tint = OwlColors.TextMuted, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Last: ${lastSetLogged.exercise} — ${lastSetLogged.weight}kg × ${lastSetLogged.reps}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = OwlColors.TextSecondary
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(32.dp))
-
-            Button(
-                onClick = onContinueWorkout,
-                modifier = Modifier.fillMaxWidth().height(64.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple)
-            ) {
-                Icon(Icons.Default.PlayArrow, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("CONTINUE WORKOUT", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            TextButton(
-                onClick = onFinishSession,
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Text("FINISH SESSION", color = OwlColors.RedNegative, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@Composable
-fun HomeQuickStatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-    ) {
-        Column(
-            Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary)
-            Text(value, style = MaterialTheme.typography.titleLarge, color = OwlColors.Purple, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-fun MenuButton(
-    text: String,
-    icon: ImageVector,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scale = remember { Animatable(1f) }
-    val scope = rememberCoroutineScope()
-
-    Surface(
-        onClick = {
-            scope.launch {
-                scale.animateTo(0.92f, tween(100))
-                scale.animateTo(1f, tween(100))
-                onClick()
-            }
-        },
-        modifier = modifier.height(140.dp).scale(scale.value),
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-    ) {
-        Column(
-            Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(32.dp))
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.titleSmall,
-                textAlign = TextAlign.Center,
-                color = OwlColors.TextPrimary,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        
+        Spacer(Modifier.height(48.dp))
     }
 }

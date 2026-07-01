@@ -2,11 +2,11 @@ package com.example.gymdiary3.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val BackgroundDark = Color(0xFF0D0D1A)
-val SurfaceDark = Color(0xFF1C1C2E)
-val PrimaryText = Color(0xFFFFFFFF)
-val SecondaryText = Color(0xFFB0B0B0)
-val Accent = Color(0xFF7B68EE)
-val PRGold = Color(0xFFFFC107)
-val SuccessGreen = Color(0xFF4CAF50)
-val ErrorRed = Color(0xFFFF5252)
+val BackgroundDark = Color(0xFF000000)
+val SurfaceDark = Color(0xFF18181B)
+val PrimaryText = Color(0xFFFAFAFA)
+val SecondaryText = Color(0xFFA1A1AA)
+val Accent = Color(0xFF6366F1) // Indigo
+val PRGold = Color(0xFFF59E0B)
+val SuccessGreen = Color(0xFF4ADE80)
+val ErrorRed = Color(0xFFFB7185)

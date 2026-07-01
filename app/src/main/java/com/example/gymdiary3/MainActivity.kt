@@ -16,7 +16,9 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,8 +57,9 @@ class MainActivity : ComponentActivity() {
                         val currentRoute = navBackStackEntry?.destination?.route
                         if (currentRoute in rootRoutes) {
                             NavigationBar(
-                                containerColor = OwlColors.CardBg,
-                                contentColor = OwlColors.TextSecondary
+                                containerColor = Color.Black,
+                                contentColor = OwlColors.TextSecondary,
+                                tonalElevation = 0.dp
                             ) {
                                 bottomNavItems.forEach { item ->
                                     val selected = currentRoute == item.route
@@ -76,7 +79,7 @@ class MainActivity : ComponentActivity() {
                                             selectedTextColor = OwlColors.Purple,
                                             unselectedIconColor = OwlColors.TextSecondary,
                                             unselectedTextColor = OwlColors.TextSecondary,
-                                            indicatorColor = OwlColors.PurpleDim
+                                            indicatorColor = OwlColors.Purple.copy(alpha = 0.15f)
                                         )
                                     )
                                 }
