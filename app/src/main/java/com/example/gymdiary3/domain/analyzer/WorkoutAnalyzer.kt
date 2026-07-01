@@ -107,7 +107,7 @@ object WorkoutAnalyzer {
             .map { it.first to it.second }
     }
 
-    fun get1RMHistory(exercise: String, allSetsForExercise: List<WorkoutSet>): List<Pair<Long, Double>> {
+    fun get1RMHistory(allSetsForExercise: List<WorkoutSet>): List<Pair<Long, Double>> {
         if (allSetsForExercise.isEmpty()) return emptyList()
         return allSetsForExercise
             .filter { it.weight > 0 && it.reps > 0 }
@@ -123,7 +123,7 @@ object WorkoutAnalyzer {
             .sortedBy { it.first }
     }
 
-    fun getExerciseVolumeHistory(exercise: String, allSetsForExercise: List<WorkoutSet>): List<Pair<String, Double>> {
+    fun getExerciseVolumeHistory(allSetsForExercise: List<WorkoutSet>): List<Pair<String, Double>> {
         val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
         return allSetsForExercise
             .groupBy { set -> set.sessionId ?: (set.timestamp / (24 * 60 * 60 * 1000)) }

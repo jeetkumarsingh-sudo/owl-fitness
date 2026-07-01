@@ -90,7 +90,7 @@ class WorkoutAnalyzerTest {
 
     @Test
     fun `get1RMHistory returns sorted pairs`() {
-        val history = WorkoutAnalyzer.get1RMHistory("Bench Press", testSets)
+        val history = WorkoutAnalyzer.get1RMHistory(testSets)
         assertTrue(history.isNotEmpty())
         assertEquals(history.sortedBy { it.first }, history)
     }

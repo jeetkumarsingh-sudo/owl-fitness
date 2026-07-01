@@ -53,11 +53,11 @@ class ProgressViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val oneRMHistory: StateFlow<List<Pair<Long, Double>>> = exerciseSets
-        .map { sets -> WorkoutAnalyzer.get1RMHistory(exerciseName, sets) }
+        .map { sets -> WorkoutAnalyzer.get1RMHistory(sets) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val volumeHistory: StateFlow<List<Pair<String, Double>>> = exerciseSets
-        .map { sets -> WorkoutAnalyzer.getExerciseVolumeHistory(exerciseName, sets) }
+        .map { sets -> WorkoutAnalyzer.getExerciseVolumeHistory(sets) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val globalVolumeHistory: StateFlow<List<Pair<String, Double>>> = workoutRepository.getSessionsWithSets()
