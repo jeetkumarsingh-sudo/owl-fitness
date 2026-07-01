@@ -12,9 +12,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 class BackupManager @Inject constructor(
@@ -52,7 +51,7 @@ class BackupManager @Inject constructor(
                 }
             )
 
-            val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             val file = File(context.cacheDir, "gym_diary_backup_$dateStr.json")
             file.writeText(json.encodeToString(backup))
             FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
