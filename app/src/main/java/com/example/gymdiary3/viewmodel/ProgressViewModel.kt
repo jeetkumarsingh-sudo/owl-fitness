@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.*
 @HiltViewModel
 class ProgressViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val workoutRepository: WorkoutRepository,
-    private val generateFitnessInsightsUseCase: GenerateFitnessInsightsUseCase
+    workoutRepository: WorkoutRepository,
+    generateFitnessInsightsUseCase: GenerateFitnessInsightsUseCase
 ) : ViewModel() {
 
     val exerciseName: String = savedStateHandle["exercise"] ?: ""
@@ -58,10 +58,6 @@ class ProgressViewModel @Inject constructor(
 
     val volumeHistory: StateFlow<List<Pair<String, Double>>> = exerciseSets
         .map { sets -> WorkoutAnalyzer.getExerciseVolumeHistory(sets) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val globalVolumeHistory: StateFlow<List<Pair<String, Double>>> = workoutRepository.getSessionsWithSets()
-        .map { WorkoutAnalyzer.getVolumeHistory(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val fitnessInsights: StateFlow<List<FitnessInsight>> = generateFitnessInsightsUseCase()
