@@ -24,7 +24,7 @@ interface WorkoutDao {
     @Delete
     suspend fun deleteSession(session: WorkoutSessionEntity)
 
-    @Query("DELETE FROM session WHERE id NOT IN (SELECT DISTINCT sessionId FROM WorkoutSet WHERE sessionId IS NOT NULL)")
+    @Query("DELETE FROM session WHERE endTime IS NOT NULL AND id NOT IN (SELECT DISTINCT sessionId FROM WorkoutSet WHERE sessionId IS NOT NULL)")
     suspend fun deleteEmptySessions()
 
     @Transaction

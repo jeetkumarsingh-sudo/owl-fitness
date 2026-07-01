@@ -8,6 +8,8 @@ import com.example.gymdiary3.system.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 @HiltViewModel
@@ -15,6 +17,9 @@ class ProgramViewModel @Inject constructor(
     private val programRepository: ProgramRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
+    companion object {
+        private val seedMutex = Mutex()
+    }
 
     val allProgramDays = programRepository.getAllProgramDays()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -28,9 +33,12 @@ class ProgramViewModel @Inject constructor(
 
     private fun seedDefaultProgramIfEmpty() {
         viewModelScope.launch {
-            val days = allProgramDays.first()
-            if (days.isEmpty()) {
-                seedProgram()
+            seedMutex.withLock {
+                // Read directly from repository flow so we don't consume stateIn's initial empty value.
+                val days = programRepository.getAllProgramDays().first()
+                if (days.isEmpty()) {
+                    seedProgram()
+                }
             }
         }
     }

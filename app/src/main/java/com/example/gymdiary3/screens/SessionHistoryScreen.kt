@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.gymdiary3.domain.model.SessionWithSets
+import com.example.gymdiary3.domain.settings.WeightFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -39,6 +40,8 @@ fun SessionHistoryScreen(
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val sessionsWithSets by viewModel.sessionsWithSets.collectAsStateWithLifecycle()
+    val userSettings by viewModel.settingsRepository.userSettingsFlow
+        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
     val sdf = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()) }
     val timeSdf = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
@@ -103,7 +106,7 @@ fun SessionHistoryScreen(
                         items = sessionsWithSets,
                         key = { it.session.id }
                     ) { sessionWithSets ->
-                        SessionCard(sessionWithSets, nav, sdf, timeSdf) {
+                        SessionCard(sessionWithSets, nav, sdf, timeSdf, userSettings.weightUnit) {
                             showDeleteDialog = it
                         }
                     }
@@ -120,6 +123,7 @@ fun SessionCard(
     nav: NavHostController,
     sdf: SimpleDateFormat,
     timeSdf: SimpleDateFormat,
+    unit: String,
     onLongClick: (Int) -> Unit
 ) {
     val session = sessionWithSets.session
@@ -189,7 +193,7 @@ fun SessionCard(
                     )
                     
                     Text(
-                        text = "${sessionWithSets.totalVolume.toInt()} kg total",
+                        text = "${WeightFormatter.formatFromKilograms(sessionWithSets.totalVolume, unit, decimals = 0)} total",
                         style = MaterialTheme.typography.labelSmall,
                         color = OwlColors.TextSecondary,
                         letterSpacing = 0.5.sp

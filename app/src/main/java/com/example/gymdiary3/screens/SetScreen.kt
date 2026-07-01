@@ -24,14 +24,18 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.domain.settings.WeightFormatter
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-
+import com.example.gymdiary3.ui.components.ApexCard
+import com.example.gymdiary3.ui.components.ApexPrimaryButton
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymdiary3.domain.settings.UserSettings
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -59,7 +63,8 @@ fun SetScreen(
     val timerSeconds by viewModel.restTimerSeconds.collectAsStateWithLifecycle()
     
     val userSettings by viewModel.settingsRepository.userSettingsFlow
-        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+        .collectAsStateWithLifecycle(UserSettings())
+    val weightUnit = userSettings.weightUnit
 
     var timerInitialSeconds by remember { mutableIntStateOf(userSettings.defaultRestSeconds) }
     
@@ -77,10 +82,10 @@ fun SetScreen(
         viewModel.loadLastSet(exercise)
     }
 
-    LaunchedEffect(lastSet) {
+    LaunchedEffect(lastSet, weightUnit) {
         lastSet?.let {
             if (weight == 0.0) {
-                weight = it.weight
+                weight = WeightFormatter.fromKilograms(it.weight, weightUnit)
             }
             if (reps == 0) {
                 reps = it.reps
@@ -97,20 +102,25 @@ fun SetScreen(
         var textValue by remember { mutableStateOf(weight.toString()) }
         AlertDialog(
             onDismissRequest = { showWeightDialog = false },
-            title = { Text("Enter Weight") },
+            containerColor = OwlColors.CardBg,
+            title = { Text("Enter Weight", color = OwlColors.TextPrimary) },
             text = {
-                TextField(
+                OutlinedTextField(
                     value = textValue,
                     onValueChange = { textValue = it },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = OwlColors.TextPrimary,
+                        unfocusedTextColor = OwlColors.TextPrimary
+                    )
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     textValue.toDoubleOrNull()?.let { weight = it }
                     showWeightDialog = false
-                }) { Text("OK") }
+                }) { Text("OK", color = OwlColors.Purple) }
             }
         )
     }
@@ -119,20 +129,25 @@ fun SetScreen(
         var textValue by remember { mutableStateOf(reps.toString()) }
         AlertDialog(
             onDismissRequest = { showRepsDialog = false },
-            title = { Text("Enter Reps") },
+            containerColor = OwlColors.CardBg,
+            title = { Text("Enter Reps", color = OwlColors.TextPrimary) },
             text = {
-                TextField(
+                OutlinedTextField(
                     value = textValue,
                     onValueChange = { textValue = it },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = OwlColors.TextPrimary,
+                        unfocusedTextColor = OwlColors.TextPrimary
+                    )
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     textValue.toIntOrNull()?.let { reps = it }
                     showRepsDialog = false
-                }) { Text("OK") }
+                }) { Text("OK", color = OwlColors.Purple) }
             }
         )
     }
@@ -143,28 +158,23 @@ fun SetScreen(
             .background(OwlColors.DeepBg)
             .verticalScroll(scrollState)
             .imePadding()
-            .padding(20.dp)
+            .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
         Text(
-            text = exercise,
-            style = MaterialTheme.typography.headlineMedium.copy(color = OwlColors.TextPrimary),
-            fontWeight = FontWeight.ExtraBold,
-            maxLines = 2,
-            lineHeight = 32.sp
+            text = exercise.uppercase(),
+            style = MaterialTheme.typography.headlineMedium,
+            color = OwlColors.TextPrimary,
+            maxLines = 2
         )
         
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(16.dp))
         
-        LastSessionSection(exercise, viewModel)
+        LastSessionSection(exercise, viewModel, weightUnit)
 
         Spacer(Modifier.height(16.dp))
 
-        Surface(
-            color = OwlColors.CardBg,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-        ) {
-            Column(Modifier.padding(20.dp)) {
+        ApexCard {
+            Column(Modifier.padding(24.dp)) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -173,12 +183,10 @@ fun SetScreen(
                     Text(
                         text = "SET $currentSet",
                         style = MaterialTheme.typography.labelLarge,
-                        color = OwlColors.Purple,
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.Bold
+                        color = OwlColors.Purple
                     )
                     
-                    TextButton(onClick = { showPlates = !showPlates }) {
+                    TextButton(onClick = { showPlates = !showPlates }, contentPadding = PaddingValues(0.dp)) {
                         Text(
                             if (showPlates) "HIDE PLATES" else "SHOW PLATES",
                             style = MaterialTheme.typography.labelMedium,
@@ -188,14 +196,15 @@ fun SetScreen(
                 }
 
                 if (showPlates) {
-                    PlateCalculatorCard(weight)
+                    PlateCalculatorCard(WeightFormatter.toKilograms(weight, weightUnit), userSettings.barWeight)
                     Spacer(Modifier.height(16.dp))
                 }
 
                 WeightStepper(
                     value = weight,
                     onValueChange = { weight = it },
-                    unit = userSettings.weightUnit,
+                    unit = WeightFormatter.label(weightUnit),
+                    step = WeightFormatter.step(weightUnit),
                     onLongClick = { showWeightDialog = true }
                 )
 
@@ -208,24 +217,25 @@ fun SetScreen(
                 )
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     lastSet?.let {
                         Text(
-                            text = "Last: ${it.weight}${userSettings.weightUnit} × ${it.reps}",
+                            text = "Last: ${WeightFormatter.formatFromKilograms(it.weight, weightUnit)} x ${it.reps}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = OwlColors.TextSecondary
                         )
                     }
 
                     suggestedWeight?.let { suggestion ->
+                        val displaySuggestion = WeightFormatter.fromKilograms(suggestion, weightUnit)
                         TextButton(
-                            onClick = { weight = suggestion },
+                            onClick = { weight = displaySuggestion },
                             contentPadding = PaddingValues(0.dp)
                         ) {
                             Text(
-                                text = "Next: ${suggestion}${userSettings.weightUnit}",
+                                text = "Next: ${WeightFormatter.formatFromKilograms(suggestion, weightUnit)}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = OwlColors.Purple,
                                 fontWeight = FontWeight.Bold
@@ -246,21 +256,21 @@ fun SetScreen(
                     Text("Support / Assisted", style = MaterialTheme.typography.bodyMedium, color = OwlColors.TextSecondary)
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(24.dp))
                 
                 // RPE Selection
                 Text(
-                    "RPE (Effort: 1-10)", 
+                    "RPE (EFFORT: 1-10)", 
                     style = MaterialTheme.typography.labelMedium, 
                     color = OwlColors.PurpleSoft,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 12.dp)
                 )
                 RpeSelector(
                     selectedRpe = rpe,
                     onRpeSelected = { rpe = it }
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(24.dp))
 
                 // Notes toggle
                 if (!showNotesInput) {
@@ -290,25 +300,22 @@ fun SetScreen(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         AnimatedVisibility(visible = isTimerRunning) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                color = OwlColors.CardBg,
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, OwlColors.PurpleDim)
-            ) {
+            ApexCard(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("REST TIMER", style = MaterialTheme.typography.labelMedium, color = OwlColors.Purple, letterSpacing = 2.sp)
+                    Text("REST TIMER", style = MaterialTheme.typography.labelLarge, color = OwlColors.Purple)
+                    Spacer(Modifier.height(8.dp))
                     Text(
                         text = "%d:%02d".format(timerSeconds / 60, timerSeconds % 60),
-                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 40.sp),
+                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 48.sp),
                         color = OwlColors.TextPrimary
                     )
+                    Spacer(Modifier.height(16.dp))
                     val progress = when {
                         timerInitialSeconds <= 0 -> 0f
                         timerSeconds <= 0 -> 1f
@@ -316,19 +323,22 @@ fun SetScreen(
                     }
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
                         color = OwlColors.Purple,
                         trackColor = OwlColors.BorderSubtle,
                         strokeCap = StrokeCap.Round
                     )
+                    Spacer(Modifier.height(12.dp))
                     TextButton(onClick = { viewModel.skipRestTimer() }) {
-                        Text("SKIP", color = OwlColors.TextSecondary)
+                        Text("SKIP TIMER", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
         }
 
-        Button(
+        ApexPrimaryButton(
+            text = "LOG SET",
+            enabled = canLogSet,
             onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 viewModel.insertWorkout(
@@ -336,7 +346,7 @@ fun SetScreen(
                     exercise = exercise,
                     setNumber = currentSet,
                     reps = reps,
-                    weight = weight,
+                    weight = WeightFormatter.toKilograms(weight, weightUnit),
                     isAssisted = isAssisted,
                     rpe = rpe,
                     notes = setNotes.takeIf { it.isNotBlank() }
@@ -345,25 +355,19 @@ fun SetScreen(
                 rpe = null
                 setNotes = ""
                 showNotesInput = false
-            },
-            modifier = Modifier.fillMaxWidth().height(60.dp),
-            enabled = canLogSet,
-            colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple, disabledContainerColor = OwlColors.PurpleDim),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text("LOG SET", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        }
+            }
+        )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         OutlinedButton(
             onClick = { nav.popBackStack() },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(100),
             border = BorderStroke(1.dp, OwlColors.BorderSubtle),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
         ) {
-            Text("FINISH EXERCISE", style = MaterialTheme.typography.bodyLarge)
+            Text("FINISH EXERCISE", style = MaterialTheme.typography.labelLarge)
         }
         
         Spacer(Modifier.height(40.dp))
@@ -384,8 +388,8 @@ fun RpeSelector(
             val isSelected = selectedRpe == value
             Surface(
                 onClick = { onRpeSelected(if (isSelected) null else value) },
-                modifier = Modifier.weight(1f).height(44.dp),
-                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RoundedCornerShape(12.dp),
                 color = if (isSelected) OwlColors.Purple else OwlColors.CardBgAlt,
                 border = if (isSelected) null else BorderStroke(1.dp, OwlColors.BorderSubtle)
             ) {
@@ -393,8 +397,7 @@ fun RpeSelector(
                     Text(
                         text = if (value == 10f) "10" else value.toString(),
                         color = if (isSelected) Color.White else OwlColors.TextPrimary,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
@@ -403,7 +406,7 @@ fun RpeSelector(
 }
 
 @Composable
-fun LastSessionSection(exerciseName: String, viewModel: WorkoutViewModel) {
+fun LastSessionSection(exerciseName: String, viewModel: WorkoutViewModel, unit: String) {
     val currentSessionId by viewModel.currentSessionId.collectAsStateWithLifecycle()
     val lastSessionSets by viewModel.getLastSessionSetsForExercise(
         exerciseName, 
@@ -411,37 +414,29 @@ fun LastSessionSection(exerciseName: String, viewModel: WorkoutViewModel) {
     ).collectAsStateWithLifecycle(initialValue = emptyList())
 
     if (lastSessionSets.isNotEmpty()) {
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = OwlColors.CardBgAlt),
-            border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-        ) {
-            Column(Modifier.padding(16.dp)) {
+        ApexCard(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            Column(Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.History, null, tint = OwlColors.PurpleSoft, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Filled.History, null, tint = OwlColors.PurpleSoft, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
                         "LAST SESSION",
                         color = OwlColors.PurpleSoft,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
                 lastSessionSets.forEachIndexed { idx, set ->
                     Row(
-                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        Modifier.fillMaxWidth().padding(vertical = 6.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Set ${idx + 1}", color = OwlColors.TextMuted, fontSize = 13.sp)
+                        Text("SET ${idx + 1}", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelLarge)
                         Text(
-                            if (set.weight > 0) "${"%.1f".format(set.weight)}kg × ${set.reps}"
+                            if (set.weight > 0) "${WeightFormatter.formatFromKilograms(set.weight, unit)} × ${set.reps}"
                             else "BW × ${set.reps}",
                             color = OwlColors.TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                 }
@@ -461,36 +456,35 @@ fun WeightStepper(
     onLongClick: () -> Unit
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().height(72.dp),
+        modifier = modifier.fillMaxWidth().height(88.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         FilledTonalButton(
             onClick = { onValueChange((value - step).coerceAtLeast(0.0)) },
-            modifier = Modifier.size(64.dp),
-            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.size(72.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = OwlColors.CardBgAlt)
         ) {
-            Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = OwlColors.TextPrimary)
+            Text("−", fontSize = 32.sp, fontWeight = FontWeight.Light, color = OwlColors.TextPrimary)
         }
         
         Column(
             modifier = Modifier
                 .weight(1f)
                 .combinedClickable(
-                    onClick = {},
+                    onClick = { onLongClick() },
                     onLongClick = onLongClick
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "%.1f".format(value),
-                style = MaterialTheme.typography.headlineMedium,
-                color = OwlColors.TextPrimary,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineLarge,
+                color = OwlColors.TextPrimary
             )
             Text(
-                text = unit,
+                text = unit.uppercase(),
                 style = MaterialTheme.typography.labelMedium,
                 color = OwlColors.TextSecondary
             )
@@ -498,11 +492,11 @@ fun WeightStepper(
         
         FilledTonalButton(
             onClick = { onValueChange(value + step) },
-            modifier = Modifier.size(64.dp),
-            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.size(72.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = OwlColors.CardBgAlt)
         ) {
-            Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = OwlColors.Purple)
+            Text("+", fontSize = 32.sp, fontWeight = FontWeight.Light, color = OwlColors.Purple)
         }
     }
 }
@@ -516,33 +510,32 @@ fun RepsStepper(
     onLongClick: () -> Unit
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().height(72.dp),
+        modifier = modifier.fillMaxWidth().height(88.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         FilledTonalButton(
-            onClick = { onValueChange((value - 1).coerceAtLeast(1)) },
-            modifier = Modifier.size(64.dp),
-            shape = RoundedCornerShape(12.dp),
+            onClick = { onValueChange((value - 1).coerceAtLeast(0)) },
+            modifier = Modifier.size(72.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = OwlColors.CardBgAlt)
         ) {
-            Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = OwlColors.TextPrimary)
+            Text("−", fontSize = 32.sp, fontWeight = FontWeight.Light, color = OwlColors.TextPrimary)
         }
         
         Column(
             modifier = Modifier
                 .weight(1f)
                 .combinedClickable(
-                    onClick = {},
+                    onClick = { onLongClick() },
                     onLongClick = onLongClick
                 ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                color = OwlColors.TextPrimary,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineLarge,
+                color = OwlColors.TextPrimary
             )
             Text(
                 text = "REPS",
@@ -553,11 +546,11 @@ fun RepsStepper(
         
         FilledTonalButton(
             onClick = { onValueChange(value + 1) },
-            modifier = Modifier.size(64.dp),
-            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.size(72.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.filledTonalButtonColors(containerColor = OwlColors.CardBgAlt)
         ) {
-            Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = OwlColors.Purple)
+            Text("+", fontSize = 32.sp, fontWeight = FontWeight.Light, color = OwlColors.Purple)
         }
     }
 }
@@ -569,17 +562,17 @@ fun PlateCalculatorCard(targetWeight: Double, barWeight: Double = 20.0) {
 
     if (sideLoad > 0) {
         Column(
-            modifier = Modifier.fillMaxWidth().background(OwlColors.CardBgAlt, RoundedCornerShape(8.dp)).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.fillMaxWidth().background(OwlColors.CardBgAlt, RoundedCornerShape(12.dp)).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("PLATES PER SIDE (${barWeight.toInt()}kg Bar)", color = OwlColors.PurpleSoft, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("PLATES PER SIDE (${barWeight.toInt()}KG BAR)", color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelSmall)
             var remaining = sideLoad
             for (plate in plates) {
                 val count = (remaining / plate).toInt()
                 if (count > 0) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${plate}kg", color = OwlColors.TextSecondary, fontSize = 13.sp)
-                        Text("x $count", color = OwlColors.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("${plate}KG", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelLarge)
+                        Text("× $count", color = OwlColors.TextPrimary, style = MaterialTheme.typography.titleMedium)
                     }
                     remaining -= count * plate
                 }

@@ -74,7 +74,7 @@ object WorkoutAnalyzer {
     }
 
     fun isValidSession(session: SessionWithSets): Boolean {
-        return session.totalVolume > 0
+        return session.sets.any { isValidSet(it.weight, it.reps) }
     }
 
     fun isValidSet(weight: Double, reps: Int): Boolean {

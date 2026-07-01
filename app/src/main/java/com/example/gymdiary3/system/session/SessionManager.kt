@@ -1,7 +1,6 @@
 package com.example.gymdiary3.system.session
 
 import com.example.gymdiary3.domain.model.WorkoutSession
-import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,8 +66,8 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
         val duration = System.currentTimeMillis() - currentStartTime
         val isExtremelyLong = duration > 24 * 60 * 60 * 1000
         
-        if (!isExtremelyLong && (sessionWithSets == null || !WorkoutAnalyzer.isValidSession(sessionWithSets))) {
-            // Delete empty or invalid session
+        if (!isExtremelyLong && (sessionWithSets == null || sessionWithSets.sets.isEmpty())) {
+            // Delete truly empty session
             val session = sessionWithSets?.session ?: workoutRepository.getSessionById(id)
             if (session != null) {
                 workoutRepository.deleteSession(session)

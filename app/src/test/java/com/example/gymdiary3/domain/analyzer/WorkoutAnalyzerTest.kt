@@ -71,7 +71,27 @@ class WorkoutAnalyzerTest {
     }
 
     @Test
-    fun `isValidSession returns false for zero volume`() {
+    fun `isValidSession returns true for bodyweight session with positive reps`() {
+        val session = SessionWithSets(
+            session = WorkoutSession(1, 1000L, 2000L),
+            sets = listOf(
+                WorkoutSet(1, 1000L, "Back", "Pull-Ups", 1, 8, 0.0, false, 1)
+            )
+        )
+        assertTrue(WorkoutAnalyzer.isValidSession(session))
+    }
+
+    @Test
+    fun `isValidSession returns false for empty session`() {
+        val session = SessionWithSets(
+            session = WorkoutSession(1, 1000L, 2000L),
+            sets = emptyList()
+        )
+        assertFalse(WorkoutAnalyzer.isValidSession(session))
+    }
+
+    @Test
+    fun `isValidSession returns false when session only has invalid sets`() {
         val session = SessionWithSets(
             session = WorkoutSession(1, 1000L, 2000L),
             sets = listOf(
