@@ -38,7 +38,7 @@ class WorkoutViewModel @Inject constructor(
     private val endSessionUseCase: EndSessionUseCase,
     private val getLastSessionSetsUseCase: GetLastSessionSetsUseCase,
     val sessionManager: SessionManager,
-    val restTimerManager: RestTimerManager
+    val restTimerManager: RestTimerManager,
 ) : ViewModel() {
 
     // Data Pipeline
@@ -51,9 +51,11 @@ class WorkoutViewModel @Inject constructor(
         workouts
     ) { sessionId, allSets ->
         if (sessionId == null) emptyList()
-        else allSets.filter { it.sessionId == sessionId }
+        else allSets.asSequence()
+             .filter { it.sessionId == sessionId }
              .map { it.exercise }
              .distinct()
+             .toList()
     }
     .distinctUntilChanged()
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -97,8 +99,7 @@ class WorkoutViewModel @Inject constructor(
     fun updateSessionNotes(notes: String) {
         val sessionId = sessionManager.currentSessionId.value ?: return
         viewModelScope.launch {
-            val session = workoutRepository.getSessionById(sessionId)
-            if (session != null) {
+            workoutRepository.getSessionById(sessionId)?.let { session ->
                 workoutRepository.updateSession(session.copy(notes = notes))
             }
         }
@@ -155,7 +156,7 @@ class WorkoutViewModel @Inject constructor(
         _lastSet // Using this to know which exercise we are currently logging
     ) { sessionId, allSets, lastSet ->
         val exerciseName = lastSet?.exercise
-        if (sessionId == null || exerciseName == null) 1
+        if ((sessionId == null) || (exerciseName == null)) 1
         else {
             allSets.count { it.sessionId == sessionId && it.exercise == exerciseName } + 1
         }

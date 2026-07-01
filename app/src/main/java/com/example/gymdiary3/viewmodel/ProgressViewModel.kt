@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.*
 class ProgressViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     workoutRepository: WorkoutRepository,
-    generateFitnessInsightsUseCase: GenerateFitnessInsightsUseCase
+    generateFitnessInsightsUseCase: GenerateFitnessInsightsUseCase,
 ) : ViewModel() {
 
     val exerciseName: String = savedStateHandle["exercise"] ?: ""

@@ -30,7 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun AnalyticsScreen(
     nav: NavHostController,
-    viewModel: ProgressViewModel = hiltViewModel()
+    viewModel: ProgressViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.exerciseUiState.collectAsStateWithLifecycle()
     val oneRMHistory by viewModel.oneRMHistory.collectAsStateWithLifecycle()
@@ -148,16 +148,18 @@ fun ChartSection(title: String, data: List<Double>, labels: List<String>? = null
         ) {
             Box(Modifier.padding(16.dp)) {
                 LineChart(
-                    linesChartData = listOf(LineChartData(
-                        points = data.mapIndexed { index, value -> 
-                            LineChartData.Point(value.toFloat(), labels?.getOrNull(index) ?: "")
-                        },
-                        lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 3.dp)
-                    )),
+                    linesChartData = listOf(
+                        LineChartData(
+                            points = data.mapIndexed { index, value -> 
+                                LineChartData.Point(value.toFloat(), labels?.getOrNull(index) ?: "")
+                            },
+                            lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 3.dp)
+                        )
+                    ),
                     modifier = Modifier.fillMaxWidth().height(200.dp),
                     pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple),
                     xAxisDrawer = SimpleXAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle),
-                    yAxisDrawer = SimpleYAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle, labelValueFormatter = { v -> "${v.toInt()}" })
+                    yAxisDrawer = SimpleYAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle, labelValueFormatter = { v -> v.toInt().toString() })
                 )
             }
         }
