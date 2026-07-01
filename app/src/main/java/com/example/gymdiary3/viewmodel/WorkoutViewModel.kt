@@ -24,7 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -74,8 +74,11 @@ class WorkoutViewModel @Inject constructor(
                 if (session != null) {
                     val startTime = session.startTime
                     while (true) {
-                        emit((System.currentTimeMillis() - startTime) / 1000)
-                        kotlinx.coroutines.delay(1.seconds)
+                        val current = System.currentTimeMillis()
+                        emit((current - startTime) / 1000)
+                        // Precise delay to align with next second
+                        val nextTick = 1000 - ((current - startTime) % 1000)
+                        kotlinx.coroutines.delay(nextTick.milliseconds)
                     }
                 } else {
                     emit(0L)
@@ -170,7 +173,6 @@ class WorkoutViewModel @Inject constructor(
     }
 
     init {
-        insertDefaultWorkouts()
         viewModelScope.launch {
             sessionManager.initialize()
         }
@@ -229,8 +231,7 @@ class WorkoutViewModel @Inject constructor(
                 weight = weight,
                 isAssisted = isAssisted,
                 rpe = rpe,
-                notes = notes,
-                scope = viewModelScope
+                notes = notes
             )
             loadLastSet(exercise)
         }
@@ -259,43 +260,7 @@ class WorkoutViewModel @Inject constructor(
         return@withContext com.example.gymdiary3.data.FileHandler.writeToCache(context, csvContent)
     }
 
-    private fun insertDefaultWorkouts() {
-        viewModelScope.launch {
-            val existing = exerciseRepository.getAllExercises()
-            if (existing.isEmpty()) {
-                val defaults = listOf(
-                    // Day 1
-                    Exercise("Push-ups", "Chest"), Exercise("Incline Smith / DB Press", "Chest"),
-                    Exercise("OHP (Strict)", "Shoulders"), Exercise("Dumbbell Lateral Raises", "Shoulders"),
-                    Exercise("Flat Bench or Chest Dips", "Chest"), Exercise("Pec Deck / Cable Fly", "Chest"),
-                    Exercise("Skull Crushers", "Triceps"),
-                    // Day 2
-                    Exercise("Pull-Ups (overhand)", "Back"), Exercise("Deadlift", "Back"),
-                    Exercise("Lat Pulldown (Wide)", "Back"), Exercise("Straight Arm Pulldown", "Back"),
-                    Exercise("Face Pulls", "Shoulders"), Exercise("Barbell Curl", "Biceps"),
-                    Exercise("Hammer Curl", "Biceps"),
-                    // Day 3
-                    Exercise("Squat", "Legs"), Exercise("Leg Press", "Legs"),
-                    Exercise("RDL", "Legs"), Exercise("Leg Extension", "Legs"),
-                    Exercise("Leg Curl", "Legs"), Exercise("Standing Calf Raises", "Legs"),
-                    // Day 5
-                    Exercise("Cable Lateral Raises (single)", "Shoulders"),
-                    Exercise("Low-to-High Cable Fly", "Chest"),
-                    Exercise("Lat Pulldown (Neutral Close)", "Back"),
-                    Exercise("Incline Dumbbell Curl", "Biceps"),
-                    Exercise("Rope Pushdown + Extension", "Triceps"),
-                    // Day 6
-                    Exercise("Light Squat (Tempo)", "Legs"), Exercise("Light RDL", "Legs"),
-                    Exercise("Nordic Hamstring Curl", "Legs"), Exercise("Hip Flexor + Thoracic Mobility", "Legs"),
-                    Exercise("Calf Raises", "Legs"), Exercise("Ab Circuit", "Abs")
-                )
-                defaults.forEach { exerciseRepository.insertExercise(it) }
-            }
-        }
-    }
-
     fun addExercise(
-
         name: String, 
         muscle: String,
         equipment: com.example.gymdiary3.domain.model.EquipmentType = com.example.gymdiary3.domain.model.EquipmentType.OTHER,
