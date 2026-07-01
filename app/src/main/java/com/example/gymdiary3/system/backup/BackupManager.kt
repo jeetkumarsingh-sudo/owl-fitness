@@ -10,7 +10,6 @@ import com.example.gymdiary3.domain.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.text.SimpleDateFormat
@@ -72,38 +71,47 @@ class BackupManager @Inject constructor(
             
             // Merge Exercises
             backup.exercises.forEach { e ->
-                exerciseRepository.insertExercise(
-                    Exercise(
-                        name = e.name,
-                        primaryMuscleGroup = e.primaryMuscleGroup,
-                        secondaryMuscleGroups = emptyList(),
-                        equipment = EquipmentType.valueOf(e.equipment),
-                        movementPattern = MovementPattern.valueOf(e.movementPattern),
-                        trackingType = TrackingType.valueOf(e.trackingType),
-                        isCustom = e.isCustom
+                val existing = exerciseRepository.getAllExercises()
+                if (existing.none { it.name == e.name }) {
+                    exerciseRepository.insertExercise(
+                        Exercise(
+                            name = e.name,
+                            primaryMuscleGroup = e.primaryMuscleGroup,
+                            secondaryMuscleGroups = emptyList(),
+                            equipment = EquipmentType.valueOf(e.equipment),
+                            movementPattern = MovementPattern.valueOf(e.movementPattern),
+                            trackingType = TrackingType.valueOf(e.trackingType),
+                            isCustom = e.isCustom
+                        )
                     )
-                )
+                }
             }
 
             // Merge BodyWeights
             backup.bodyWeights.forEach { bw ->
-                bodyWeightRepository.insertWeight(BodyWeight(0, bw.timestamp, bw.weight))
+                val existing = bodyWeightRepository.getWeights().firstOrNull() ?: emptyList()
+                if (existing.none { it.timestamp == bw.timestamp }) {
+                    bodyWeightRepository.insertWeight(BodyWeight(0, bw.timestamp, bw.weight))
+                }
             }
 
             // Merge Sessions & Sets
             backup.sessions.forEach { s ->
-                val sessionId = workoutRepository.insertSession(
-                    WorkoutSession(0, s.startTime, s.endTime, s.name, s.notes)
-                ).toInt()
-                
-                s.sets.forEach { set ->
-                    workoutRepository.insertSet(
-                        WorkoutSet(
-                            0, set.timestamp, set.muscle, set.exercise,
-                            set.setNumber, set.reps, set.weight, set.isAssisted,
-                            sessionId, set.rpe, set.notes
+                val existingSessions = workoutRepository.getSessionsWithSets().firstOrNull() ?: emptyList()
+                if (existingSessions.none { it.session.startTime == s.startTime }) {
+                    val sessionId = workoutRepository.insertSession(
+                        WorkoutSession(0, s.startTime, s.endTime, s.name, s.notes)
+                    ).toInt()
+                    
+                    s.sets.forEach { set ->
+                        workoutRepository.insertSet(
+                            WorkoutSet(
+                                0, set.timestamp, set.muscle, set.exercise,
+                                set.setNumber, set.reps, set.weight, set.isAssisted,
+                                sessionId, set.rpe, set.notes
+                            )
                         )
-                    )
+                    }
                 }
             }
             

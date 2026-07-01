@@ -9,15 +9,12 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gymdiary3.core.database.dao.BodyWeightDao
 import com.example.gymdiary3.core.database.dao.ProgramDao
 import com.example.gymdiary3.core.database.dao.WorkoutDao
-import com.example.gymdiary3.core.database.entity.BodyWeightEntity
-import com.example.gymdiary3.core.database.entity.ExerciseEntity
-import com.example.gymdiary3.core.database.entity.ProgramDayEntity
-import com.example.gymdiary3.core.database.entity.ProgramExerciseEntity
-import com.example.gymdiary3.core.database.entity.SessionExerciseLogEntity
-import com.example.gymdiary3.core.database.entity.SessionScheduleEntity
-import com.example.gymdiary3.core.database.entity.WorkoutSessionEntity
-import com.example.gymdiary3.core.database.entity.WorkoutSetEntity
+import com.example.gymdiary3.core.database.entity.*
 import com.example.gymdiary3.core.database.migration.MIGRATION_8_9
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -177,6 +174,44 @@ abstract class WorkoutDatabase : RoomDatabase() {
                     "gym_database"
                 )
                     .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                    .addCallback(object : Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+                            super.onCreate(db)
+                            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+                            scope.launch {
+                                INSTANCE?.let { database ->
+                                    val dao = database.workoutDao()
+                                    val defaults = listOf(
+                                        // Day 1
+                                        ExerciseEntity("Push-ups", "Chest"), ExerciseEntity("Incline Smith / DB Press", "Chest"),
+                                        ExerciseEntity("OHP (Strict)", "Shoulders"), ExerciseEntity("Dumbbell Lateral Raises", "Shoulders"),
+                                        ExerciseEntity("Flat Bench or Chest Dips", "Chest"), ExerciseEntity("Pec Deck / Cable Fly", "Chest"),
+                                        ExerciseEntity("Skull Crushers", "Triceps"),
+                                        // Day 2
+                                        ExerciseEntity("Pull-Ups (overhand)", "Back"), ExerciseEntity("Deadlift", "Back"),
+                                        ExerciseEntity("Lat Pulldown (Wide)", "Back"), ExerciseEntity("Straight Arm Pulldown", "Back"),
+                                        ExerciseEntity("Face Pulls", "Shoulders"), ExerciseEntity("Barbell Curl", "Biceps"),
+                                        ExerciseEntity("Hammer Curl", "Biceps"),
+                                        // Day 3
+                                        ExerciseEntity("Squat", "Legs"), ExerciseEntity("Leg Press", "Legs"),
+                                        ExerciseEntity("RDL", "Legs"), ExerciseEntity("Leg Extension", "Legs"),
+                                        ExerciseEntity("Leg Curl", "Legs"), ExerciseEntity("Standing Calf Raises", "Legs"),
+                                        // Day 5
+                                        ExerciseEntity("Cable Lateral Raises (single)", "Shoulders"),
+                                        ExerciseEntity("Low-to-High Cable Fly", "Chest"),
+                                        ExerciseEntity("Lat Pulldown (Neutral Close)", "Back"),
+                                        ExerciseEntity("Incline Dumbbell Curl", "Biceps"),
+                                        ExerciseEntity("Rope Pushdown + Extension", "Triceps"),
+                                        // Day 6
+                                        ExerciseEntity("Light Squat (Tempo)", "Legs"), ExerciseEntity("Light RDL", "Legs"),
+                                        ExerciseEntity("Nordic Hamstring Curl", "Legs"), ExerciseEntity("Hip Flexor + Thoracic Mobility", "Legs"),
+                                        ExerciseEntity("Calf Raises", "Legs"), ExerciseEntity("Ab Circuit", "Abs")
+                                    )
+                                    defaults.forEach { dao.insertExercise(it) }
+                                }
+                            }
+                        }
+                    })
                     .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance

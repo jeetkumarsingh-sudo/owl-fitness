@@ -4,7 +4,6 @@ import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.repository.SettingsRepository
 import com.example.gymdiary3.domain.repository.WorkoutRepository
 import com.example.gymdiary3.system.timer.RestTimerManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
@@ -21,7 +20,6 @@ class LogSetUseCase @Inject constructor(
         reps: Int,
         weight: Double,
         isAssisted: Boolean,
-        scope: CoroutineScope,
         rpe: Float? = null,
         notes: String? = null
     ) {
@@ -44,6 +42,6 @@ class LogSetUseCase @Inject constructor(
 
         val restSeconds = settingsRepository.userSettingsFlow
             .firstOrNull()?.defaultRestSeconds ?: 90
-        restTimerManager.startTimer(restSeconds, scope)
+        restTimerManager.startTimer(restSeconds)
     }
 }
