@@ -56,7 +56,6 @@ fun HomeScreen(
     LaunchedEffect(Unit) { isVisible = true }
 
     var showSessionDateDialog by remember { mutableStateOf(false) }
-    var selectedSessionDate by remember { mutableStateOf(0L) }
 
     if (showSessionDateDialog) {
         AlertDialog(
@@ -66,13 +65,8 @@ fun HomeScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     val now = System.currentTimeMillis()
                     val cal = Calendar.getInstance()
-                    cal.timeInMillis = now
-                    cal.set(Calendar.HOUR_OF_DAY, 0)
-                    cal.set(Calendar.MINUTE, 0)
-                    cal.set(Calendar.SECOND, 0)
-                    cal.set(Calendar.MILLISECOND, 0)
-                    val todayStartMillis = cal.timeInMillis
                     
+                    cal.timeInMillis = now
                     cal.add(Calendar.DAY_OF_MONTH, -1)
                     val yesterdayStartMillis = cal.timeInMillis
 
@@ -228,8 +222,7 @@ fun HomeScreen(
                             icon = Icons.Default.Add,
                             color = OwlColors.Purple,
                             onClick = {
-                                if (currentSessionId != null) nav.navigate("muscle")
-                                else Toast.makeText(context, "Start a session first!", Toast.LENGTH_SHORT).show()
+                                nav.navigate("muscle")
                             }
                         )
                     }

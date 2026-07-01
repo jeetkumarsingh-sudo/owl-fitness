@@ -1,7 +1,6 @@
 package com.example.gymdiary3.system.session
 
 import com.example.gymdiary3.domain.model.WorkoutSession
-import com.example.gymdiary3.domain.model.SessionWithSets
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.MutableStateFlow

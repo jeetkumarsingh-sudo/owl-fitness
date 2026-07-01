@@ -1,8 +1,10 @@
 package com.example.gymdiary3.screens
 
-import androidx.compose.foundation.*
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,8 +17,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -456,9 +456,9 @@ fun WeightStepper(
     value: Double,
     onValueChange: (Double) -> Unit,
     unit: String,
+    modifier: Modifier = Modifier,
     step: Double = 2.5,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onLongClick: () -> Unit
 ) {
     Row(
         modifier = modifier.fillMaxWidth().height(72.dp),
@@ -512,8 +512,8 @@ fun WeightStepper(
 fun RepsStepper(
     value: Int,
     onValueChange: (Int) -> Unit,
-    onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLongClick: () -> Unit
 ) {
     Row(
         modifier = modifier.fillMaxWidth().height(72.dp),

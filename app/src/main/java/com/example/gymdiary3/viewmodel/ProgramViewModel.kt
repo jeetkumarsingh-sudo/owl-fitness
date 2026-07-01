@@ -115,10 +115,6 @@ class ProgramViewModel @Inject constructor(
         }
     }
 
-    fun getExercisesForDay(dayId: Int): Flow<List<ProgramExercise>> {
-        return programRepository.getExercisesForDay(dayId)
-    }
-
     fun logScheduledSession(schedule: SessionSchedule, onComplete: (Int) -> Unit) {
         viewModelScope.launch {
             // 1. Use SessionManager to start the session correctly
