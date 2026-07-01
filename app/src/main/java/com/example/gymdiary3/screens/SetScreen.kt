@@ -149,7 +149,8 @@ fun SetScreen(
             text = exercise,
             style = MaterialTheme.typography.headlineMedium.copy(color = OwlColors.TextPrimary),
             fontWeight = FontWeight.ExtraBold,
-            maxLines = 1
+            maxLines = 2,
+            lineHeight = 32.sp
         )
         
         Spacer(Modifier.height(8.dp))

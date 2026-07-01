@@ -21,6 +21,7 @@ import androidx.navigation.NavHostController
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.ProgressViewModel
+import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.github.tehras.charts.line.LineChart
 import com.github.tehras.charts.line.LineChartData
 import com.github.tehras.charts.line.renderer.line.SolidLineDrawer

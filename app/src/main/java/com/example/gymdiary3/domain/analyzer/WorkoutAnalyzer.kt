@@ -68,7 +68,7 @@ object WorkoutAnalyzer {
     fun getSuggestedWeight(lastWeight: Double): Double {
         return when {
             lastWeight < 20 -> lastWeight + 1.25
-            lastWeight < 50 -> lastWeight + 2.5
+            lastWeight <= 50 -> lastWeight + 2.5
             else -> lastWeight + 5
         }
     }

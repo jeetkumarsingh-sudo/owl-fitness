@@ -30,7 +30,7 @@ import com.example.gymdiary3.core.database.migration.MIGRATION_8_9
         SessionScheduleEntity::class,
         SessionExerciseLogEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 abstract class WorkoutDatabase : RoomDatabase() {
@@ -42,6 +42,21 @@ abstract class WorkoutDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: WorkoutDatabase? = null
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Fix WorkoutSet indices to match Room's expected default names
+                db.execSQL("DROP INDEX IF EXISTS idx_workout_exercise")
+                db.execSQL("DROP INDEX IF EXISTS idx_workout_session")
+                db.execSQL("DROP INDEX IF EXISTS idx_workout_timestamp")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorkoutSet_exercise` ON `WorkoutSet` (`exercise`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorkoutSet_sessionId` ON `WorkoutSet` (`sessionId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorkoutSet_timestamp` ON `WorkoutSet` (`timestamp`)")
+
+                // Add missing index for session startTime
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_startTime` ON `session` (`startTime`)")
+            }
+        }
 
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -106,6 +121,9 @@ abstract class WorkoutDatabase : RoomDatabase() {
                 """.trimIndent())
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_exercise_logs_sessionId` ON `session_exercise_logs` (`sessionId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_exercise_logs_programExerciseId` ON `session_exercise_logs` (`programExerciseId`)")
+                
+                // Fix: Also add the index that was added to WorkoutSessionEntity
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_startTime` ON `session` (`startTime`)")
             }
         }
 
@@ -144,10 +162,10 @@ abstract class WorkoutDatabase : RoomDatabase() {
                 db.execSQL("DROP TABLE IF EXISTS BodyWeight")
                 db.execSQL("ALTER TABLE BodyWeight_new RENAME TO BodyWeight")
 
-                // Recreate indices
-                db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_exercise ON WorkoutSet(exercise)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_session ON WorkoutSet(sessionId)")
-                db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_timestamp ON WorkoutSet(timestamp)")
+                // Recreate indices with Room's expected default names
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorkoutSet_exercise` ON `WorkoutSet` (`exercise`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorkoutSet_sessionId` ON `WorkoutSet` (`sessionId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorkoutSet_timestamp` ON `WorkoutSet` (`timestamp`)")
             }
         }
 
@@ -158,7 +176,8 @@ abstract class WorkoutDatabase : RoomDatabase() {
                     WorkoutDatabase::class.java,
                     "gym_database"
                 )
-                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
