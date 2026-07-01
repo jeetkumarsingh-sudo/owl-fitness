@@ -23,12 +23,18 @@ class SessionManager(private val workoutRepository: WorkoutRepository) {
         }
     }
 
-    suspend fun startSession(sessionDateMillis: Long = System.currentTimeMillis()) {
+    suspend fun startSession(
+        sessionDateMillis: Long = System.currentTimeMillis(),
+        name: String? = null,
+        notes: String? = null
+    ) {
         if (_currentSessionId.value != null) return
         currentStartTime = sessionDateMillis
         val session = WorkoutSession(
             startTime = currentStartTime,
-            endTime = null
+            endTime = null,
+            name = name,
+            notes = notes
         )
         val id = workoutRepository.insertSession(session).toInt()
         _currentSessionId.value = id

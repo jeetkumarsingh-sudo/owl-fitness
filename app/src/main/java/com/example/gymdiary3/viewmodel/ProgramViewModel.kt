@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymdiary3.domain.model.*
 import com.example.gymdiary3.domain.repository.ProgramRepository
-import com.example.gymdiary3.domain.repository.WorkoutRepository
+import com.example.gymdiary3.system.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -13,7 +13,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProgramViewModel @Inject constructor(
     private val programRepository: ProgramRepository,
-    private val workoutRepository: WorkoutRepository
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     val allProgramDays = programRepository.getAllProgramDays()
@@ -121,14 +121,13 @@ class ProgramViewModel @Inject constructor(
 
     fun logScheduledSession(schedule: SessionSchedule, onComplete: (Int) -> Unit) {
         viewModelScope.launch {
-            // 1. Create a Training Session
-            val session = WorkoutSession(
-                startTime = System.currentTimeMillis(),
-                endTime = null,
+            // 1. Use SessionManager to start the session correctly
+            sessionManager.startSession(
+                sessionDateMillis = System.currentTimeMillis(),
                 name = schedule.title,
                 notes = schedule.notes
             )
-            val sessionId = workoutRepository.insertSession(session).toInt()
+            val sessionId = sessionManager.currentSessionId.value ?: return@launch
 
             // 2. Mark schedule as Done
             programRepository.updateScheduledSession(schedule.copy(status = "Done"))

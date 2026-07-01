@@ -334,7 +334,8 @@ fun ActiveSessionPanel(
                     color = OwlColors.TextPrimary,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp),
+                    maxLines = 2
                 )
             }
 

@@ -1,8 +1,5 @@
 package com.example.gymdiary3.presentation.state
 
-import androidx.compose.runtime.Stable
-
-@Stable
 data class ExerciseUiState(
     val exercise: String,
     val trend: Double,

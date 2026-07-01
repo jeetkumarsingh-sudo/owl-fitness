@@ -227,7 +227,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun startRestTimer(seconds: Int) {
-        restTimerManager.startTimer(seconds)
+        restTimerManager.startTimer(seconds, viewModelScope)
     }
 
     fun getExerciseUiState(exercise: String): ExerciseUiState {

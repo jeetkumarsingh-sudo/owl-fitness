@@ -9,7 +9,7 @@ import java.util.*
 object ExportFormatter {
     fun buildCsv(sessions: List<SessionWithSets>, bodyWeights: List<BodyWeight>, unit: String = "kg"): String {
         val sb = StringBuilder()
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
 
         // SECTION 1: Sets
         sb.appendLine("Date,Session ID,Exercise,Muscle Group,Set #,Weight ($unit),Reps,Volume ($unit),Est 1RM ($unit)")
