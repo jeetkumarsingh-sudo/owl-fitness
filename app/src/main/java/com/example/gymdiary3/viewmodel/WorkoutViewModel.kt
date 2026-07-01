@@ -263,13 +263,30 @@ class WorkoutViewModel @Inject constructor(
             val existing = exerciseRepository.getAllExercises()
             if (existing.isEmpty()) {
                 val defaults = listOf(
-                    Exercise("Bench Press", "Chest"), Exercise("Incline Bench Press", "Chest"),
-                    Exercise("Deadlift", "Back"), Exercise("Pullups", "Back"),
+                    // Day 1
+                    Exercise("Push-ups", "Chest"), Exercise("Incline Smith / DB Press", "Chest"),
+                    Exercise("OHP (Strict)", "Shoulders"), Exercise("Dumbbell Lateral Raises", "Shoulders"),
+                    Exercise("Flat Bench or Chest Dips", "Chest"), Exercise("Pec Deck / Cable Fly", "Chest"),
+                    Exercise("Skull Crushers", "Triceps"),
+                    // Day 2
+                    Exercise("Pull-Ups (overhand)", "Back"), Exercise("Deadlift", "Back"),
+                    Exercise("Lat Pulldown (Wide)", "Back"), Exercise("Straight Arm Pulldown", "Back"),
+                    Exercise("Face Pulls", "Shoulders"), Exercise("Barbell Curl", "Biceps"),
+                    Exercise("Hammer Curl", "Biceps"),
+                    // Day 3
                     Exercise("Squat", "Legs"), Exercise("Leg Press", "Legs"),
-                    Exercise("Overhead Press", "Shoulders"), Exercise("Lateral Raise", "Shoulders"),
-                    Exercise("Barbell Curl", "Biceps"), Exercise("Hammer Curl", "Biceps"),
-                    Exercise("Triceps Pushdown", "Triceps"), Exercise("Dips", "Triceps"),
-                    Exercise("Plank", "Abs"), Exercise("Crunches", "Abs")
+                    Exercise("RDL", "Legs"), Exercise("Leg Extension", "Legs"),
+                    Exercise("Leg Curl", "Legs"), Exercise("Standing Calf Raises", "Legs"),
+                    // Day 5
+                    Exercise("Cable Lateral Raises (single)", "Shoulders"),
+                    Exercise("Low-to-High Cable Fly", "Chest"),
+                    Exercise("Lat Pulldown (Neutral Close)", "Back"),
+                    Exercise("Incline Dumbbell Curl", "Biceps"),
+                    Exercise("Rope Pushdown + Extension", "Triceps"),
+                    // Day 6
+                    Exercise("Light Squat (Tempo)", "Legs"), Exercise("Light RDL", "Legs"),
+                    Exercise("Nordic Hamstring Curl", "Legs"), Exercise("Hip Flexor + Thoracic Mobility", "Legs"),
+                    Exercise("Calf Raises", "Legs"), Exercise("Ab Circuit", "Abs")
                 )
                 defaults.forEach { exerciseRepository.insertExercise(it) }
             }

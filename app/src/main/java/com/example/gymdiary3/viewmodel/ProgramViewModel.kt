@@ -37,13 +37,13 @@ class ProgramViewModel @Inject constructor(
 
     private suspend fun seedProgram() {
         val days = listOf(
-            ProgramDay(name = "Day 1 — Push", dayNumber = 1, sessionType = "Push", plannedDuration = 70, primaryPriority = "Upper Chest, Side Delts, OHP", warmupNotes = "5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
-            ProgramDay(name = "Day 2 — Pull", dayNumber = 2, sessionType = "Pull", plannedDuration = 75, primaryPriority = "Lats, Face Pulls, Biceps", warmupNotes = "5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
-            ProgramDay(name = "Day 3 — Legs", dayNumber = 3, sessionType = "Legs", plannedDuration = 70, primaryPriority = "Squat, RDL, Quad isolation", warmupNotes = "Clamshells 2x15 + Ankle mob 10/side + 5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
-            ProgramDay(name = "Day 4 — Rest", dayNumber = 4, sessionType = "Rest", plannedDuration = 20, primaryPriority = "Recovery", warmupNotes = "20 min walk only"),
-            ProgramDay(name = "Day 5 — Upper Volume", dayNumber = 5, sessionType = "Upper Volume", plannedDuration = 70, primaryPriority = "Side Delts, Rear Delts, Arms, 2nd Lat session", warmupNotes = "5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
-            ProgramDay(name = "Day 6 — Light Lower", dayNumber = 6, sessionType = "Light Lower", plannedDuration = 50, primaryPriority = "Technique + Mobility", warmupNotes = "If sleep <7 hrs for 3+ nights -> Full Rest. Otherwise: Clamshells 2x15 + Ankle mob 10/side + 5 min easy bike/treadmill"),
-            ProgramDay(name = "Day 7 — Rest", dayNumber = 7, sessionType = "Rest", plannedDuration = 0, primaryPriority = "Full Recovery", warmupNotes = "Full rest. No training.")
+            ProgramDay(name = "Day 1 — PUSH", dayNumber = 1, sessionType = "Push", plannedDuration = 70, primaryPriority = "Upper Chest, Side Delts, OHP", warmupNotes = "5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
+            ProgramDay(name = "Day 2 — PULL", dayNumber = 2, sessionType = "Pull", plannedDuration = 75, primaryPriority = "Lats, Face Pulls, Biceps", warmupNotes = "5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
+            ProgramDay(name = "Day 3 — LEGS", dayNumber = 3, sessionType = "Legs", plannedDuration = 70, primaryPriority = "Squat, RDL, Quad isolation", warmupNotes = "Clamshells 2x15/side + Ankle mob 10 reps/side + 5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
+            ProgramDay(name = "Day 4 — REST", dayNumber = 4, sessionType = "Rest", plannedDuration = 20, primaryPriority = "Recovery", warmupNotes = "20 min walk only"),
+            ProgramDay(name = "Day 5 — UPPER VOLUME", dayNumber = 5, sessionType = "Upper Volume", plannedDuration = 70, primaryPriority = "Side Delts, Rear Delts, Arms, 2nd Lat session", warmupNotes = "5 min easy bike/treadmill + Band pull-aparts 2x20 + Chin tucks 2x15 + Compound ramp"),
+            ProgramDay(name = "Day 6 — LIGHT LOWER", dayNumber = 6, sessionType = "Light Lower", plannedDuration = 50, primaryPriority = "Technique + Mobility", warmupNotes = "If sleep <7 hrs for 3+ nights -> Full Rest. Otherwise: Clamshells 2x15/side + Ankle mob 10 reps/side + 5 min easy bike/treadmill"),
+            ProgramDay(name = "Day 7 — REST", dayNumber = 7, sessionType = "Rest", plannedDuration = 0, primaryPriority = "Full Recovery", warmupNotes = "Full rest. No training.")
         )
 
         days.forEach { day ->
@@ -65,7 +65,7 @@ class ProgramViewModel @Inject constructor(
             )
             "Pull" -> listOf(
                 ProgramExercise(programDayId = dayId, exerciseName = "Pull-Ups (overhand)", order = 1, setsPlanned = 3, repsPlanned = "max (cap 8)", restSeconds = 120, notes = "Dead hang start. Elbows DOWN toward hips.", category = "Primary"),
-                ProgramExercise(programDayId = dayId, exerciseName = "Deadlift", order = 2, setsPlanned = 3, repsPlanned = "70%x5, 80%x5, Top: workingx5", restSeconds = 180, notes = "Brace fully. Add 5 kg to top set when all 3 clean.", category = "Primary"),
+                ProgramExercise(programDayId = dayId, exerciseName = "Deadlift", order = 2, setsPlanned = 3, repsPlanned = "Set 1: 70%x5, Set 2: 80%x5, Top: workingx5", restSeconds = 180, notes = "Brace fully. Add 5 kg to top set when all 3 clean.", category = "Primary"),
                 ProgramExercise(programDayId = dayId, exerciseName = "Lat Pulldown (Wide)", order = 3, setsPlanned = 3, repsPlanned = "10–12", restSeconds = 90, notes = "Pull to upper chest. Elbows to back pockets.", category = "Primary"),
                 ProgramExercise(programDayId = dayId, exerciseName = "Straight Arm Pulldown", order = 4, setsPlanned = 3, repsPlanned = "12–15", restSeconds = 75, notes = "Arms STRAIGHT. Best pure lat isolation.", category = "Accessory"),
                 ProgramExercise(programDayId = dayId, exerciseName = "Face Pulls", order = 5, setsPlanned = 3, repsPlanned = "15", restSeconds = 60, notes = "Elbows high and wide. External rotation at peak.", category = "Accessory"),
@@ -93,8 +93,9 @@ class ProgramViewModel @Inject constructor(
                 ProgramExercise(programDayId = dayId, exerciseName = "Light Squat (Tempo)", order = 1, setsPlanned = 3, repsPlanned = "12", restSeconds = 90, notes = "50 kg max. 3-down, 1s hold, 2-up. Pure technique.", category = "Primary"),
                 ProgramExercise(programDayId = dayId, exerciseName = "Light RDL", order = 2, setsPlanned = 3, repsPlanned = "10", restSeconds = 90, notes = "40 kg. Feel every hamstring stretch.", category = "Primary"),
                 ProgramExercise(programDayId = dayId, exerciseName = "Nordic Hamstring Curl", order = 3, setsPlanned = 3, repsPlanned = "6–8", restSeconds = 90, notes = "Controlled lowering phase (4–5 seconds).", category = "Primary"),
-                ProgramExercise(programDayId = dayId, exerciseName = "Calf Raises", order = 4, setsPlanned = 3, repsPlanned = "20", restSeconds = 60, notes = "Same execution as Day 3.", category = "Accessory"),
-                ProgramExercise(programDayId = dayId, exerciseName = "Ab Circuit", order = 5, setsPlanned = 3, repsPlanned = "Hanging/Crunches/Plank", restSeconds = 60, notes = "10 knee raises + 15 crunches + 30s plank.", category = "Accessory")
+                ProgramExercise(programDayId = dayId, exerciseName = "Hip Flexor + Thoracic Mobility", order = 4, setsPlanned = 1, repsPlanned = "5 min", restSeconds = 0, notes = "90-90 hip stretch, Thoracic extension, Kneeling hip flexor.", category = "Accessory"),
+                ProgramExercise(programDayId = dayId, exerciseName = "Calf Raises", order = 5, setsPlanned = 3, repsPlanned = "20", restSeconds = 60, notes = "Same execution as Day 3.", category = "Accessory"),
+                ProgramExercise(programDayId = dayId, exerciseName = "Ab Circuit", order = 6, setsPlanned = 3, repsPlanned = "Circuit", restSeconds = 60, notes = "10 knee raises + 15 crunches + 30s plank.", category = "Accessory")
             )
             else -> emptyList()
         }
