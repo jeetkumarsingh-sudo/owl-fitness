@@ -11,10 +11,6 @@ import com.example.gymdiary3.core.database.dao.ProgramDao
 import com.example.gymdiary3.core.database.dao.WorkoutDao
 import com.example.gymdiary3.core.database.entity.*
 import com.example.gymdiary3.core.database.migration.MIGRATION_8_9
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -39,6 +35,34 @@ abstract class WorkoutDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: WorkoutDatabase? = null
+
+        /** Default exercise library seeded on first database creation: name to primary muscle group. */
+        private val DEFAULT_EXERCISES = listOf(
+            // Day 1
+            "Push-ups" to "Chest", "Incline Smith / DB Press" to "Chest",
+            "OHP (Strict)" to "Shoulders", "Dumbbell Lateral Raises" to "Shoulders",
+            "Flat Bench or Chest Dips" to "Chest", "Pec Deck / Cable Fly" to "Chest",
+            "Skull Crushers" to "Triceps",
+            // Day 2
+            "Pull-Ups (overhand)" to "Back", "Deadlift" to "Back",
+            "Lat Pulldown (Wide)" to "Back", "Straight Arm Pulldown" to "Back",
+            "Face Pulls" to "Shoulders", "Barbell Curl" to "Biceps",
+            "Hammer Curl" to "Biceps",
+            // Day 3
+            "Squat" to "Legs", "Leg Press" to "Legs",
+            "RDL" to "Legs", "Leg Extension" to "Legs",
+            "Leg Curl" to "Legs", "Standing Calf Raises" to "Legs",
+            // Day 5
+            "Cable Lateral Raises (single)" to "Shoulders",
+            "Low-to-High Cable Fly" to "Chest",
+            "Lat Pulldown (Neutral Close)" to "Back",
+            "Incline Dumbbell Curl" to "Biceps",
+            "Rope Pushdown + Extension" to "Triceps",
+            // Day 6
+            "Light Squat (Tempo)" to "Legs", "Light RDL" to "Legs",
+            "Nordic Hamstring Curl" to "Legs", "Hip Flexor + Thoracic Mobility" to "Legs",
+            "Calf Raises" to "Legs", "Ab Circuit" to "Abs"
+        )
 
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -177,38 +201,15 @@ abstract class WorkoutDatabase : RoomDatabase() {
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-                            scope.launch {
-                                INSTANCE?.let { database ->
-                                    val dao = database.workoutDao()
-                                    val defaults = listOf(
-                                        // Day 1
-                                        ExerciseEntity("Push-ups", "Chest"), ExerciseEntity("Incline Smith / DB Press", "Chest"),
-                                        ExerciseEntity("OHP (Strict)", "Shoulders"), ExerciseEntity("Dumbbell Lateral Raises", "Shoulders"),
-                                        ExerciseEntity("Flat Bench or Chest Dips", "Chest"), ExerciseEntity("Pec Deck / Cable Fly", "Chest"),
-                                        ExerciseEntity("Skull Crushers", "Triceps"),
-                                        // Day 2
-                                        ExerciseEntity("Pull-Ups (overhand)", "Back"), ExerciseEntity("Deadlift", "Back"),
-                                        ExerciseEntity("Lat Pulldown (Wide)", "Back"), ExerciseEntity("Straight Arm Pulldown", "Back"),
-                                        ExerciseEntity("Face Pulls", "Shoulders"), ExerciseEntity("Barbell Curl", "Biceps"),
-                                        ExerciseEntity("Hammer Curl", "Biceps"),
-                                        // Day 3
-                                        ExerciseEntity("Squat", "Legs"), ExerciseEntity("Leg Press", "Legs"),
-                                        ExerciseEntity("RDL", "Legs"), ExerciseEntity("Leg Extension", "Legs"),
-                                        ExerciseEntity("Leg Curl", "Legs"), ExerciseEntity("Standing Calf Raises", "Legs"),
-                                        // Day 5
-                                        ExerciseEntity("Cable Lateral Raises (single)", "Shoulders"),
-                                        ExerciseEntity("Low-to-High Cable Fly", "Chest"),
-                                        ExerciseEntity("Lat Pulldown (Neutral Close)", "Back"),
-                                        ExerciseEntity("Incline Dumbbell Curl", "Biceps"),
-                                        ExerciseEntity("Rope Pushdown + Extension", "Triceps"),
-                                        // Day 6
-                                        ExerciseEntity("Light Squat (Tempo)", "Legs"), ExerciseEntity("Light RDL", "Legs"),
-                                        ExerciseEntity("Nordic Hamstring Curl", "Legs"), ExerciseEntity("Hip Flexor + Thoracic Mobility", "Legs"),
-                                        ExerciseEntity("Calf Raises", "Legs"), ExerciseEntity("Ab Circuit", "Abs")
-                                    )
-                                    defaults.forEach { dao.insertExercise(it) }
-                                }
+                            // Seed default exercises directly on the freshly created database.
+                            // Running here (on Room's creation thread) guarantees the defaults
+                            // exist before the first query, and avoids depending on the static
+                            // INSTANCE having been assigned yet.
+                            for ((name, muscle) in DEFAULT_EXERCISES) {
+                                db.execSQL(
+                                    "INSERT OR IGNORE INTO Exercise (name, primaryMuscleGroup) VALUES (?, ?)",
+                                    arrayOf(name, muscle)
+                                )
                             }
                         }
                     })

@@ -49,7 +49,7 @@ fun ProgramSessionLogScreen(
                 ),
                 actions = {
                     TextButton(onClick = { nav.navigate("summary/$sessionId") }) {
-                        Text("FINISH", color = OwlColors.Purple, fontWeight = FontWeight.Bold)
+                        Text("FINISH", color = OwlColors.Crimson, fontWeight = FontWeight.Bold)
                     }
                 }
             )
@@ -133,7 +133,7 @@ fun ExerciseLogRow(
                     color = OwlColors.TextPrimary
                 )
                 IconButton(onClick = { showDetails = !showDetails }) {
-                    Icon(Icons.Default.Info, contentDescription = "Details", tint = OwlColors.PurpleDim)
+                    Icon(Icons.Default.Info, contentDescription = "Details", tint = OwlColors.CrimsonDim)
                 }
             }
 
@@ -202,7 +202,7 @@ fun ExerciseLogRow(
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.PurpleDim.copy(alpha = 0.3f), contentColor = OwlColors.Purple)
+                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.CrimsonDim.copy(alpha = 0.3f), contentColor = OwlColors.Crimson)
             ) {
                 Text("SAVE EXERCISE", style = MaterialTheme.typography.labelLarge)
             }

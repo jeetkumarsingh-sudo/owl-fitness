@@ -139,15 +139,15 @@ fun WeeklyCalendarView(
                     Text(
                         text = dateFormat.format(date).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isToday) OwlColors.Purple else OwlColors.TextMuted
+                        color = if (isToday) OwlColors.Crimson else OwlColors.TextMuted
                     )
                     Spacer(Modifier.height(4.dp))
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = when {
                             session?.status == "Done" -> OwlColors.GreenBulk.copy(alpha = 0.2f)
-                            session?.status == "Planned" -> OwlColors.Purple.copy(alpha = 0.2f)
-                            isToday -> OwlColors.Purple
+                            session?.status == "Planned" -> OwlColors.Crimson.copy(alpha = 0.2f)
+                            isToday -> OwlColors.Crimson
                             else -> Color.Transparent
                         },
                         modifier = Modifier.size(32.dp)
@@ -165,7 +165,7 @@ fun WeeklyCalendarView(
                         Icon(
                             imageVector = if (session.status == "Done") Icons.Default.CheckCircle else Icons.Default.Circle,
                             contentDescription = null,
-                            tint = if (session.status == "Done") OwlColors.GreenBulk else OwlColors.Purple,
+                            tint = if (session.status == "Done") OwlColors.GreenBulk else OwlColors.Crimson,
                             modifier = Modifier.size(8.dp).padding(top = 2.dp)
                         )
                     }
@@ -198,7 +198,7 @@ fun ProgramDayCard(day: ProgramDay, onClick: () -> Unit) {
                     color = OwlColors.TextSecondary
                 )
             }
-            Icon(Icons.Default.Add, contentDescription = "Schedule", tint = OwlColors.Purple)
+            Icon(Icons.Default.Add, contentDescription = "Schedule", tint = OwlColors.Crimson)
         }
     }
 }

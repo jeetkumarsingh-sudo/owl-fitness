@@ -2,11 +2,15 @@ package com.example.gymdiary3.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val BackgroundDark = Color(0xFF000000)
-val SurfaceDark = Color(0xFF18181B)
-val PrimaryText = Color(0xFFFAFAFA)
-val SecondaryText = Color(0xFFA1A1AA)
-val Accent = Color(0xFF6366F1) // Indigo
-val PRGold = Color(0xFFF59E0B)
-val SuccessGreen = Color(0xFF4ADE80)
-val ErrorRed = Color(0xFFFB7185)
+// Legacy aliases kept for compatibility; the source of truth is [OwlColors].
+val BackgroundDark = OwlColors.DeepBg
+val SurfaceDark = OwlColors.CardBg
+val PrimaryText = OwlColors.TextPrimary
+val SecondaryText = OwlColors.TextSecondary
+val Accent = OwlColors.Crimson
+val PRGold = OwlColors.AmberWarn
+val SuccessGreen = OwlColors.GreenPositive
+val ErrorRed = OwlColors.RedNegative
+
+// Explicit transparent helper occasionally handy in previews.
+val Transparent = Color(0x00000000)

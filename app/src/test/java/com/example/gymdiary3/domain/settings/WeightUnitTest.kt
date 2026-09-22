@@ -23,4 +23,17 @@ class WeightUnitTest {
     fun `formatFromKilograms includes converted unit label`() {
         assertEquals("220 lbs", WeightFormatter.formatFromKilograms(100.0, "lbs", decimals = 0))
     }
+
+    @Test
+    fun `formatFromKilograms omits unit label when includeUnit is false`() {
+        assertEquals("70", WeightFormatter.formatFromKilograms(70.0, "kg", decimals = 0, includeUnit = false))
+        assertEquals("154", WeightFormatter.formatFromKilograms(70.0, "lbs", decimals = 0, includeUnit = false))
+    }
+
+    @Test
+    fun `label maps preference to symbol`() {
+        assertEquals("kg", WeightFormatter.label("kg"))
+        assertEquals("lbs", WeightFormatter.label("lbs"))
+        assertEquals("kg", WeightFormatter.label("unknown"))
+    }
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import com.example.gymdiary3.domain.settings.UserSettings
 import com.example.gymdiary3.domain.settings.WeightFormatter
 import com.example.gymdiary3.ui.components.ApexCard
 import com.example.gymdiary3.ui.components.ApexPrimaryButton
+import com.example.gymdiary3.ui.components.ApexSectionHeader
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
@@ -73,7 +75,7 @@ fun HomeScreen(
                                 showSessionDateDialog = false
                                 viewModel.startSession(now)
                             },
-                        color = OwlColors.Purple,
+                        color = OwlColors.Crimson,
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
@@ -122,13 +124,34 @@ fun HomeScreen(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
     ) {
-        Spacer(Modifier.height(48.dp))
-        
-        Text("APEX FITNESS", style = MaterialTheme.typography.labelMedium, color = OwlColors.Purple, letterSpacing = 1.sp)
-        Spacer(Modifier.height(4.dp))
-        Text("Ready to work.", style = MaterialTheme.typography.headlineLarge, color = OwlColors.TextPrimary)
-        
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(56.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("APEX FITNESS", style = MaterialTheme.typography.labelMedium, color = OwlColors.Crimson)
+                Spacer(Modifier.height(4.dp))
+                Text("Ready to work.", style = MaterialTheme.typography.headlineLarge, color = OwlColors.TextPrimary)
+            }
+            Surface(
+                onClick = { nav.navigate("settings") },
+                shape = CircleShape,
+                color = OwlColors.CardBg,
+                border = BorderStroke(1.dp, OwlColors.BorderSubtle)
+            ) {
+                Box(Modifier.padding(10.dp)) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = OwlColors.TextSecondary
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(36.dp))
 
         if (currentSessionId != null) {
             Surface(
@@ -208,7 +231,7 @@ fun HomeScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = OwlColors.Purple)
+                    Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = OwlColors.Crimson)
                     Spacer(Modifier.width(16.dp))
                     Column {
                         Text("Program Routines", style = MaterialTheme.typography.titleMedium, color = OwlColors.TextPrimary)
@@ -220,8 +243,8 @@ fun HomeScreen(
             }
         }
 
-        Spacer(Modifier.height(48.dp))
-        Text("LIFETIME STATS", style = MaterialTheme.typography.labelMedium, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(44.dp))
+        ApexSectionHeader("LIFETIME STATS")
         Spacer(Modifier.height(16.dp))
 
         Row(
@@ -250,8 +273,10 @@ fun HomeScreen(
                 Column(Modifier.padding(20.dp)) {
                     Text("BODY WEIGHT", style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary, letterSpacing = 1.sp)
                     Spacer(Modifier.height(12.dp))
-                    val weightText = latestWeight?.let { 
-                        WeightFormatter.formatFromKilograms(it.weight, userSettings.weightUnit) 
+                    // Number only; the unit label is rendered separately below to avoid
+                    // duplicating it (e.g. "70.0 kg KG").
+                    val weightText = latestWeight?.let {
+                        WeightFormatter.formatFromKilograms(it.weight, userSettings.weightUnit, includeUnit = false)
                     } ?: "--"
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(

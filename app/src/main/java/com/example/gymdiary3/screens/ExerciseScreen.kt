@@ -71,7 +71,7 @@ fun ExerciseScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add Exercise",
-                            tint = OwlColors.Purple
+                            tint = OwlColors.Crimson
                         )
                     }
                 }
@@ -170,7 +170,7 @@ fun ExerciseScreen(
                             showAddDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple)
+                    colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Crimson)
                 ) { Text("ADD", color = Color.White) }
             },
             dismissButton = {
@@ -192,11 +192,11 @@ fun ExerciseScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = OwlColors.TextPrimary,
                             unfocusedTextColor = OwlColors.TextPrimary,
-                            focusedBorderColor = OwlColors.Purple,
+                            focusedBorderColor = OwlColors.Crimson,
                             unfocusedBorderColor = OwlColors.BorderSubtle,
-                            focusedLabelColor = OwlColors.Purple,
+                            focusedLabelColor = OwlColors.Crimson,
                             unfocusedLabelColor = OwlColors.TextMuted,
-                            cursorColor = OwlColors.Purple,
+                            cursorColor = OwlColors.Crimson,
                             focusedContainerColor = OwlColors.InputBg,
                             unfocusedContainerColor = OwlColors.InputBg
                         )
@@ -250,13 +250,13 @@ fun <T : Enum<T>> ClassificationDropdown(
             readOnly = true,
             label = { Text(label, color = OwlColors.TextMuted) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor().fillMaxWidth(),
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = OwlColors.TextPrimary,
                 unfocusedTextColor = OwlColors.TextPrimary,
-                focusedBorderColor = OwlColors.Purple,
+                focusedBorderColor = OwlColors.Crimson,
                 unfocusedBorderColor = OwlColors.BorderSubtle,
-                focusedLabelColor = OwlColors.Purple,
+                focusedLabelColor = OwlColors.Crimson,
                 unfocusedLabelColor = OwlColors.TextMuted,
                 focusedContainerColor = OwlColors.InputBg,
                 unfocusedContainerColor = OwlColors.InputBg

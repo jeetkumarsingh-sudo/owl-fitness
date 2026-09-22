@@ -12,10 +12,31 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve line number information for readable crash stack traces,
+# while hiding the original source file name.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ---------------------------------------------------------------------------
+# kotlinx.serialization
+# Keeps generated serializers and the reflective serializer() lookups used by
+# the JSON backup/restore feature. Room and Hilt ship their own consumer rules.
+# ---------------------------------------------------------------------------
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class kotlinx.serialization.json.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Keep @Serializable model classes and their generated $$serializer.
+-keep,includedescriptorclasses class com.example.gymdiary3.**$$serializer { *; }
+-keepclassmembers class com.example.gymdiary3.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.example.gymdiary3.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}

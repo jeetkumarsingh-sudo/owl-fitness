@@ -119,7 +119,7 @@ fun InsightsSection(viewModel: ProgressViewModel) {
     Column {
         Text(
             "INTELLIGENCE",
-            color = OwlColors.PurpleSoft,
+            color = OwlColors.CrimsonSoft,
             style = MaterialTheme.typography.labelMedium,
             letterSpacing = 1.sp
         )
@@ -158,7 +158,7 @@ fun InsightCard(insight: FitnessInsight) {
             Text(icon, color = borderColor, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp, top = 2.dp))
             Column {
                 insight.exerciseName?.let {
-                    Text(it.uppercase(), color = OwlColors.PurpleSoft, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text(it.uppercase(), color = OwlColors.CrimsonSoft, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Spacer(Modifier.height(4.dp))
                 }
                 Text(insight.message, color = OwlColors.TextPrimary, style = MaterialTheme.typography.bodySmall)
@@ -183,7 +183,7 @@ fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>, unit: String) {
                 Text(
                     "WEEKLY VOLUME ANALYSIS",
                     style = MaterialTheme.typography.labelMedium,
-                    color = OwlColors.PurpleSoft,
+                    color = OwlColors.CrimsonSoft,
                     letterSpacing = 1.sp
                 )
                 Spacer(Modifier.height(16.dp))
@@ -243,7 +243,7 @@ fun WeeklyVolumeAnalysisCard(sessions: List<SessionWithSets>, unit: String) {
                                         .fillMaxWidth()
                                         .fillMaxHeight(barHeightFraction)
                                         .background(
-                                            color = if (isCurrentWeek) OwlColors.Purple else OwlColors.PurpleDim,
+                                            color = if (isCurrentWeek) OwlColors.Crimson else OwlColors.CrimsonDim,
                                             shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
                                         )
                                 )
@@ -296,7 +296,7 @@ fun ExerciseProgressCard(
                 if (uiState.isPR) {
                     PrBadge()
                 } else {
-                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, tint = OwlColors.PurpleSoft, modifier = Modifier.size(16.dp))
+                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, tint = OwlColors.CrimsonSoft, modifier = Modifier.size(16.dp))
                 }
             }
             
@@ -307,13 +307,13 @@ fun ExerciseProgressCard(
                 Text(
                     "${uiState.best1RM.toInt()} $unit",
                     style = MaterialTheme.typography.titleMedium,
-                    color = OwlColors.Purple,
+                    color = OwlColors.Crimson,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             Spacer(Modifier.height(16.dp))
-            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = OwlColors.PurpleSoft, letterSpacing = 1.sp)
+            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = OwlColors.CrimsonSoft, letterSpacing = 1.sp)
             
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val trendColor = when {

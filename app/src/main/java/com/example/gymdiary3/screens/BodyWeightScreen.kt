@@ -99,9 +99,9 @@ fun BodyWeightScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = OwlColors.TextPrimary,
                                 unfocusedTextColor = OwlColors.TextPrimary,
-                                focusedLabelColor = OwlColors.Purple,
+                                focusedLabelColor = OwlColors.Crimson,
                                 unfocusedLabelColor = OwlColors.TextMuted,
-                                focusedBorderColor = OwlColors.Purple,
+                                focusedBorderColor = OwlColors.Crimson,
                                 unfocusedBorderColor = OwlColors.BorderSubtle,
                                 focusedContainerColor = OwlColors.InputBg,
                                 unfocusedContainerColor = OwlColors.InputBg
@@ -120,7 +120,7 @@ fun BodyWeightScreen(
                                 weightInput = ""
                             },
                             modifier = Modifier.fillMaxWidth().height(64.dp).scale(logScale.value),
-                            colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
+                            colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Crimson),
                             shape = RoundedCornerShape(14.dp)
                         ) {
                             Text("LOG WEIGHT", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -131,7 +131,7 @@ fun BodyWeightScreen(
 
             BodyWeightChart(weights, weightUnit)
 
-            Text("HISTORY", color = OwlColors.Purple, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            Text("HISTORY", color = OwlColors.Crimson, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
@@ -261,13 +261,13 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
                     points = displayWeights.sortedBy { it.timestamp }.map { bw ->
                         LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.timestamp)))
                     },
-                    lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 2.dp)
+                    lineDrawer = SolidLineDrawer(color = OwlColors.Crimson, thickness = 2.dp)
                 )
             ),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(200.dp),
-            pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple, diameter = 6.dp),
+            pointDrawer = FilledCircularPointDrawer(color = OwlColors.Crimson, diameter = 6.dp),
             xAxisDrawer = SimpleXAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle),
             yAxisDrawer = SimpleYAxisDrawer(
                 labelTextColor = OwlColors.TextMuted,

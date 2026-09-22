@@ -89,6 +89,7 @@ class WorkoutViewModel @Inject constructor(
 
     val sessions: StateFlow<List<SessionWithSets>> = workoutRepository.getSessionsWithSets()
         .map { WorkoutAnalyzer.filterValidSessions(it) }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Current session notes

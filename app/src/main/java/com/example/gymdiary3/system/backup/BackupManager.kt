@@ -2,6 +2,7 @@ package com.example.gymdiary3.system.backup
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
 import com.example.gymdiary3.domain.repository.BodyWeightRepository
 import com.example.gymdiary3.domain.repository.ExerciseRepository
@@ -56,7 +57,7 @@ class BackupManager @Inject constructor(
             file.writeText(json.encodeToString(backup))
             FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to export backup", e)
             null
         }
     }
@@ -67,11 +68,17 @@ class BackupManager @Inject constructor(
                 ?: return@withContext Result.failure(Exception("Could not read file"))
 
             val backup = json.decodeFromString<GymDiaryBackup>(content)
-            
+
+            // Fetch existing keys ONCE up front (avoids an O(n) full-table read per imported item).
+            val existingExerciseNames = exerciseRepository.getAllExercises().map { it.name }.toMutableSet()
+            val existingWeightTimestamps = (bodyWeightRepository.getWeights().firstOrNull() ?: emptyList())
+                .map { it.timestamp }.toMutableSet()
+            val existingSessionStartTimes = (workoutRepository.getSessionsWithSets().firstOrNull() ?: emptyList())
+                .map { it.session.startTime }.toMutableSet()
+
             // Merge Exercises
             backup.exercises.forEach { e ->
-                val existing = exerciseRepository.getAllExercises()
-                if (existing.none { it.name == e.name }) {
+                if (existingExerciseNames.add(e.name)) {
                     exerciseRepository.insertExercise(
                         Exercise(
                             name = e.name,
@@ -88,20 +95,18 @@ class BackupManager @Inject constructor(
 
             // Merge BodyWeights
             backup.bodyWeights.forEach { bw ->
-                val existing = bodyWeightRepository.getWeights().firstOrNull() ?: emptyList()
-                if (existing.none { it.timestamp == bw.timestamp }) {
+                if (existingWeightTimestamps.add(bw.timestamp)) {
                     bodyWeightRepository.insertWeight(BodyWeight(0, bw.timestamp, bw.weight))
                 }
             }
 
             // Merge Sessions & Sets
             backup.sessions.forEach { s ->
-                val existingSessions = workoutRepository.getSessionsWithSets().firstOrNull() ?: emptyList()
-                if (existingSessions.none { it.session.startTime == s.startTime }) {
+                if (existingSessionStartTimes.add(s.startTime)) {
                     val sessionId = workoutRepository.insertSession(
                         WorkoutSession(0, s.startTime, s.endTime, s.name, s.notes)
                     ).toInt()
-                    
+
                     s.sets.forEach { set ->
                         workoutRepository.insertSet(
                             WorkoutSet(
@@ -113,10 +118,15 @@ class BackupManager @Inject constructor(
                     }
                 }
             }
-            
+
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to import backup", e)
             Result.failure(e)
         }
+    }
+
+    companion object {
+        private const val TAG = "BackupManager"
     }
 }

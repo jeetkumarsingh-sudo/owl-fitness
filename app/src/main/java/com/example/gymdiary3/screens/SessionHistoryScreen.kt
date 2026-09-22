@@ -175,7 +175,7 @@ fun SessionCard(
                 Text(
                     text = muscleGroups,
                     style = MaterialTheme.typography.labelSmall,
-                    color = OwlColors.PurpleSoft,
+                    color = OwlColors.CrimsonSoft,
                     letterSpacing = 0.5.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
@@ -188,7 +188,7 @@ fun SessionCard(
                     Text(
                         text = timeSdf.format(Date(session.startTime)),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = OwlColors.Purple,
+                        color = OwlColors.Crimson,
                         fontWeight = FontWeight.Bold
                     )
                     
@@ -203,7 +203,7 @@ fun SessionCard(
                 Text(
                     text = "VIEW SUMMARY",
                     style = MaterialTheme.typography.labelSmall,
-                    color = OwlColors.Purple,
+                    color = OwlColors.Crimson,
                     fontWeight = FontWeight.ExtraBold
                 )
             }

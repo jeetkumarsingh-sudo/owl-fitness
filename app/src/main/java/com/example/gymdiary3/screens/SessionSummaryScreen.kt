@@ -87,7 +87,7 @@ fun SessionSummaryScreen(
                             val text = ShareUtils.buildShareText(s, userSettings.weightUnit)
                             ShareUtils.shareText(context, text)
                         }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share Text", tint = OwlColors.Purple)
+                            Icon(Icons.Default.Share, contentDescription = "Share Text", tint = OwlColors.Crimson)
                         }
                     }
                     TextButton(
@@ -99,7 +99,7 @@ fun SessionSummaryScreen(
                                 }
                             }
                         },
-                        colors = ButtonDefaults.textButtonColors(contentColor = OwlColors.Purple)
+                        colors = ButtonDefaults.textButtonColors(contentColor = OwlColors.Crimson)
                     ) {
                         Text("SHARE IMAGE", style = MaterialTheme.typography.labelLarge)
                     }
@@ -166,7 +166,7 @@ fun SessionSummaryScreen(
                                     nav.navigate("home") { popUpTo("home") { inclusive = true } } 
                                 },
                                 modifier = Modifier.fillMaxWidth().height(64.dp).scale(doneScale.value),
-                                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
+                                colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Crimson),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Text("DONE", style = MaterialTheme.typography.titleLarge)
@@ -215,7 +215,7 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets, unit: String) {
                 Text(
                     text = dateStr,
                     style = MaterialTheme.typography.labelMedium,
-                    color = OwlColors.Purple,
+                    color = OwlColors.Crimson,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -233,7 +233,7 @@ fun SummaryStatsCard(isVisible: Boolean, s: SessionWithSets, unit: String) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(Modifier.padding(12.dp)) {
-                            Icon(Icons.AutoMirrored.Filled.Notes, null, tint = OwlColors.PurpleSoft, modifier = Modifier.size(16.dp))
+                            Icon(Icons.AutoMirrored.Filled.Notes, null, tint = OwlColors.CrimsonSoft, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(s.session.notes, style = MaterialTheme.typography.bodySmall, color = OwlColors.TextSecondary)
                         }
@@ -280,7 +280,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                             Text(
                                 uiState.exercise.uppercase(),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = OwlColors.Purple,
+                                color = OwlColors.Crimson,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
@@ -345,7 +345,7 @@ fun ExerciseSummaryCard(isVisible: Boolean, uiState: ExerciseUiState, sets: List
                                     Text(
                                         " · RPE ${set.rpe}",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = OwlColors.PurpleSoft,
+                                        color = OwlColors.CrimsonSoft,
                                         modifier = Modifier.padding(start = 8.dp)
                                     )
                                 }
@@ -442,7 +442,7 @@ fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit
                 Text(
                     "VOLUME BY MUSCLE",
                     style = MaterialTheme.typography.labelMedium,
-                    color = OwlColors.Purple,
+                    color = OwlColors.Crimson,
                     letterSpacing = 1.sp
                 )
                 Spacer(Modifier.height(12.dp))
@@ -463,7 +463,7 @@ fun MuscleVolumeCard(isVisible: Boolean, muscleVolume: Map<String, Double>, unit
 @Composable
 fun SummaryStat(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, style = MaterialTheme.typography.labelSmall, color = OwlColors.Purple)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = OwlColors.Crimson)
         Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = OwlColors.TextPrimary)
     }
 }

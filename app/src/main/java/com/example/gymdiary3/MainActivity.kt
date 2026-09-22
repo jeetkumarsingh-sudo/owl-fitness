@@ -1,11 +1,15 @@
 package com.example.gymdiary3
 
 import android.content.Intent
+import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
@@ -16,7 +20,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +46,12 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Always-dark (OLED) theme: force transparent system bars with light icons
+        // regardless of the system light/dark setting.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
 
         setContent {
@@ -56,32 +65,35 @@ class MainActivity : ComponentActivity() {
                         val navBackStackEntry by nav.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
                         if (currentRoute in rootRoutes) {
-                            NavigationBar(
-                                containerColor = Color.Black,
-                                contentColor = OwlColors.TextSecondary,
-                                tonalElevation = 0.dp
-                            ) {
-                                bottomNavItems.forEach { item ->
-                                    val selected = currentRoute == item.route
-                                    NavigationBarItem(
-                                        selected = selected,
-                                        onClick = { 
-                                            nav.navigate(item.route) {
-                                                popUpTo(nav.graph.startDestinationId) { saveState = true }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        },
-                                        icon = { Icon(item.icon, contentDescription = item.label) },
-                                        label = { Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Bold) },
-                                        colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = OwlColors.Purple,
-                                            selectedTextColor = OwlColors.Purple,
-                                            unselectedIconColor = OwlColors.TextSecondary,
-                                            unselectedTextColor = OwlColors.TextSecondary,
-                                            indicatorColor = OwlColors.Purple.copy(alpha = 0.15f)
+                            Column {
+                                HorizontalDivider(thickness = 1.dp, color = OwlColors.BorderSubtle)
+                                NavigationBar(
+                                    containerColor = OwlColors.DeepBg,
+                                    contentColor = OwlColors.TextSecondary,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    bottomNavItems.forEach { item ->
+                                        val selected = currentRoute == item.route
+                                        NavigationBarItem(
+                                            selected = selected,
+                                            onClick = {
+                                                nav.navigate(item.route) {
+                                                    popUpTo(nav.graph.startDestinationId) { saveState = true }
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
+                                            },
+                                            icon = { Icon(item.icon, contentDescription = item.label) },
+                                            label = { Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp) },
+                                            colors = NavigationBarItemDefaults.colors(
+                                                selectedIconColor = OwlColors.Crimson,
+                                                selectedTextColor = OwlColors.Crimson,
+                                                unselectedIconColor = OwlColors.TextMuted,
+                                                unselectedTextColor = OwlColors.TextMuted,
+                                                indicatorColor = OwlColors.CrimsonGlow
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }

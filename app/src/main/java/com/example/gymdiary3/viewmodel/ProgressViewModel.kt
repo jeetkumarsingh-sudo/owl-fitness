@@ -11,6 +11,7 @@ import com.example.gymdiary3.domain.usecase.analytics.GenerateFitnessInsightsUse
 import com.example.gymdiary3.intelligence.model.FitnessInsight
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
 @HiltViewModel
@@ -26,6 +27,7 @@ class ProgressViewModel @Inject constructor(
     private val exerciseSets: StateFlow<List<WorkoutSet>> = workoutRepository.getAllSets()
         .map { allSets -> allSets.filter { it.exercise == exerciseName } }
         .distinctUntilChanged()
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val exerciseUiState: StateFlow<ExerciseUiState?> = exerciseSets
@@ -50,14 +52,17 @@ class ProgressViewModel @Inject constructor(
                 )
             }
         }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     val oneRMHistory: StateFlow<List<Pair<Long, Double>>> = exerciseSets
         .map { sets -> WorkoutAnalyzer.get1RMHistory(sets) }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val volumeHistory: StateFlow<List<Pair<String, Double>>> = exerciseSets
         .map { sets -> WorkoutAnalyzer.getExerciseVolumeHistory(sets) }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val fitnessInsights: StateFlow<List<FitnessInsight>> = generateFitnessInsightsUseCase()

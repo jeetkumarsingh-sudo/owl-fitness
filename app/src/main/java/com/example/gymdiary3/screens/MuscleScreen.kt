@@ -74,7 +74,7 @@ fun MuscleCard(muscle: String, onClick: () -> Unit) {
             Text(
                 muscle.uppercase(),
                 style = MaterialTheme.typography.titleMedium,
-                color = OwlColors.Purple,
+                color = OwlColors.Crimson,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )

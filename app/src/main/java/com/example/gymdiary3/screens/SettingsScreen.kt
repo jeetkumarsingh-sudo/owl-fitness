@@ -82,7 +82,7 @@ fun SettingsScreen(
             item {
                 Text(
                     text = "UNITS",
-                    color = OwlColors.PurpleSoft,
+                    color = OwlColors.CrimsonSoft,
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = 1.2.sp
                 )
@@ -117,7 +117,7 @@ fun SettingsScreen(
             item {
                 Text(
                     text = "REST TIMER DEFAULTS",
-                    color = OwlColors.PurpleSoft,
+                    color = OwlColors.CrimsonSoft,
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = 1.2.sp
                 )
@@ -143,7 +143,7 @@ fun SettingsScreen(
                                     selected = settings.defaultRestSeconds == seconds,
                                     onClick = { viewModel.updateDefaultRestSeconds(seconds) },
                                     colors = RadioButtonDefaults.colors(
-                                        selectedColor = OwlColors.Purple,
+                                        selectedColor = OwlColors.Crimson,
                                         unselectedColor = OwlColors.TextMuted
                                     )
                                 )
@@ -168,7 +168,7 @@ fun SettingsScreen(
             item {
                 Text(
                     text = "BAR WEIGHT",
-                    color = OwlColors.PurpleSoft,
+                    color = OwlColors.CrimsonSoft,
                     style = MaterialTheme.typography.labelMedium,
                     letterSpacing = 1.2.sp
                 )
@@ -198,7 +198,7 @@ fun SettingsScreen(
             }
 
             item {
-                Text("DATA", color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.2.sp)
+                Text("DATA", color = OwlColors.CrimsonSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.2.sp)
                 Spacer(Modifier.height(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(
@@ -256,7 +256,7 @@ fun UnitButton(label: String, isSelected: Boolean, modifier: Modifier = Modifier
         onClick = onClick,
         modifier = modifier.height(44.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) OwlColors.Purple else Color.Transparent,
+            containerColor = if (isSelected) OwlColors.Crimson else Color.Transparent,
             contentColor = if (isSelected) Color.White else OwlColors.TextSecondary
         ),
         shape = RoundedCornerShape(8.dp),

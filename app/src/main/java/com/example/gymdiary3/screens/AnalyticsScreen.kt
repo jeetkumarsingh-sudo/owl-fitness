@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.domain.settings.WeightFormatter
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.ProgressViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
@@ -41,6 +42,8 @@ fun AnalyticsScreen(
         .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
     
     val exerciseName = viewModel.exerciseName.ifEmpty { "Exercise" }
+    val unit = userSettings.weightUnit
+    val unitLabel = WeightFormatter.label(unit)
 
     Scaffold(
         containerColor = OwlColors.DeepBg,
@@ -80,8 +83,8 @@ fun AnalyticsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    AnalyticsStatCard("Best 1RM", "${state.best1RM.toInt()} ${userSettings.weightUnit}", Modifier.weight(1f))
-                    AnalyticsStatCard("Total Volume", "${state.totalVolume.toInt()} ${userSettings.weightUnit}", Modifier.weight(1f))
+                    AnalyticsStatCard("Best 1RM", "${WeightFormatter.fromKilograms(state.best1RM, unit).toInt()} $unitLabel", Modifier.weight(1f))
+                    AnalyticsStatCard("Total Volume", "${WeightFormatter.fromKilograms(state.totalVolume, unit).toInt()} $unitLabel", Modifier.weight(1f))
                 }
             }
 
@@ -96,7 +99,7 @@ fun AnalyticsScreen(
                         Column(Modifier.padding(16.dp)) {
                             Text(
                                 "RECOMMENDATION",
-                                color = OwlColors.PurpleSoft,
+                                color = OwlColors.CrimsonSoft,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
@@ -109,7 +112,7 @@ fun AnalyticsScreen(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                text = (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} ${userSettings.weightUnit} since last session",
+                                text = (if (state.trend >= 0) "+" else "") + "${WeightFormatter.fromKilograms(state.trend, unit).toInt()} $unitLabel since last session",
                                 color = if (state.trend > 0) OwlColors.GreenPositive 
                                         else if (state.trend < 0) OwlColors.RedNegative 
                                         else OwlColors.TextSecondary,
@@ -121,17 +124,17 @@ fun AnalyticsScreen(
                 }
             }
 
-            // 1RM Progress Chart
+            // 1RM Progress Chart (values converted to the user's display unit)
             if (oneRMHistory.size >= 2) {
                 item {
-                    ChartSection("1RM PROGRESS (ESTIMATED)", oneRMHistory.map { it.second })
+                    ChartSection("1RM PROGRESS (ESTIMATED)", oneRMHistory.map { WeightFormatter.fromKilograms(it.second, unit) })
                 }
             }
 
-            // Volume Progress Chart
+            // Volume Progress Chart (values converted to the user's display unit)
             if (volumeHistory.size >= 2) {
                 item {
-                    ChartSection("VOLUME PROGRESS", volumeHistory.map { it.second }, labels = volumeHistory.map { it.first })
+                    ChartSection("VOLUME PROGRESS", volumeHistory.map { WeightFormatter.fromKilograms(it.second, unit) }, labels = volumeHistory.map { it.first })
                 }
             }
         }
@@ -141,7 +144,7 @@ fun AnalyticsScreen(
 @Composable
 fun ChartSection(title: String, data: List<Double>, labels: List<String>? = null) {
     Column {
-        Text(title, color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp)
+        Text(title, color = OwlColors.CrimsonSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp)
         Spacer(Modifier.height(16.dp))
         
         Surface(
@@ -157,11 +160,11 @@ fun ChartSection(title: String, data: List<Double>, labels: List<String>? = null
                             points = data.mapIndexed { index, value -> 
                                 LineChartData.Point(value.toFloat(), labels?.getOrNull(index) ?: "")
                             },
-                            lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 3.dp)
+                            lineDrawer = SolidLineDrawer(color = OwlColors.Crimson, thickness = 3.dp)
                         )
                     ),
                     modifier = Modifier.fillMaxWidth().height(200.dp),
-                    pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple),
+                    pointDrawer = FilledCircularPointDrawer(color = OwlColors.Crimson),
                     xAxisDrawer = SimpleXAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle),
                     yAxisDrawer = SimpleYAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle, labelValueFormatter = { v -> v.toInt().toString() })
                 )
@@ -180,7 +183,7 @@ fun AnalyticsStatCard(label: String, value: String, modifier: Modifier = Modifie
     ) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary)
-            Text(value, style = MaterialTheme.typography.titleMedium, color = OwlColors.Purple, fontWeight = FontWeight.Bold)
+            Text(value, style = MaterialTheme.typography.titleMedium, color = OwlColors.Crimson, fontWeight = FontWeight.Bold)
         }
     }
 }
