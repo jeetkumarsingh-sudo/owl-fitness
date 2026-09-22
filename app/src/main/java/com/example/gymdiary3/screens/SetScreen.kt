@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -60,6 +61,7 @@ fun SetScreen(
     val lastSet by viewModel.lastSet.collectAsStateWithLifecycle()
     val suggestedWeight by viewModel.suggestedWeight.collectAsStateWithLifecycle()
     val currentSet by viewModel.currentSet.collectAsStateWithLifecycle()
+    val personalRecord by viewModel.personalRecord.collectAsStateWithLifecycle()
     
     val isTimerRunning by viewModel.isRestTimerRunning.collectAsStateWithLifecycle()
     val timerSeconds by viewModel.restTimerSeconds.collectAsStateWithLifecycle()
@@ -82,6 +84,16 @@ fun SetScreen(
 
     LaunchedEffect(exercise) {
         viewModel.loadLastSet(exercise)
+    }
+
+    val isPrForThisExercise = personalRecord?.exercise == exercise
+    LaunchedEffect(personalRecord) {
+        val pr = personalRecord ?: return@LaunchedEffect
+        if (pr.exercise == exercise) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            kotlinx.coroutines.delay(4500)
+        }
+        viewModel.consumePersonalRecord()
     }
 
     LaunchedEffect(lastSet, weightUnit) {
@@ -168,7 +180,32 @@ fun SetScreen(
             color = OwlColors.TextPrimary,
             maxLines = 2
         )
-        
+
+        AnimatedVisibility(visible = isPrForThisExercise) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .background(OwlColors.CrimsonGlow, RoundedCornerShape(14.dp))
+                    .border(1.dp, OwlColors.Crimson, RoundedCornerShape(14.dp))
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                com.example.gymdiary3.ui.components.PrBadge()
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("NEW PERSONAL RECORD", color = OwlColors.CrimsonSoft, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    personalRecord?.let {
+                        Text(
+                            "Estimated 1RM ${WeightFormatter.formatFromKilograms(it.estimated1RM, weightUnit)}",
+                            color = OwlColors.TextPrimary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
+
         Spacer(Modifier.height(16.dp))
         
         LastSessionSection(exercise, viewModel, weightUnit)

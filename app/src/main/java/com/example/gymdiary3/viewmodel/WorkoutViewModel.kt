@@ -8,6 +8,7 @@ import com.example.gymdiary3.domain.model.Exercise
 import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.model.SessionWithSets
 import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
+import com.example.gymdiary3.core.util.WorkoutCalculations
 import com.example.gymdiary3.domain.usecase.workout.*
 import com.example.gymdiary3.presentation.state.ExerciseUiState
 import com.example.gymdiary3.system.session.SessionManager
@@ -149,6 +150,15 @@ class WorkoutViewModel @Inject constructor(
     private val _lastSet = MutableStateFlow<WorkoutSet?>(null)
     val lastSet: StateFlow<WorkoutSet?> = _lastSet.asStateFlow()
 
+    /** Emitted when a just-logged set beats the historic best estimated 1RM for that exercise. */
+    data class PrEvent(val exercise: String, val estimated1RM: Double)
+    private val _personalRecord = MutableStateFlow<PrEvent?>(null)
+    val personalRecord: StateFlow<PrEvent?> = _personalRecord.asStateFlow()
+
+    fun consumePersonalRecord() {
+        _personalRecord.value = null
+    }
+
     // Task 8: Derived flow for suggested weight
     val suggestedWeight: StateFlow<Double?> = _lastSet
         .map { it?.let { WorkoutAnalyzer.getSuggestedWeight(it.weight) } }
@@ -239,6 +249,16 @@ class WorkoutViewModel @Inject constructor(
                 notes = notes
             )
             loadLastSet(exercise)
+
+            // Celebrate a new personal record: the set's estimated 1RM beats the best
+            // from every prior session for this exercise.
+            val estimated1RM = WorkoutCalculations.calculate1RM(weight, reps)
+            if (estimated1RM > 0) {
+                val historicBest = workoutRepository.getHistoricBest1RM(exercise, sessionId) ?: 0.0
+                if (estimated1RM > historicBest) {
+                    _personalRecord.value = PrEvent(exercise, estimated1RM)
+                }
+            }
         }
     }
 
