@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.domain.model.WorkoutSet
 import com.example.gymdiary3.domain.settings.WeightFormatter
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
@@ -307,6 +309,8 @@ fun SetScreen(
 
         Spacer(Modifier.height(24.dp))
 
+        ThisSessionSection(exercise, viewModel, weightUnit)
+
         AnimatedVisibility(visible = isTimerRunning) {
             ApexCard(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
                 Column(
@@ -333,7 +337,28 @@ fun SetScreen(
                         trackColor = OwlColors.BorderSubtle,
                         strokeCap = StrokeCap.Round
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { viewModel.addRestTime(-15) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(100),
+                            border = BorderStroke(1.dp, OwlColors.BorderActive),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
+                        ) { Text("−15s", style = MaterialTheme.typography.labelLarge) }
+                        OutlinedButton(
+                            onClick = { viewModel.addRestTime(15) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(100),
+                            border = BorderStroke(1.dp, OwlColors.BorderActive),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
+                        ) { Text("+15s", style = MaterialTheme.typography.labelLarge) }
+                    }
+                    Spacer(Modifier.height(8.dp))
                     TextButton(onClick = { viewModel.skipRestTimer() }) {
                         Text("SKIP TIMER", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelLarge)
                     }
@@ -558,6 +583,113 @@ fun RepsStepper(
             Text("+", fontSize = 32.sp, fontWeight = FontWeight.Light, color = OwlColors.Crimson)
         }
     }
+}
+
+@Composable
+fun ThisSessionSection(exerciseName: String, viewModel: WorkoutViewModel, unit: String) {
+    val sets by remember(exerciseName) { viewModel.getCurrentSessionSets(exerciseName) }
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+
+    var editing by remember { mutableStateOf<WorkoutSet?>(null) }
+
+    if (sets.isNotEmpty()) {
+        ApexCard(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Column(Modifier.padding(20.dp)) {
+                Text("THIS SESSION", color = OwlColors.Crimson, style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.height(12.dp))
+                sets.forEachIndexed { idx, set ->
+                    Row(
+                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("SET ${idx + 1}", color = OwlColors.TextSecondary, style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(56.dp))
+                        Text(
+                            if (set.weight > 0) "${WeightFormatter.formatFromKilograms(set.weight, unit)} × ${set.reps}" else "BW × ${set.reps}",
+                            color = OwlColors.TextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        set.rpe?.let {
+                            Text("RPE ${if (it == 10f) "10" else it.toString()}", color = OwlColors.TextMuted, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(end = 8.dp))
+                        }
+                        TextButton(onClick = { editing = set }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            Text("EDIT", color = OwlColors.CrimsonSoft, style = MaterialTheme.typography.labelMedium)
+                        }
+                        IconButton(onClick = { viewModel.deleteSet(set) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Delete set", tint = OwlColors.TextMuted, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    editing?.let { set ->
+        EditSetDialog(
+            set = set,
+            unit = unit,
+            onDismiss = { editing = null },
+            onSave = { newWeightKg, newReps ->
+                viewModel.updateSet(set.copy(weight = newWeightKg, reps = newReps))
+                editing = null
+            },
+            onDelete = {
+                viewModel.deleteSet(set)
+                editing = null
+            }
+        )
+    }
+}
+
+@Composable
+fun EditSetDialog(
+    set: WorkoutSet,
+    unit: String,
+    onDismiss: () -> Unit,
+    onSave: (weightKg: Double, reps: Int) -> Unit,
+    onDelete: () -> Unit
+) {
+    var weightText by remember { mutableStateOf(WeightFormatter.formatFromKilograms(set.weight, unit, includeUnit = false)) }
+    var repsText by remember { mutableStateOf(set.reps.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = OwlColors.CardBg,
+        title = { Text("Edit Set", color = OwlColors.TextPrimary) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = weightText,
+                    onValueChange = { weightText = it },
+                    label = { Text("Weight (${WeightFormatter.label(unit)})", color = OwlColors.TextMuted) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = OwlColors.TextPrimary, unfocusedTextColor = OwlColors.TextPrimary, focusedBorderColor = OwlColors.Crimson)
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = repsText,
+                    onValueChange = { repsText = it },
+                    label = { Text("Reps", color = OwlColors.TextMuted) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = OwlColors.TextPrimary, unfocusedTextColor = OwlColors.TextPrimary, focusedBorderColor = OwlColors.Crimson)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val reps = repsText.toIntOrNull()
+                val displayWeight = weightText.toDoubleOrNull()
+                if (reps != null && reps > 0 && displayWeight != null && displayWeight >= 0) {
+                    onSave(WeightFormatter.toKilograms(displayWeight, unit), reps)
+                }
+            }) { Text("SAVE", color = OwlColors.Crimson) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDelete) { Text("DELETE", color = OwlColors.RedNegative) }
+        }
+    )
 }
 
 @Composable

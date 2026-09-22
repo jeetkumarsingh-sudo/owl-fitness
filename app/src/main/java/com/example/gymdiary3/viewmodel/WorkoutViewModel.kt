@@ -173,6 +173,10 @@ class WorkoutViewModel @Inject constructor(
         restTimerManager.skipTimer()
     }
 
+    fun addRestTime(deltaSeconds: Int) {
+        restTimerManager.addTime(deltaSeconds)
+    }
+
     init {
         viewModelScope.launch {
             sessionManager.initialize()
@@ -235,6 +239,29 @@ class WorkoutViewModel @Inject constructor(
                 notes = notes
             )
             loadLastSet(exercise)
+        }
+    }
+
+    /** Sets logged in the CURRENT session for the given exercise, ordered by set number. */
+    fun getCurrentSessionSets(exerciseName: String): Flow<List<WorkoutSet>> =
+        combine(sessionManager.currentSessionId, workouts) { sessionId, allSets ->
+            if (sessionId == null) emptyList()
+            else allSets
+                .filter { it.sessionId == sessionId && it.exercise == exerciseName }
+                .sortedBy { it.setNumber }
+        }.distinctUntilChanged()
+
+    fun updateSet(set: WorkoutSet) {
+        viewModelScope.launch {
+            workoutRepository.updateSet(set)
+            loadLastSet(set.exercise)
+        }
+    }
+
+    fun deleteSet(set: WorkoutSet) {
+        viewModelScope.launch {
+            workoutRepository.deleteSet(set)
+            loadLastSet(set.exercise)
         }
     }
 

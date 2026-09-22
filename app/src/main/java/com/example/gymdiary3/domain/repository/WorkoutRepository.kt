@@ -9,6 +9,8 @@ interface WorkoutRepository {
     fun getAllSets(): Flow<List<WorkoutSet>>
     fun getSessionsWithSets(): Flow<List<SessionWithSets>>
     suspend fun insertSet(set: WorkoutSet)
+    suspend fun updateSet(set: WorkoutSet)
+    suspend fun deleteSet(set: WorkoutSet)
     suspend fun insertSession(session: WorkoutSession): Long
     suspend fun updateSession(session: WorkoutSession)
     suspend fun deleteSession(session: WorkoutSession)

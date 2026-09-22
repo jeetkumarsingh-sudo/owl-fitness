@@ -20,8 +20,14 @@ class WorkoutRepositoryImpl @Inject constructor(
     override fun getSessionsWithSets(): Flow<List<SessionWithSets>> = 
         workoutDao.getSessionsWithSets().map { list -> list.map { it.toDomain() } }
     
-    override suspend fun insertSet(set: WorkoutSet) = 
+    override suspend fun insertSet(set: WorkoutSet) =
         workoutDao.insertWorkout(set.toEntity())
+
+    override suspend fun updateSet(set: WorkoutSet) =
+        workoutDao.updateWorkout(set.toEntity())
+
+    override suspend fun deleteSet(set: WorkoutSet) =
+        workoutDao.deleteWorkoutById(set.id)
     
     override suspend fun insertSession(session: WorkoutSession): Long = 
         workoutDao.insertSession(session.toEntity())

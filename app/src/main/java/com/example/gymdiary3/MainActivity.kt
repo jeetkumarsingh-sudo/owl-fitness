@@ -1,16 +1,23 @@
 package com.example.gymdiary3
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color as AndroidColor
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.History
@@ -57,6 +64,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             OwlFitnessTheme {
                 val nav = rememberNavController()
+
+                // Ask once for notification permission (Android 13+) so the rest-timer
+                // alert can post a notification when the app is in the background.
+                val context = LocalContext.current
+                val notifPermission = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { }
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        notifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
                 val bottomNavItems = listOf(BottomNavItem.Home, BottomNavItem.History, BottomNavItem.Progress, BottomNavItem.Weight)
                 val rootRoutes = bottomNavItems.map { it.route }.toSet()
 

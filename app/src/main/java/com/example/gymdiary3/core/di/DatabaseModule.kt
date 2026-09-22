@@ -42,6 +42,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideRestTimerManager(): RestTimerManager =
-        RestTimerManager()
+    fun provideRestTimerManager(@ApplicationContext context: Context): RestTimerManager =
+        RestTimerManager(context)
 }

@@ -15,6 +15,12 @@ interface WorkoutDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkout(workout: WorkoutSetEntity)
 
+    @Update
+    suspend fun updateWorkout(workout: WorkoutSetEntity)
+
+    @Query("DELETE FROM WorkoutSet WHERE id = :id")
+    suspend fun deleteWorkoutById(id: Int)
+
     @Insert
     suspend fun insertSession(session: WorkoutSessionEntity): Long
 
