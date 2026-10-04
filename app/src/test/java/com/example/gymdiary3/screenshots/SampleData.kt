@@ -27,25 +27,26 @@ object SampleData {
         val stallAfter: Int? = null, val dropLast: Boolean = false
     )
 
+    // Realistic pace: a weight step every 4–8 sessions of that split, reps +1 per session up to +3.
     private val push = listOf(
-        Ex("Bench Press", "Chest", 40.0, 2.5, 3, 6),
-        Ex("Incline DB Press", "Chest", 24.0, 2.0, 3, 8),
-        Ex("Overhead Press", "Shoulders", 25.0, 2.5, 4, 6),
-        Ex("Lateral Raise", "Shoulders", 6.0, 1.0, 4, 12),
-        Ex("Triceps Pushdown", "Triceps", 35.0, 2.5, 3, 10),
+        Ex("Bench Press", "Chest", 40.0, 2.5, 5, 6),
+        Ex("Incline DB Press", "Chest", 24.0, 2.0, 6, 8),
+        Ex("Overhead Press", "Shoulders", 25.0, 2.5, 8, 6),
+        Ex("Lateral Raise", "Shoulders", 6.0, 1.0, 8, 12),
+        Ex("Triceps Pushdown", "Triceps", 35.0, 2.5, 6, 10),
     )
     private val pull = listOf(
-        Ex("Deadlift", "Back", 80.0, 5.0, 3, 5, dropLast = true),
-        Ex("Lat Pulldown", "Back", 45.0, 2.5, 2, 8, stallAfter = 4),
-        Ex("Seated Row", "Back", 45.0, 2.5, 3, 8),
-        Ex("Face Pull", "Back", 35.0, 2.5, 4, 12),
-        Ex("Hammer Curl", "Biceps", 10.0, 2.0, 4, 9),
+        Ex("Deadlift", "Back", 80.0, 5.0, 4, 5, dropLast = true),
+        Ex("Lat Pulldown", "Back", 45.0, 2.5, 4, 8, stallAfter = 4),
+        Ex("Seated Row", "Back", 45.0, 2.5, 5, 8),
+        Ex("Face Pull", "Back", 35.0, 2.5, 8, 12),
+        Ex("Hammer Curl", "Biceps", 10.0, 2.0, 7, 9),
     )
     private val legs = listOf(
-        Ex("Squat", "Legs", 50.0, 2.5, 2, 6, sets = 4),
-        Ex("Leg Press", "Legs", 60.0, 5.0, 3, 10),
-        Ex("Leg Curl", "Legs", 45.0, 2.5, 3, 10),
-        Ex("Calf Raise", "Legs", 30.0, 5.0, 4, 12),
+        Ex("Squat", "Legs", 50.0, 2.5, 4, 6, sets = 4),
+        Ex("Leg Press", "Legs", 60.0, 5.0, 5, 10),
+        Ex("Leg Curl", "Legs", 45.0, 2.5, 6, 10),
+        Ex("Calf Raise", "Legs", 30.0, 5.0, 8, 12),
     )
 
     /** Days-ago pattern each week (now is Sunday): Mon push, Tue pull, Thu legs, Sat push. */
@@ -107,7 +108,7 @@ object SampleData {
         val stalled = ex.stallAfter != null && idx >= total - ex.stallAfter
         val effective = if (stalled) total - ex.stallAfter!! - 1 else idx
         var w = ex.start + ex.step * (effective / ex.everyN)
-        var r = ex.baseReps + (effective % ex.everyN)
+        var r = ex.baseReps + minOf(effective % ex.everyN, 3)
         if (stalled) r = ex.baseReps + 1
         if (ex.dropLast && idx == total - 1) { w -= ex.step * 3; r = ex.baseReps - 1 }
         return w to r

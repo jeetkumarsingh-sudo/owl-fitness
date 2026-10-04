@@ -1,113 +1,158 @@
 package com.example.gymdiary3.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.components.ApexLineChart
-import com.example.gymdiary3.ui.components.ApexPanel
-import com.example.gymdiary3.ui.components.ApexScaffold
-import com.example.gymdiary3.ui.components.CountUpText
-import com.example.gymdiary3.ui.components.SectionLabel
-import com.example.gymdiary3.ui.theme.Apex
-import com.example.gymdiary3.viewmodel.ProgressViewModel
-import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymdiary3.domain.analytics.TimeRange
+import com.example.gymdiary3.presentation.exercise.ExerciseCharts
+import com.example.gymdiary3.presentation.exercise.ExerciseDetailUiState
+import com.example.gymdiary3.presentation.exercise.ExerciseTab
+import com.example.gymdiary3.presentation.format.Fmt
+import com.example.gymdiary3.ui.design.*
+import com.example.gymdiary3.ui.design.chart.TimeSeriesChart
+import com.example.gymdiary3.ui.theme.GdType
+import com.example.gymdiary3.ui.theme.LocalReducedMotion
+import com.example.gymdiary3.viewmodel.ExerciseDetailViewModel
+
+data class ExerciseDetailActions(val onBack: () -> Unit = {}, val onLog: () -> Unit = {})
 
 @Composable
-fun AnalyticsScreen(
-    nav: NavHostController,
-    viewModel: ProgressViewModel = hiltViewModel(),
-    workoutViewModel: WorkoutViewModel = hiltViewModel(),
+fun AnalyticsScreen(nav: NavHostController, vm: ExerciseDetailViewModel = hiltViewModel()) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    val unit by vm.unit.collectAsStateWithLifecycle()
+    val s = state ?: return
+    ExerciseDetailScreen(
+        s, unit, System.currentTimeMillis(),
+        ExerciseDetailActions(
+            onBack = { nav.popBackStack() },
+            onLog = { nav.navigate(loggerRoute(vm.muscle, s.exercise)) }
+        )
+    )
+}
+
+@Composable
+fun ExerciseDetailScreen(
+    state: ExerciseDetailUiState,
+    unit: String,
+    now: Long,
+    actions: ExerciseDetailActions,
+    modifier: Modifier = Modifier,
+    initialTab: ExerciseTab = ExerciseTab.STRENGTH,
+    initialRange: TimeRange = TimeRange.W8
 ) {
-    val uiState by viewModel.exerciseUiState.collectAsStateWithLifecycle()
-    val oneRMHistory by viewModel.oneRMHistory.collectAsStateWithLifecycle()
-    val volumeHistory by viewModel.volumeHistory.collectAsStateWithLifecycle()
-    val userSettings by workoutViewModel.settingsRepository.userSettingsFlow
-        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    val reduced = LocalReducedMotion.current
+    var tab by rememberSaveable { mutableStateOf(initialTab) }
+    var range by rememberSaveable { mutableStateOf(initialRange) }
+    val spec = remember(state.sessions, tab, range, unit, now) { ExerciseCharts.spec(state.sessions, tab, range, unit, now) }
 
-    val exerciseName = viewModel.exerciseName.ifEmpty { "Exercise" }
-    val unit = userSettings.weightUnit
-
-    ApexScaffold(title = exerciseName, onBack = { nav.popBackStack() }) { padding ->
-        val state = uiState
-        if (state == null) {
-            Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                Text("No data for this exercise", color = Apex.TextMuted)
+    Column(modifier.fillMaxSize()) {
+        DetailTopBar(
+            title = state.exercise,
+            onBack = actions.onBack,
+            actions = { TextAction("Log", onClick = actions.onLog, color = Gd.Text) }
+        )
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = Gd.s8)) {
+            if (state.sessions.isEmpty()) {
+                item(key = "empty") {
+                    EmptyMessage("No sessions yet", "Log this exercise once and its history starts here.")
+                }
+                return@LazyColumn
             }
-            return@ApexScaffold
-        }
 
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    StatCard("Best 1RM", state.best1RM.toInt(), unit, Modifier.weight(1f))
-                    StatCard("Total volume", state.totalVolume.toInt(), unit, Modifier.weight(1f))
+            item(key = "status") {
+                if (state.status != null) {
+                    Row(Modifier.gutter(), verticalAlignment = Alignment.CenterVertically) {
+                        StatusLabel(state.status.label(), state.status.color())
+                        state.statusText?.let {
+                            Spacer(Modifier.width(Gd.s2))
+                            Text(it, style = GdType.labelNum, color = Gd.TextMuted)
+                        }
+                    }
+                    Spacer(Modifier.height(Gd.s4))
+                }
+                MetricRow {
+                    Metric(state.bestWeight, "heaviest", Modifier.weight(1f), detail = state.bestWeightDetail)
+                    Metric(state.e1rm, "est. 1RM", Modifier.weight(1f))
+                    Metric(state.lastSession ?: "—", "last session", Modifier.weight(1.25f), detail = state.lastSessionDetail)
                 }
             }
 
-            if (state.recommendation.isNotBlank()) {
-                item {
-                    ApexPanel(radius = Apex.radiusMd) {
-                        Column(Modifier.padding(18.dp)) {
-                            SectionLabel("Recommendation", accent = true)
-                            Spacer(Modifier.height(8.dp))
-                            Text(state.recommendation, color = Apex.TextPrimary, style = MaterialTheme.typography.bodyMedium)
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} $unit since last session",
-                                color = if (state.trend > 0) Apex.Positive else if (state.trend < 0) Apex.Negative else Apex.TextSecondary,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+            item(key = "chart") {
+                Spacer(Modifier.height(Gd.s6))
+                UnderlineTabs(ExerciseTab.entries.map { it.label }, tab.ordinal, { tab = ExerciseTab.entries[it] })
+                Column(Modifier.gutter().padding(top = Gd.s4)) {
+                    SegmentedControl(TimeRange.EXERCISE.map { it.label }, TimeRange.EXERCISE.indexOf(range), { range = TimeRange.EXERCISE[it] })
+                    Spacer(Modifier.height(Gd.s4))
+                    AnimatedContent(
+                        targetState = spec.headline,
+                        transitionSpec = { fadeIn(tween(if (reduced) 0 else GdMotion.Base)) togetherWith fadeOut(tween(if (reduced) 0 else GdMotion.Fast)) },
+                        label = "headline"
+                    ) { headline ->
+                        Text(
+                            headline ?: " ",
+                            style = GdType.bodyStrong.copy(fontFeatureSettings = "tnum"),
+                            color = spec.headlineTone.color().takeIf { spec.headlineTone != com.example.gymdiary3.presentation.insight.Tone.NEUTRAL } ?: Gd.Text
+                        )
+                    }
+                    Spacer(Modifier.height(Gd.s3))
+                    TimeSeriesChart(
+                        points = spec.points,
+                        rangeStart = range.start(now, state.firstDate),
+                        rangeEnd = now,
+                        yAxisTitle = spec.yAxisTitle,
+                        formatTick = ::compactTick,
+                        minSpan = spec.minSpan,
+                        kind = spec.kind,
+                        height = 200.dp,
+                        summary = spec.summary,
+                        emptyText = spec.emptyText
+                    )
+                    Text("Tap or drag the chart to see a session", style = GdType.meta, color = Gd.TextFaint, modifier = Modifier.padding(top = Gd.s2))
+                }
+            }
+
+            state.next?.let { next ->
+                item(key = "next") {
+                    Spacer(Modifier.height(Gd.s6))
+                    Column(
+                        Modifier
+                            .gutter()
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(Gd.RadiusLg))
+                            .background(Gd.Surface)
+                            .padding(Gd.s5)
+                    ) {
+                        StatusLabel("Next session", Gd.TextMuted)
+                        Spacer(Modifier.height(Gd.s2))
+                        Text(next.headline, style = GdType.metric, color = Gd.Text)
+                        Spacer(Modifier.height(2.dp))
+                        Text(next.action, style = GdType.label, color = Gd.Text)
+                        next.reason?.let { Text(it, style = GdType.meta, color = Gd.TextMuted) }
                     }
                 }
             }
 
-            if (oneRMHistory.size >= 2) {
-                item { ChartCard("1RM Progress (estimated)", oneRMHistory.map { it.second.toFloat() }) }
-            }
-            if (volumeHistory.size >= 2) {
-                item { ChartCard("Volume Progress", volumeHistory.map { it.second.toFloat() }) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatCard(label: String, value: Int, unit: String, modifier: Modifier = Modifier) {
-    ApexPanel(modifier = modifier, radius = Apex.radiusMd) {
-        Column(Modifier.padding(16.dp)) {
-            CountUpText(
-                target = value,
-                style = MaterialTheme.typography.headlineSmall,
-                color = Apex.AccentSoft,
-                suffix = " $unit"
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = Apex.TextMuted)
-        }
-    }
-}
-
-@Composable
-private fun ChartCard(title: String, values: List<Float>) {
-    Column {
-        SectionLabel(title, accent = true)
-        Spacer(Modifier.height(14.dp))
-        ApexPanel(radius = Apex.radiusMd) {
-            Box(Modifier.padding(16.dp)) {
-                ApexLineChart(values = values, height = 200.dp)
+            item(key = "recentHeader") { SectionHeader("Recent sessions") }
+            itemsIndexed(state.recent, key = { _, r -> "r_${r.key}" }) { i, row ->
+                ListRow(title = row.date, subtitle = row.setsLine)
+                if (i < state.recent.lastIndex) Hairline()
             }
         }
     }

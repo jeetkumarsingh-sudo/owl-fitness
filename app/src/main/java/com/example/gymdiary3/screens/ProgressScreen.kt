@@ -1,206 +1,192 @@
 package com.example.gymdiary3.screens
 
 import android.net.Uri
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.domain.model.WorkoutSet
-import com.example.gymdiary3.domain.model.SessionWithSets
-import com.example.gymdiary3.presentation.state.ExerciseUiState
-import com.example.gymdiary3.domain.analyzer.WorkoutAnalyzer
-import com.example.gymdiary3.ui.components.*
-import com.example.gymdiary3.ui.theme.Apex
-import com.example.gymdiary3.intelligence.model.FitnessInsight
-import com.example.gymdiary3.intelligence.model.InsightSeverity
-import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.example.gymdiary3.viewmodel.ProgressViewModel
-import java.text.SimpleDateFormat
-import java.util.*
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.gymdiary3.domain.analytics.TimeRange
+import com.example.gymdiary3.presentation.format.Fmt
+import com.example.gymdiary3.presentation.progress.ProgressUiState
+import com.example.gymdiary3.ui.design.*
+import com.example.gymdiary3.ui.design.chart.ChartKind
+import com.example.gymdiary3.ui.design.chart.TimeSeriesChart
+import com.example.gymdiary3.ui.theme.GdType
+import com.example.gymdiary3.ui.theme.LocalReducedMotion
+import com.example.gymdiary3.viewmodel.ProgressOverviewViewModel
+
+data class ProgressActions(
+    val onOpenExercise: (String) -> Unit = {},
+    val onStart: () -> Unit = {}
+)
+
+private const val LIFTS_PREVIEW = 6
+private val VOLUME_RANGES = listOf(TimeRange.W8, TimeRange.M3, TimeRange.M6, TimeRange.Y1)
 
 @Composable
-fun ProgressScreen(
-    nav: NavHostController,
-    viewModel: WorkoutViewModel = hiltViewModel(),
-    progressViewModel: ProgressViewModel = hiltViewModel()
-) {
-    val workouts by viewModel.workouts.collectAsStateWithLifecycle()
-    val sessions by viewModel.sessions.collectAsStateWithLifecycle()
-    val exerciseUiStates by viewModel.exerciseUiStates.collectAsStateWithLifecycle()
-    val insights by progressViewModel.fitnessInsights.collectAsStateWithLifecycle()
-    val grouped = remember(workouts) { workouts.groupBy { it.exercise } }
-    val sdf = remember { SimpleDateFormat("MMM dd", Locale.getDefault()) }
-    val userSettings by viewModel.settingsRepository.userSettingsFlow
-        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
-
-    val exercisesList = remember(grouped) {
-        grouped.entries.asSequence()
-            .sortedByDescending { (_, sets) -> sets.maxOfOrNull { it.timestamp } ?: 0L }
-            .map { it.key }.toList()
-    }
-
-    ApexScaffold(title = "Progress & PRs") { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            if (insights.isNotEmpty()) {
-                item {
-                    Column {
-                        SectionLabel("Intelligence", accent = true)
-                        Spacer(Modifier.height(12.dp))
-                        insights.take(5).forEach { insight ->
-                            InsightCard(insight)
-                            Spacer(Modifier.height(8.dp))
-                        }
-                    }
-                }
-            }
-
-            item { WeeklyVolumeCard(sessions, userSettings.weightUnit) }
-
-            if (exercisesList.isEmpty()) {
-                item {
-                    Box(Modifier.fillMaxWidth().padding(top = 48.dp)) {
-                        EmptyState(message = "Start a workout to track your progress!", title = "NO PERFORMANCE DATA")
-                    }
-                }
-            }
-
-            items(exercisesList, key = { it }) { exercise ->
-                val uiState = exerciseUiStates[exercise] ?: return@items
-                val sets = grouped[exercise] ?: emptyList()
-                ExerciseProgressCard(exercise, uiState, sets, sdf, userSettings.weightUnit) {
-                    nav.navigate("analytics/${Uri.encode(exercise)}")
-                }
-            }
-        }
-    }
+fun ProgressScreen(nav: NavHostController, vm: ProgressOverviewViewModel = hiltViewModel()) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    val unit by vm.unit.collectAsStateWithLifecycle()
+    val s = state ?: return
+    ProgressContent(
+        s, unit, System.currentTimeMillis(),
+        ProgressActions(
+            onOpenExercise = { nav.navigate("analytics/${Uri.encode(it)}") },
+            onStart = { nav.navigate("home") { launchSingleTop = true } }
+        )
+    )
 }
 
-@Composable
-private fun InsightCard(insight: FitnessInsight) {
-    val accent = when (insight.severity) {
-        InsightSeverity.POSITIVE -> Apex.Positive
-        InsightSeverity.WARNING -> Apex.Warning
-        InsightSeverity.ACTION_REQUIRED -> Apex.Negative
-        InsightSeverity.INFO -> Apex.Info
-    }
-    ApexPanel(radius = Apex.radiusMd) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.width(3.dp).height(36.dp).background(accent, RoundedCornerShape(100)))
-            Spacer(Modifier.width(12.dp))
-            Column {
-                insight.exerciseName?.let {
-                    Text(it.uppercase(), color = accent, style = MaterialTheme.typography.labelSmall, letterSpacing = 1.sp)
-                    Spacer(Modifier.height(3.dp))
-                }
-                Text(insight.message, color = Apex.TextPrimary, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-}
+/** Compact large numbers for axis ticks: 7,500 → "7.5k". */
+internal fun compactTick(v: Double): String =
+    if (v >= 1000) Fmt.trim(v / 1000) + "k" else Fmt.trim(v)
 
 @Composable
-private fun WeeklyVolumeCard(sessions: List<SessionWithSets>, unit: String) {
-    val weeklyVolume = remember(sessions) { WorkoutAnalyzer.getWeeklyVolume(sessions) }
-    val sortedWeeks = remember(weeklyVolume) { weeklyVolume.keys.toList().sortedDescending() }
-    if (sortedWeeks.isEmpty()) return
-
-    ApexPanel(radius = Apex.radiusMd) {
-        Column(Modifier.padding(20.dp)) {
-            SectionLabel("Weekly volume", accent = true)
-            Spacer(Modifier.height(16.dp))
-
-            val currentVolume = weeklyVolume[sortedWeeks.first()] ?: 0.0
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                Column {
-                    Text("CURRENT WEEK", style = MaterialTheme.typography.labelSmall, color = Apex.TextMuted)
-                    CountUpText(target = currentVolume.toInt(), style = MaterialTheme.typography.headlineSmall, color = Apex.TextPrimary, suffix = " $unit")
-                }
-                if (sortedWeeks.size >= 2) {
-                    val prev = weeklyVolume[sortedWeeks[1]] ?: 0.0
-                    val diff = currentVolume - prev
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("VS LAST WEEK", style = MaterialTheme.typography.labelSmall, color = Apex.TextMuted)
-                        Text(
-                            (if (diff >= 0) "+" else "") + "${diff.toInt()} $unit",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = if (diff >= 0) Apex.Positive else Apex.Negative,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            val last6 = remember(weeklyVolume) { sortedWeeks.take(6).reversed().map { (weeklyVolume[it] ?: 0.0).toFloat() } }
-            if (last6.size >= 2) {
-                Spacer(Modifier.height(18.dp))
-                ApexBars(values = last6, height = 60.dp)
-                Spacer(Modifier.height(6.dp))
-                Text("Last ${last6.size} weeks", color = Apex.TextMuted, style = MaterialTheme.typography.labelSmall)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ExerciseProgressCard(
-    exercise: String,
-    uiState: ExerciseUiState,
-    sets: List<WorkoutSet>,
-    sdf: SimpleDateFormat,
+fun ProgressContent(
+    state: ProgressUiState,
     unit: String,
-    onClick: () -> Unit
+    now: Long,
+    actions: ProgressActions,
+    modifier: Modifier = Modifier
 ) {
-    val sortedSets = remember(sets.map { it.id }) { sets.sortedByDescending { it.timestamp } }
-    ApexPanel(onClick = onClick, radius = Apex.radiusMd) {
-        Column(Modifier.padding(20.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(exercise.uppercase(), style = MaterialTheme.typography.titleMedium, color = Apex.TextPrimary, fontWeight = FontWeight.Bold)
-                if (uiState.isPR) PrBadge()
-                else Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = null, tint = Apex.AccentSoft, modifier = Modifier.size(16.dp))
+    var rangeIndex by rememberSaveable { mutableIntStateOf(0) }
+    var showAllLifts by rememberSaveable { mutableStateOf(false) }
+
+    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = Gd.s8)) {
+        item(key = "header") { ScreenHeader("Progress") }
+
+        if (state.isEmpty) {
+            item(key = "empty") {
+                EmptyMessage(
+                    title = "Nothing to chart yet",
+                    body = "Log a few workouts and your volume, records and trends show up here.",
+                    action = { SecondaryButton("Start a workout", onClick = actions.onStart, compact = true) }
+                )
             }
-            Spacer(Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Best 1RM: ", style = MaterialTheme.typography.labelLarge, color = Apex.TextSecondary)
-                Text("${uiState.best1RM.toInt()} $unit", style = MaterialTheme.typography.titleMedium, color = Apex.AccentSoft, fontWeight = FontWeight.Bold)
+            return@LazyColumn
+        }
+
+        item(key = "overview") {
+            MetricRow(Modifier.padding(top = Gd.s2)) {
+                Metric(state.weekVolume, "this week", Modifier.weight(1.3f), detail = state.weekVolumeDelta, detailColor = state.weekVolumeTone.color())
+                Metric(state.perWeek, "workouts / week", Modifier.weight(1f), detail = "4-week average")
+                Metric("${state.prCount30}", if (state.prCount30 == 1) "PR" else "PRs", Modifier.weight(0.8f), detail = "last 30 days")
             }
-            Spacer(Modifier.height(16.dp))
-            Text("RECENT TREND", style = MaterialTheme.typography.labelSmall, color = Apex.AccentSoft, letterSpacing = 1.sp)
-            val trendColor = when {
-                uiState.trend > 0 -> Apex.Positive
-                uiState.trend < 0 -> Apex.Negative
-                else -> Apex.TextSecondary
+        }
+
+        item(key = "volume") {
+            SectionHeader("Weekly volume")
+            Column(Modifier.gutter()) {
+                SegmentedControl(VOLUME_RANGES.map { it.label }, rangeIndex, { rangeIndex = it })
+                Spacer(Modifier.height(Gd.s4))
+                val range = VOLUME_RANGES[rangeIndex]
+                val start = range.start(now, state.firstSessionAt)
+                val points = state.weeklyVolume.filter { it.time >= start }
+                TimeSeriesChart(
+                    points = points,
+                    rangeStart = start,
+                    rangeEnd = now,
+                    yAxisTitle = "Volume per week (${Fmt.unitLabel(unit)})",
+                    formatTick = ::compactTick,
+                    minSpan = 1.0,
+                    kind = ChartKind.Bars,
+                    height = 180.dp,
+                    summary = "Weekly training volume, ${points.size} weeks shown",
+                    emptyText = "No workouts in this range"
+                )
             }
-            Text(
-                text = if (uiState.trend != 0.0) (if (uiState.trend > 0) "+" else "") + "${uiState.trend}$unit since last session"
-                else "Same weight as last session",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = trendColor
-            )
-            Text(uiState.recommendation, style = MaterialTheme.typography.bodySmall, color = Apex.TextMuted)
-            Spacer(Modifier.height(12.dp))
-            sortedSets.take(3).forEach { set ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(sdf.format(Date(set.timestamp)), style = MaterialTheme.typography.bodySmall, color = Apex.TextMuted)
-                    Text("${set.weight}$unit × ${set.reps}", style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = Apex.TextPrimary)
+        }
+
+        if (state.lifts.isNotEmpty()) {
+            val lifts = if (showAllLifts) state.lifts else state.lifts.take(LIFTS_PREVIEW)
+            item(key = "liftsHeader") {
+                SectionHeader(
+                    "Lifts",
+                    action = if (state.lifts.size > LIFTS_PREVIEW) (if (showAllLifts) "Fewer" else "All ${state.lifts.size}") else null,
+                    onAction = { showAllLifts = !showAllLifts }
+                )
+            }
+            itemsIndexed(lifts, key = { _, l -> "lift_${l.exercise}" }) { i, lift ->
+                ListRow(
+                    title = lift.exercise,
+                    subtitle = lift.state,
+                    overline = lift.status.label(),
+                    overlineColor = lift.status.color(),
+                    titleStrong = true,
+                    trailing = {
+                        // The status label already carries direction in colour; only a real drop repeats it.
+                        lift.change?.let {
+                            Text(
+                                it, style = GdType.labelNum,
+                                color = if (lift.changeTone == com.example.gymdiary3.presentation.insight.Tone.DANGER) Gd.Danger else Gd.TextMuted
+                            )
+                        }
+                    },
+                    onClick = { actions.onOpenExercise(lift.exercise) },
+                    modifier = Modifier.animateItem()
+                )
+                if (i < lifts.lastIndex) Hairline()
+            }
+        }
+
+        if (state.records.isNotEmpty()) {
+            item(key = "recordsHeader") { SectionHeader("Personal records") }
+            itemsIndexed(state.records, key = { i, r -> "rec_${i}_${r.exercise}" }) { i, rec ->
+                ListRow(
+                    title = rec.exercise,
+                    subtitle = rec.whenLabel,
+                    trailing = { Text(rec.set, style = GdType.bodyStrong.copy(fontFeatureSettings = "tnum"), color = Gd.Text) },
+                    onClick = { actions.onOpenExercise(rec.exercise) }
+                )
+                if (i < state.records.lastIndex) Hairline()
+            }
+        }
+
+        if (state.balance.isNotEmpty()) {
+            item(key = "balance") {
+                SectionHeader("Training balance")
+                Text("Sets per muscle · last 4 weeks", style = GdType.meta, color = Gd.TextMuted, modifier = Modifier.gutter())
+                Spacer(Modifier.height(Gd.s3))
+                Column(Modifier.gutter(), verticalArrangement = Arrangement.spacedBy(Gd.s3)) {
+                    state.balance.forEach { BalanceBar(it.muscle, it.sets, it.fraction) }
                 }
             }
         }
+
+        if (state.insights.isNotEmpty()) {
+            item(key = "insightsHeader") { SectionHeader("Insights") }
+            itemsIndexed(state.insights, key = { i, r -> "ins_${i}_${r.tag}" }) { i, row ->
+                InsightItem(row, onClick = row.exercise?.let { ex -> { actions.onOpenExercise(ex) } })
+                if (i < state.insights.lastIndex) Hairline()
+            }
+        }
+    }
+}
+
+@Composable
+private fun BalanceBar(muscle: String, sets: Int, fraction: Float) {
+    val reduced = LocalReducedMotion.current
+    var shown by remember { mutableStateOf(reduced) }
+    LaunchedEffect(Unit) { shown = true }
+    val f by animateFloatAsState(if (shown) fraction else 0f, tween(if (reduced) 0 else 500, easing = GdMotion.Ease), label = "balance")
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(muscle, style = GdType.label, color = Gd.Text, modifier = Modifier.width(84.dp))
+        Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Gd.Surface)) {
+            Box(Modifier.fillMaxWidth(f).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(Gd.DataNeutral))
+        }
+        Text("$sets sets", style = GdType.labelNum, color = Gd.TextMuted, modifier = Modifier.width(72.dp).padding(start = Gd.s3))
     }
 }

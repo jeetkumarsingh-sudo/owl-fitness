@@ -1,8 +1,6 @@
 package com.example.gymdiary3
 
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -38,8 +36,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,9 +48,7 @@ import com.example.gymdiary3.ui.design.Hairline
 import com.example.gymdiary3.ui.theme.GdType
 import com.example.gymdiary3.ui.theme.GymDiaryTheme
 import com.example.gymdiary3.ui.theme.LocalReducedMotion
-import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
 
@@ -85,28 +79,8 @@ class MainActivity : ComponentActivity() {
                     containerColor = Gd.Bg,
                     bottomBar = { if (route in TAB_ROUTES) BottomBar(nav, route) }
                 ) { padding ->
-                    AppNavHost(
-                        nav = nav,
-                        modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding(),
-                        onExportCsv = { vm -> exportCsv(vm) }
-                    )
+                    AppNavHost(nav, Modifier.padding(padding).consumeWindowInsets(padding).imePadding())
                 }
-            }
-        }
-    }
-
-    private fun exportCsv(workoutViewModel: WorkoutViewModel) {
-        lifecycleScope.launch {
-            val uri = workoutViewModel.exportAllDataToCsv(applicationContext)
-            if (uri != null) {
-                val intent = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/csv"
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                startActivity(Intent.createChooser(intent, "Export CSV"))
-            } else {
-                Toast.makeText(applicationContext, "No data to export", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -145,7 +119,7 @@ private fun BottomBar(nav: NavHostController, current: String?) {
 }
 
 @Composable
-private fun AppNavHost(nav: NavHostController, modifier: Modifier, onExportCsv: (WorkoutViewModel) -> Unit) {
+private fun AppNavHost(nav: NavHostController, modifier: Modifier) {
     val reduced = LocalReducedMotion.current
     fun bothTabs(a: String?, b: String?) = a in TAB_ROUTES && b in TAB_ROUTES
 
@@ -175,7 +149,7 @@ private fun AppNavHost(nav: NavHostController, modifier: Modifier, onExportCsv: 
         composable("home") { HomeRoute(nav) }
         composable("history") { SessionHistoryScreen(nav) }
         composable("progress") { ProgressScreen(nav) }
-        composable("body") { BodyWeightScreen(nav) }
+        composable("body") { BodyRoute(nav) }
 
         // Workout flow
         composable("workout") { ActiveWorkoutRoute(nav) }
@@ -191,9 +165,6 @@ private fun AppNavHost(nav: NavHostController, modifier: Modifier, onExportCsv: 
         composable("program_log/{sessionId}") { back ->
             ProgramSessionLogScreen(nav, sessionId = back.arguments?.getString("sessionId")?.toIntOrNull() ?: 0)
         }
-        composable("settings") {
-            val workoutViewModel: WorkoutViewModel = hiltViewModel()
-            SettingsScreen(nav = nav, onExportClick = { onExportCsv(workoutViewModel) })
-        }
+        composable("settings") { SettingsScreen(nav) }
     }
 }

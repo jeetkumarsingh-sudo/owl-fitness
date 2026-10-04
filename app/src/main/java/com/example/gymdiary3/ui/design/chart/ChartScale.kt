@@ -94,7 +94,15 @@ object ChartScale {
         if (end <= start || count < 2) return listOf(start)
         val step = (end - start).toDouble() / (count - 1)
         return (0 until count)
-            .map { snapToMidnight((start + step * it).toLong()) }
+            .map { i ->
+                // Snap to a midnight, but never outside the range: a tick labelled
+                // tomorrow on a chart that ends today would misstate the data.
+                var t = snapToMidnight((start + step * i).toLong())
+                if (t > end) t -= DAY_MS
+                if (t < start) t += DAY_MS
+                t
+            }
+            .filter { it in start..end }
             .distinct()
     }
 

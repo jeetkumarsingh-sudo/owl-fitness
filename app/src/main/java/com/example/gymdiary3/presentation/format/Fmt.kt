@@ -16,6 +16,10 @@ object Fmt {
     /** "62.5 kg" */
     fun weightUnit(kg: Double, unit: String): String = "${weight(kg, unit)} ${WeightFormatter.label(unit)}"
 
+    /** Estimated values (e.g. 1RM) to the nearest whole unit: "62 kg" — no false precision. */
+    fun estimate(kg: Double, unit: String): String =
+        "${WeightFormatter.fromKilograms(kg, unit).roundToLong()} ${WeightFormatter.label(unit)}"
+
     /** "60 × 8" (bodyweight sets read "BW × 12"). */
     fun set(kg: Double, reps: Int, unit: String): String =
         if (kg <= 0.0) "BW × $reps" else "${weight(kg, unit)} × $reps"

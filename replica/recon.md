@@ -28,6 +28,7 @@ rollout, commit 80d50a2), `clone` = v2. Rows v2 removes on purpose are
 | S10 | Program tracker | `program_tracker` | week calendar, program days | empty, scheduled, done |
 | S11 | Program session log | `program_log/{id}` | 5×(kg, reps) grid per exercise | filled |
 | S12 | Settings | `settings` | units, rest default, bar weight, export/backup/restore | — |
+| S13 | Active workout (added in v2) | `workout` | exercises in the live session, up next, finish | just started, mid-session |
 
 ## User flows (happy-path taps)
 

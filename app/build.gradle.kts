@@ -92,7 +92,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     // Charts
-    implementation(libs.tehras.charts)
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
