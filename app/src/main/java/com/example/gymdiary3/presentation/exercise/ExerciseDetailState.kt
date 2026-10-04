@@ -55,7 +55,8 @@ object ExerciseDetailStateBuilder {
 
     fun build(exercise: String, sets: List<WorkoutSet>, unit: String, now: Long): ExerciseDetailUiState {
         val p = ProgressionEngine.analyze(exercise, sets, unit)
-        val heaviest = p.sessions.maxByOrNull { it.topWeight }
+        // The best set at the heaviest weight (47.5 × 9), not the first time it was lifted (47.5 × 6).
+        val heaviest = p.sessions.maxWithOrNull(compareBy({ it.topWeight }, { it.topReps }))
         val latest = p.latest
         val dateFmt = SimpleDateFormat("MMM d", Locale.getDefault())
 

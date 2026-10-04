@@ -72,7 +72,8 @@ object HistoryStateBuilder {
                 val older = list.getOrNull(i + 1)
                 if (older != null) {
                     val gap = TrainingCalendar.daysBetween(older.session.startTime, s.session.startTime) - 1
-                    if (gap >= 1) entries += RestEntry(gap, s.session.id)
+                    // One rest day is the normal rhythm; only a longer break earns a line.
+                    if (gap >= 2) entries += RestEntry(gap, s.session.id)
                 }
             }
             val volume = list.sumOf { it.totalVolume }

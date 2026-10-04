@@ -62,8 +62,8 @@ Home: streak,home,should,yes,yes,compact
 Home: recent PR,home,should,no,yes,new in v2
 Home: last workout,home,should,yes,yes,
 Home: one insight,home,should,yes,yes,v1 showed two verbose
-Home: lifetime stats tiles,home,could,yes,removed,moved to Progress overview line
-Home: body weight tile,home,could,yes,removed,lives in Body tab
+Home: lifetime stats tiles,home,could,yes,partial,workout count is the History header; lifetime volume dropped as a vanity number
+Home: body weight tile,home,could,yes,yes,"lives in the Body tab: current, change, labelled chart"
 Settings reachable from Home,settings,must,yes,yes,
 Units kg/lbs,settings,must,yes,yes,
 Default rest seconds,settings,must,yes,yes,
@@ -74,11 +74,13 @@ Restore JSON (incl. extension-less),settings,must,yes,yes,
 Program days list and scheduling,programs,should,yes,yes,
 Program weekly calendar,programs,should,yes,yes,
 Program session log (5x kg/reps),programs,should,yes,yes,
-Animated atmosphere background,visual,could,yes,removed,constant motion - user asked to avoid
-Confetti particles,visual,could,yes,removed,excessive particles - user asked to avoid
-Staggered list entrance,visual,could,yes,removed,decorative; replaced by insert/remove animation
+Animated atmosphere background,visual,could,yes,skip,removed on purpose: the brief rules out decorative constant motion
+Confetti particles,visual,could,yes,skip,removed on purpose: the brief rules out excessive particles; PR = accent row wash + haptic
+Staggered list entrance,visual,could,yes,skip,removed on purpose: decorative; list insert/remove motion kept
 Reduced-motion support,visual,must,yes,yes,every animation checks LocalReducedMotion; legacy screens removed
 Screen transitions,visual,should,no,yes,new in v2
 Archivo typeface,visual,must,yes,yes,
 Leaderboards / social feed,skip,could,no,skip,single-user offline app
 Wearable heart-rate,skip,could,no,skip,no hardware integration in scope
+Backup includes programs and settings,settings,could,no,no,BUG-008 follow-up; v1 never had it
+Tablet / landscape layout (content width cap),visual,could,no,yes,new in v2 (P12)
