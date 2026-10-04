@@ -29,7 +29,7 @@ import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
 import com.example.gymdiary3.ui.theme.Apex
 import com.example.gymdiary3.ui.theme.OwlColors
-import com.example.gymdiary3.ui.theme.OwlFitnessTheme
+import com.example.gymdiary3.ui.theme.GymDiaryTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            OwlFitnessTheme {
+            GymDiaryTheme {
                 val nav = rememberNavController()
                 val bottomNavItems = listOf(BottomNavItem.Home, BottomNavItem.History, BottomNavItem.Progress, BottomNavItem.Weight)
                 val rootRoutes = bottomNavItems.map { it.route }.toSet()
