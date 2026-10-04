@@ -69,9 +69,9 @@ fun HistoryScreen(state: HistoryUiState, actions: HistoryActions, modifier: Modi
                         entry,
                         onClick = { actions.onOpen(entry.sessionId) },
                         onLongClick = { deleting = entry },
-                        modifier = Modifier.animateItem()
+                        modifier = itemMotion()
                     )
-                    is RestEntry -> RestRow(entry, Modifier.animateItem())
+                    is RestEntry -> RestRow(entry, itemMotion())
                 }
             }
         }

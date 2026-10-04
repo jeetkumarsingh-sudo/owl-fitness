@@ -125,10 +125,10 @@ fun LoggerScreen(
             if (state.todaySets.isNotEmpty() || state.pendingSets.isNotEmpty()) {
                 item(key = "tableHeader") { TableHeader() }
                 items(state.todaySets, key = { it.id }) { row ->
-                    LoggedRow(row, unit, onLongClick = { deleteRow = row }, modifier = Modifier.animateItem())
+                    LoggedRow(row, unit, onLongClick = { deleteRow = row }, modifier = itemMotion())
                 }
                 items(state.pendingSets, key = { "pending_${it.setNumber}" }) { row ->
-                    PendingRow(row, isNext = row.setNumber == state.nextSetNumber, modifier = Modifier.animateItem())
+                    PendingRow(row, isNext = row.setNumber == state.nextSetNumber, modifier = itemMotion())
                 }
             }
 
@@ -295,9 +295,9 @@ private fun LoggedRow(row: LoggedSetRow, unit: String, onLongClick: () -> Unit, 
     val reduced = LocalReducedMotion.current
     // A PR row starts lightly washed in the accent and settles to neutral.
     val wash = remember(row.id) { Animatable(if (row.isPr && !reduced) 1f else 0f) }
-    LaunchedEffect(row.id) { if (row.isPr && !reduced) wash.animateTo(0f, tween(1600)) }
+    LaunchedEffect(row.id) { if (row.isPr && !reduced) wash.animateTo(0f, tween(GdMotion.Highlight)) }
     val check = remember(row.id) { Animatable(if (reduced) 1f else 0.4f) }
-    LaunchedEffect(row.id) { if (!reduced) check.animateTo(1f, tween(220)) }
+    LaunchedEffect(row.id) { if (!reduced) check.animateTo(1f, tween(GdMotion.Base, easing = GdMotion.Ease)) }
 
     Row(
         modifier

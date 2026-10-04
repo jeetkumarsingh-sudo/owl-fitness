@@ -73,6 +73,7 @@ object GdMotion {
     const val Fast = 120
     const val Base = 200
     const val Slow = 300
-    const val Chart = 450
+    const val Chart = 450      // chart draw-in and bar fills
+    const val Highlight = 1600 // a new PR's row wash fading out — long enough to notice, gone before the next set
     val Ease: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 }

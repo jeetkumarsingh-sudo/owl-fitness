@@ -137,7 +137,7 @@ fun ProgressContent(
                         }
                     },
                     onClick = { actions.onOpenExercise(lift.exercise) },
-                    modifier = Modifier.animateItem()
+                    modifier = itemMotion()
                 )
                 if (i < lifts.lastIndex) Hairline()
             }
@@ -182,7 +182,7 @@ private fun BalanceBar(muscle: String, sets: Int, fraction: Float) {
     val reduced = LocalReducedMotion.current
     var shown by remember { mutableStateOf(reduced) }
     LaunchedEffect(Unit) { shown = true }
-    val f by animateFloatAsState(if (shown) fraction else 0f, tween(if (reduced) 0 else 500, easing = GdMotion.Ease), label = "balance")
+    val f by animateFloatAsState(if (shown) fraction else 0f, tween(if (reduced) 0 else GdMotion.Chart, easing = GdMotion.Ease), label = "balance")
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(muscle, style = GdType.label, color = Gd.Text, modifier = Modifier.width(84.dp))
         Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Gd.Surface)) {

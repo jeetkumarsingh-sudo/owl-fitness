@@ -123,7 +123,7 @@ fun ActiveWorkoutScreen(
                         titleStrong = true,
                         trailing = { Chevron() },
                         onClick = { actions.onOpenExercise(row.exercise, row.muscle) },
-                        modifier = Modifier.animateItem()
+                        modifier = itemMotion()
                     )
                     Hairline(inset = if (i == state.exercises.lastIndex) 0.dp else Gd.Gutter)
                 }
@@ -147,7 +147,7 @@ fun ActiveWorkoutScreen(
                             Icon(Icons.Default.Add, contentDescription = "Log ${row.exercise}", tint = Gd.TextMuted)
                         },
                         onClick = { actions.onOpenExercise(row.exercise, row.muscle) },
-                        modifier = Modifier.animateItem()
+                        modifier = itemMotion()
                     )
                     if (i < state.upNext.lastIndex) Hairline()
                 }

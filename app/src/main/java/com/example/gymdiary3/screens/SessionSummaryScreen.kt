@@ -158,7 +158,7 @@ private fun PrRow(exercise: String, set: String, detail: String, index: Int, onC
     LaunchedEffect(Unit) {
         if (!reduced) {
             kotlinx.coroutines.delay(150L * index)
-            wash.animateTo(0f, tween(1800))
+            wash.animateTo(0f, tween(GdMotion.Highlight))
         }
     }
     Box(Modifier.background(Gd.AccentWash.copy(alpha = Gd.AccentWash.alpha * wash.value))) {
@@ -177,7 +177,7 @@ private fun MuscleBar(muscle: String, volume: String, fraction: Float) {
     val reduced = LocalReducedMotion.current
     var shown by remember { mutableStateOf(reduced) }
     LaunchedEffect(Unit) { shown = true }
-    val f by animateFloatAsState(if (shown) fraction else 0f, tween(if (reduced) 0 else 500, easing = GdMotion.Ease), label = "muscle")
+    val f by animateFloatAsState(if (shown) fraction else 0f, tween(if (reduced) 0 else GdMotion.Chart, easing = GdMotion.Ease), label = "muscle")
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(muscle, style = GdType.label, color = Gd.Text, modifier = Modifier.width(84.dp))
         Box(
