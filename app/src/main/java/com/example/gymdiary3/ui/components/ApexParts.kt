@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,8 +40,9 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
+import kotlinx.coroutines.delay
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -50,13 +52,40 @@ import com.example.gymdiary3.ui.theme.LocalReducedMotion
 import com.example.gymdiary3.ui.theme.Motion
 
 /* ----------------------------------------------------------------------------
+ * Appear — staggered fade + rise entrance for list/grid items. Honors reduced
+ * motion by appearing instantly. Pass the item index for the stagger.
+ * ------------------------------------------------------------------------- */
+@Composable
+fun Modifier.appear(index: Int = 0, stepMs: Int = 45): Modifier {
+    val reduced = LocalReducedMotion.current
+    var shown by remember { mutableStateOf(reduced) }
+    LaunchedEffect(Unit) {
+        if (!reduced) {
+            delay(index * stepMs.toLong())
+            shown = true
+        }
+    }
+    val a by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = tween(320, easing = Motion.emphasized),
+        label = "appear"
+    )
+    return this.graphicsLayer {
+        alpha = a
+        translationY = (1f - a) * 26f
+    }
+}
+
+/* ----------------------------------------------------------------------------
  * Panel — the canonical Apex surface. Carbon fill, hairline border, a faint top
  * highlight for layered depth, and press-scale feedback when clickable.
  * ------------------------------------------------------------------------- */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ApexPanel(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     fill: Color = Apex.Surface2,
     border: Color = Apex.Hairline,
     accentEdge: Boolean = false,
@@ -92,8 +121,13 @@ fun ApexPanel(
             shape
         )
         .border(BorderStroke(1.dp, borderBrush), shape)
-    if (onClick != null) {
-        m = m.clickable(interactionSource = interaction, indication = null, onClick = onClick)
+    if (onClick != null || onLongClick != null) {
+        m = m.combinedClickable(
+            interactionSource = interaction,
+            indication = null,
+            onClick = { onClick?.invoke() },
+            onLongClick = onLongClick
+        )
     }
     Box(m) { content() }
 }

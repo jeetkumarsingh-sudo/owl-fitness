@@ -1,8 +1,5 @@
 package com.example.gymdiary3.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,27 +10,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.viewmodel.BodyWeightViewModel
-import com.example.gymdiary3.ui.theme.OwlColors
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.gymdiary3.domain.BodyWeightAnalyzer
 import com.example.gymdiary3.domain.model.BodyWeight
 import com.example.gymdiary3.domain.settings.WeightFormatter
-import com.github.tehras.charts.line.LineChart
-import com.github.tehras.charts.line.LineChartData
-import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
-import com.github.tehras.charts.line.renderer.point.FilledCircularPointDrawer
-import com.github.tehras.charts.line.renderer.xaxis.SimpleXAxisDrawer
-import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
-import kotlinx.coroutines.launch
+import com.example.gymdiary3.ui.components.*
+import com.example.gymdiary3.ui.theme.Apex
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,106 +30,59 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BodyWeightScreen(
-    nav: NavHostController, 
+    nav: NavHostController,
     viewModel: BodyWeightViewModel = hiltViewModel()
 ) {
-
     var weightInput by remember { mutableStateOf("") }
     val weights by viewModel.allWeights.collectAsStateWithLifecycle()
-    
-    val userSettings by viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
+    val userSettings by viewModel.settingsRepository.userSettingsFlow
+        .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
     val weightUnit = userSettings.weightUnit
-
     val sdf = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
-    val scope = rememberCoroutineScope()
 
-    var isVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { isVisible = true }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize().background(OwlColors.DeepBg),
-        topBar = { 
-            TopAppBar(
-                title = { Text("BODY WEIGHT", fontWeight = FontWeight.ExtraBold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = OwlColors.DeepBg,
-                    titleContentColor = OwlColors.TextPrimary
-                )
-            ) 
-        }
-    ) { padding ->
+    ApexScaffold(title = "Body Weight", onBack = { nav.popBackStack() }) { padding ->
         Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .background(OwlColors.DeepBg)
-                .padding(20.dp),
+            modifier = Modifier.padding(padding).fillMaxSize().padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = fadeIn(tween(200)) + slideInVertically(tween(200)) { it / 2 }
-            ) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = OwlColors.CardBg,
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                ) {
-                    Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        OutlinedTextField(
-                            value = weightInput,
-                            onValueChange = { weightInput = it },
-                            label = { Text("Current Weight (${WeightFormatter.label(weightUnit)})", color = OwlColors.TextMuted) },
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            textStyle = MaterialTheme.typography.headlineSmall.copy(color = OwlColors.TextPrimary),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = OwlColors.TextPrimary,
-                                unfocusedTextColor = OwlColors.TextPrimary,
-                                focusedLabelColor = OwlColors.Purple,
-                                unfocusedLabelColor = OwlColors.TextMuted,
-                                focusedBorderColor = OwlColors.Purple,
-                                unfocusedBorderColor = OwlColors.BorderSubtle,
-                                focusedContainerColor = OwlColors.InputBg,
-                                unfocusedContainerColor = OwlColors.InputBg
-                            )
+            ApexPanel(radius = Apex.radiusMd) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = weightInput,
+                        onValueChange = { weightInput = it },
+                        label = { Text("Current weight (${WeightFormatter.label(weightUnit)})", color = Apex.TextMuted) },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(color = Apex.TextPrimary),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Apex.TextPrimary,
+                            unfocusedTextColor = Apex.TextPrimary,
+                            focusedLabelColor = Apex.AccentSoft,
+                            unfocusedLabelColor = Apex.TextMuted,
+                            focusedBorderColor = Apex.Accent,
+                            unfocusedBorderColor = Apex.Hairline,
+                            focusedContainerColor = Apex.Surface3,
+                            unfocusedContainerColor = Apex.Surface3
                         )
-
-                        val logScale = remember { Animatable(1f) }
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    logScale.animateTo(0.95f, tween(100))
-                                    logScale.animateTo(1f, tween(100))
-                                }
-                                val w = weightInput.toDoubleOrNull() ?: return@Button
-                                viewModel.insertWeight(WeightFormatter.toKilograms(w, weightUnit))
-                                weightInput = ""
-                            },
-                            modifier = Modifier.fillMaxWidth().height(64.dp).scale(logScale.value),
-                            colors = ButtonDefaults.buttonColors(containerColor = OwlColors.Purple),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Text("LOG WEIGHT", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                    )
+                    ApexCta(text = "LOG WEIGHT", onClick = {
+                        val w = weightInput.toDoubleOrNull() ?: return@ApexCta
+                        viewModel.insertWeight(WeightFormatter.toKilograms(w, weightUnit))
+                        weightInput = ""
+                    })
                 }
             }
 
             BodyWeightChart(weights, weightUnit)
 
-            Text("HISTORY", color = OwlColors.Purple, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            SectionLabel("History", accent = true)
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(
-                    items = weights,
-                    key = { it.id }
-                ) { item ->
+                items(weights, key = { it.id }) { item ->
                     val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { value ->
                             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -149,18 +91,16 @@ fun BodyWeightScreen(
                             } else false
                         }
                     )
-
                     SwipeToDismissBox(
                         state = dismissState,
                         backgroundContent = {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(Color(0xFFB71C1C), RoundedCornerShape(12.dp))
+                                Modifier.fillMaxSize()
+                                    .background(Apex.AccentDeep, RoundedCornerShape(Apex.radiusMd))
                                     .padding(end = 16.dp),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
-                                Text("DELETE", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("DELETE", color = Color.White, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     ) {
@@ -173,7 +113,7 @@ fun BodyWeightScreen(
 }
 
 @Composable
-fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
+private fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
     val unitLabel = WeightFormatter.label(unit)
     val displayWeights = remember(weights, unit) {
         weights.map { it.copy(weight = WeightFormatter.fromKilograms(it.weight, unit)) }
@@ -181,32 +121,24 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
 
     if (displayWeights.size < 2) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .background(OwlColors.CardBg, RoundedCornerShape(12.dp)),
+            Modifier.fillMaxWidth().height(180.dp)
+                .background(Apex.Surface2, RoundedCornerShape(Apex.radiusMd)),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("📈", fontSize = 28.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "Log 2+ entries to see your trend",
-                    color = OwlColors.TextMuted,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                "Log 2+ entries to see your trend",
+                color = Apex.TextMuted,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
         return
     }
 
     val stats = BodyWeightAnalyzer.getStats(displayWeights) ?: return
-    val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
-
-    val latestWeight = displayWeights.maxByOrNull { it.timestamp }
-    val previousWeight = displayWeights.sortedByDescending { it.timestamp }.getOrNull(1)
-
+    val sorted = remember(displayWeights) { displayWeights.sortedBy { it.timestamp } }
+    val latestWeight = sorted.lastOrNull()
+    val previousWeight = sorted.getOrNull(sorted.size - 2)
     val weightChange = (latestWeight?.weight ?: 0.0) - (previousWeight?.weight ?: 0.0)
 
     val recentAvg = remember(displayWeights) {
@@ -216,88 +148,53 @@ fun BodyWeightChart(weights: List<BodyWeight>, unit: String) {
     }
 
     val trendColor = when {
-        weightChange > 0.1  -> OwlColors.GreenBulk     // gaining weight = GOOD (bulking)
-        weightChange < -0.1 -> OwlColors.RedNegative   // losing weight
-        else                -> OwlColors.TextMuted      // stable
+        weightChange > 0.1 -> Apex.Positive
+        weightChange < -0.1 -> Apex.Negative
+        else -> Apex.TextMuted
     }
+    val trendText = (if (weightChange > 0) "+" else "") + "${WeightFormatter.formatNumber(weightChange, 2)} $unitLabel"
 
-    val trendPrefix = if (weightChange > 0) "+" else ""
-    val trendText = "${trendPrefix}${WeightFormatter.formatNumber(weightChange, 2)} $unitLabel"
-
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text("CURRENT", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text("${WeightFormatter.formatNumber(stats.latestWeight, 1)} $unitLabel", color = OwlColors.TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("CHANGE", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text(
-                    trendText,
-                    color = trendColor,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
+    ApexPanel(radius = Apex.radiusMd) {
+        Column(Modifier.padding(18.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                StatMini("CURRENT", "${WeightFormatter.formatNumber(stats.latestWeight, 1)} $unitLabel", Apex.TextPrimary)
+                StatMini("CHANGE", trendText, trendColor, Alignment.CenterHorizontally)
+                StatMini(
+                    "AVG (14D)",
+                    if (recentAvg != null) "${WeightFormatter.formatNumber(recentAvg, 1)} $unitLabel" else "--",
+                    Apex.TextPrimary,
+                    Alignment.End
                 )
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("AVG (14 DAYS)", color = OwlColors.TextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text(
-                    text = if (recentAvg != null) "${WeightFormatter.formatNumber(recentAvg, 1)} $unitLabel" else "--",
-                    color = OwlColors.TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            Spacer(Modifier.height(18.dp))
+            ApexLineChart(values = sorted.map { it.weight.toFloat() }, height = 190.dp)
         }
-
-        LineChart(
-            linesChartData = listOf(
-                LineChartData(
-                    points = displayWeights.sortedBy { it.timestamp }.map { bw ->
-                        LineChartData.Point(bw.weight.toFloat(), dateFormat.format(Date(bw.timestamp)))
-                    },
-                    lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 2.dp)
-                )
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple, diameter = 6.dp),
-            xAxisDrawer = SimpleXAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle),
-            yAxisDrawer = SimpleYAxisDrawer(
-                labelTextColor = OwlColors.TextMuted,
-                axisLineColor = OwlColors.BorderSubtle,
-                labelValueFormatter = { value -> "%.1f".format(value) }
-            ),
-            horizontalOffset = 5f
-        )
     }
 }
 
 @Composable
-fun WeightCard(item: BodyWeight, sdf: SimpleDateFormat, unit: String) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-    ) {
+private fun StatMini(label: String, value: String, valueColor: Color, align: Alignment.Horizontal = Alignment.Start) {
+    Column(horizontalAlignment = align) {
+        Text(label, color = Apex.TextMuted, style = MaterialTheme.typography.labelSmall)
+        Spacer(Modifier.height(2.dp))
+        Text(value, color = valueColor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun WeightCard(item: BodyWeight, sdf: SimpleDateFormat, unit: String) {
+    ApexPanel(radius = Apex.radiusMd) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            Modifier.padding(16.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(sdf.format(Date(item.timestamp)), color = OwlColors.TextMuted, fontSize = 14.sp)
+            Text(sdf.format(Date(item.timestamp)), color = Apex.TextMuted, style = MaterialTheme.typography.bodyMedium)
             Text(
                 WeightFormatter.formatFromKilograms(item.weight, unit),
-                color = OwlColors.TextPrimary,
+                color = Apex.TextPrimary,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                style = MaterialTheme.typography.titleMedium
             )
         }
     }

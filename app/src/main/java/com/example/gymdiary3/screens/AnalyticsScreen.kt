@@ -1,33 +1,24 @@
 package com.example.gymdiary3.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.theme.OwlColors
+import com.example.gymdiary3.ui.components.ApexLineChart
+import com.example.gymdiary3.ui.components.ApexPanel
+import com.example.gymdiary3.ui.components.ApexScaffold
+import com.example.gymdiary3.ui.components.CountUpText
+import com.example.gymdiary3.ui.components.SectionLabel
+import com.example.gymdiary3.ui.theme.Apex
 import com.example.gymdiary3.viewmodel.ProgressViewModel
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import com.github.tehras.charts.line.LineChart
-import com.github.tehras.charts.line.LineChartData
-import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
-import com.github.tehras.charts.line.renderer.point.FilledCircularPointDrawer
-import com.github.tehras.charts.line.renderer.xaxis.SimpleXAxisDrawer
-import com.github.tehras.charts.line.renderer.yaxis.SimpleYAxisDrawer
-
 import androidx.hilt.navigation.compose.hiltViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
     nav: NavHostController,
@@ -39,148 +30,85 @@ fun AnalyticsScreen(
     val volumeHistory by viewModel.volumeHistory.collectAsStateWithLifecycle()
     val userSettings by workoutViewModel.settingsRepository.userSettingsFlow
         .collectAsStateWithLifecycle(com.example.gymdiary3.domain.settings.UserSettings())
-    
-    val exerciseName = viewModel.exerciseName.ifEmpty { "Exercise" }
 
-    Scaffold(
-        containerColor = OwlColors.DeepBg,
-        topBar = {
-            TopAppBar(
-                title = { Text(exerciseName.uppercase(), fontWeight = FontWeight.Black, fontSize = 20.sp, letterSpacing = 1.sp) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = OwlColors.DeepBg,
-                    titleContentColor = OwlColors.TextPrimary
-                ),
-                navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OwlColors.TextPrimary)
-                    }
-                }
-            )
+    val exerciseName = viewModel.exerciseName.ifEmpty { "Exercise" }
+    val unit = userSettings.weightUnit
+
+    ApexScaffold(title = exerciseName, onBack = { nav.popBackStack() }) { padding ->
+        val state = uiState
+        if (state == null) {
+            Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("No data for this exercise", color = Apex.TextMuted)
+            }
+            return@ApexScaffold
         }
-    ) { padding ->
+
         LazyColumn(
             modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(20.dp),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            val state = uiState
-            if (state == null) {
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    StatCard("Best 1RM", state.best1RM.toInt(), unit, Modifier.weight(1f))
+                    StatCard("Total volume", state.totalVolume.toInt(), unit, Modifier.weight(1f))
+                }
+            }
+
+            if (state.recommendation.isNotBlank()) {
                 item {
-                    Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No data for this exercise", color = OwlColors.TextMuted)
-                    }
-                }
-                return@LazyColumn
-            }
-
-            // Stat Summary Cards
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AnalyticsStatCard("Best 1RM", "${state.best1RM.toInt()} ${userSettings.weightUnit}", Modifier.weight(1f))
-                    AnalyticsStatCard("Total Volume", "${state.totalVolume.toInt()} ${userSettings.weightUnit}", Modifier.weight(1f))
-                }
-            }
-
-            // RECOMMENDATION / Trend
-            item {
-                if (state.recommendation.isNotBlank()) {
-                    Surface(
-                        color = OwlColors.CardBg,
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(
-                                "RECOMMENDATION",
-                                color = OwlColors.PurpleSoft,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
+                    ApexPanel(radius = Apex.radiusMd) {
+                        Column(Modifier.padding(18.dp)) {
+                            SectionLabel("Recommendation", accent = true)
                             Spacer(Modifier.height(8.dp))
+                            Text(state.recommendation, color = Apex.TextPrimary, style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.height(6.dp))
                             Text(
-                                text = state.recommendation,
-                                color = OwlColors.TextPrimary,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} ${userSettings.weightUnit} since last session",
-                                color = if (state.trend > 0) OwlColors.GreenPositive 
-                                        else if (state.trend < 0) OwlColors.RedNegative 
-                                        else OwlColors.TextSecondary,
+                                (if (state.trend >= 0) "+" else "") + "${state.trend.toInt()} $unit since last session",
+                                color = if (state.trend > 0) Apex.Positive else if (state.trend < 0) Apex.Negative else Apex.TextSecondary,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
                 }
             }
 
-            // 1RM Progress Chart
             if (oneRMHistory.size >= 2) {
-                item {
-                    ChartSection("1RM PROGRESS (ESTIMATED)", oneRMHistory.map { it.second })
-                }
+                item { ChartCard("1RM Progress (estimated)", oneRMHistory.map { it.second.toFloat() }) }
             }
-
-            // Volume Progress Chart
             if (volumeHistory.size >= 2) {
-                item {
-                    ChartSection("VOLUME PROGRESS", volumeHistory.map { it.second }, labels = volumeHistory.map { it.first })
-                }
+                item { ChartCard("Volume Progress", volumeHistory.map { it.second.toFloat() }) }
             }
         }
     }
 }
 
 @Composable
-fun ChartSection(title: String, data: List<Double>, labels: List<String>? = null) {
+private fun StatCard(label: String, value: Int, unit: String, modifier: Modifier = Modifier) {
+    ApexPanel(modifier = modifier, radius = Apex.radiusMd) {
+        Column(Modifier.padding(16.dp)) {
+            CountUpText(
+                target = value,
+                style = MaterialTheme.typography.headlineSmall,
+                color = Apex.AccentSoft,
+                suffix = " $unit"
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(label.uppercase(), style = MaterialTheme.typography.labelSmall, color = Apex.TextMuted)
+        }
+    }
+}
+
+@Composable
+private fun ChartCard(title: String, values: List<Float>) {
     Column {
-        Text(title, color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp)
-        Spacer(Modifier.height(16.dp))
-        
-        Surface(
-            color = OwlColors.CardBg,
-            shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, OwlColors.BorderSubtle),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        SectionLabel(title, accent = true)
+        Spacer(Modifier.height(14.dp))
+        ApexPanel(radius = Apex.radiusMd) {
             Box(Modifier.padding(16.dp)) {
-                LineChart(
-                    linesChartData = listOf(
-                        LineChartData(
-                            points = data.mapIndexed { index, value -> 
-                                LineChartData.Point(value.toFloat(), labels?.getOrNull(index) ?: "")
-                            },
-                            lineDrawer = SolidLineDrawer(color = OwlColors.Purple, thickness = 3.dp)
-                        )
-                    ),
-                    modifier = Modifier.fillMaxWidth().height(200.dp),
-                    pointDrawer = FilledCircularPointDrawer(color = OwlColors.Purple),
-                    xAxisDrawer = SimpleXAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle),
-                    yAxisDrawer = SimpleYAxisDrawer(labelTextColor = OwlColors.TextMuted, axisLineColor = OwlColors.BorderSubtle, labelValueFormatter = { v -> v.toInt().toString() })
-                )
+                ApexLineChart(values = values, height = 200.dp)
             }
-        }
-    }
-}
-
-@Composable
-fun AnalyticsStatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = OwlColors.TextSecondary)
-            Text(value, style = MaterialTheme.typography.titleMedium, color = OwlColors.Purple, fontWeight = FontWeight.Bold)
         }
     }
 }
