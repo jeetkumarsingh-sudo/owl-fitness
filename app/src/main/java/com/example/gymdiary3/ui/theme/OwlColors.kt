@@ -22,4 +22,13 @@ object OwlColors {
     val TextMuted     = Color(0xFF71717A) // Zinc 500 muted text
     val BorderSubtle  = Color(0xFF27272A) // Very subtle borders
     val BorderActive  = Color(0xFF3F3F46) // Slightly lighter for active elements
+
+    // --- Compatibility bridge: legacy "Purple" accent names used across screens.
+    // The palette was migrated to Carbon & Crimson but 77 call sites still reference
+    // these names. Alias them to the crimson accent so the app compiles and the
+    // accent stays consistent. (To be consolidated in the design-system pass.)
+    val Purple     = Crimson      // primary accent
+    val PurpleSoft = CrimsonSoft  // secondary/highlight accent
+    val PurpleDim  = CrimsonDim   // dim/inactive accent
+    val GreenBulk  = GreenPositive // legacy name for positive/bulk green
 }
