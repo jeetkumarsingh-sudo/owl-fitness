@@ -134,7 +134,9 @@ fun SettingsScreen(
                         }
                     }
                     DataButton("RESTORE FROM BACKUP") {
-                        importLauncher.launch(arrayOf("application/json"))
+                        // Accept JSON backups even when shared without a .json extension
+                        // (e.g. received through a messaging app as octet-stream).
+                        importLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain", "*/*"))
                     }
                 }
             }
