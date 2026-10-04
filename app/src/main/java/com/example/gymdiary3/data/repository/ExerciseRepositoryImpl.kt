@@ -18,4 +18,6 @@ class ExerciseRepositoryImpl @Inject constructor(
     override suspend fun deleteExercise(exercise: Exercise) = workoutDao.deleteExercise(exercise.toEntity())
     override suspend fun getAllExercises(): List<Exercise> =
         workoutDao.getAllExercisesList().map { it.toDomain() }
+    override fun getAllExercisesFlow(): Flow<List<Exercise>> =
+        workoutDao.getAllExercisesFlow().map { list -> list.map { it.toDomain() } }
 }

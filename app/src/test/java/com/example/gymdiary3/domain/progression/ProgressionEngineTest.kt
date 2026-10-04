@@ -43,6 +43,13 @@ class ProgressionEngineTest {
         assertEquals("Try +1 rep before adding weight", p.recommendation?.action)
     }
 
+    @Test fun `a plateau after an early rep gain is still stalling`() {
+        // 8 → 9 reps once, then 9, 9, 9 at the same weight.
+        val p = analyze(session(1, 50.0, 8), session(2, 50.0, 9), session(3, 50.0, 9), session(4, 50.0, 9))
+        assertEquals(ProgressionStatus.STALLING, p.status)
+        assertEquals(4, p.streakAtWeight)
+    }
+
     @Test fun `two sessions at the same weight is stable`() {
         assertEquals(ProgressionStatus.STABLE, analyze(session(1, 12.0, 10), session(2, 12.0, 10)).status)
     }

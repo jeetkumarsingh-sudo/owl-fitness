@@ -20,6 +20,7 @@ interface WorkoutRepository {
     suspend fun getSessionById(sessionId: Int): WorkoutSession?
     suspend fun deleteSessionById(id: Int)
     suspend fun deleteSetsBySessionId(id: Int)
+    suspend fun deleteSetById(id: Int)
     suspend fun getLastSet(exerciseName: String): WorkoutSet?
     fun getLastThreeSets(exerciseName: String): Flow<List<WorkoutSet>>
     suspend fun getTodaySetCount(exerciseName: String, dayStart: Long, dayEnd: Long): Int

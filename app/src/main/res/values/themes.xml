@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.GymDiary3" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Dark window so launch shows the app background, not a white flash, before Compose draws. -->
+    <style name="Theme.GymDiary3" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/gd_bg</item>
+        <item name="android:colorBackground">@color/gd_bg</item>
+    </style>
 </resources>

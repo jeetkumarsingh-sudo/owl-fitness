@@ -105,13 +105,14 @@ fun SectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     action: String? = null,
-    onAction: (() -> Unit)? = null
+    onAction: (() -> Unit)? = null,
+    top: Dp = Gd.s8
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .gutter()
-            .padding(top = Gd.s8, bottom = Gd.s2),
+            .padding(top = top, bottom = Gd.s2),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, style = GdType.section, color = Gd.Text, modifier = Modifier.weight(1f))

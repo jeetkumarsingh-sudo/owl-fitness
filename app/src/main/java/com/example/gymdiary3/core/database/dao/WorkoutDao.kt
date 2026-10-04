@@ -72,6 +72,12 @@ interface WorkoutDao {
     @Query("SELECT * FROM Exercise")
     suspend fun getAllExercisesList(): List<ExerciseEntity>
 
+    @Query("SELECT * FROM Exercise ORDER BY name COLLATE NOCASE")
+    fun getAllExercisesFlow(): Flow<List<ExerciseEntity>>
+
+    @Query("DELETE FROM WorkoutSet WHERE id = :id")
+    suspend fun deleteSetById(id: Int)
+
     @Delete
     suspend fun deleteExercise(exercise: ExerciseEntity)
 

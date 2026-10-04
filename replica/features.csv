@@ -1,29 +1,29 @@
 feature,area,priority,original,clone,notes
-Start empty workout now,workout,must,yes,no,
-Log yesterday's workout,workout,should,yes,no,start dialog option
-Resume active session,workout,must,yes,no,
-Live session duration,workout,should,yes,no,
-Finish session (empty sessions deleted),workout,must,yes,no,SessionManager.endSession
-Stale session auto-close >12h,workout,must,yes,no,SessionManager.initialize - untouched
-Choose exercise by muscle group,workout,must,yes,no,merged into one picker
-Recent exercises first in picker,workout,should,no,no,new in v2
-Add custom exercise (equipment/pattern/tracking),workout,must,yes,no,
-Delete exercise,workout,should,yes,no,long-press
-Weight and reps steppers,logging,must,yes,no,
-Long-press manual weight/reps entry,logging,should,yes,no,
-Assisted set flag,logging,should,yes,no,
-RPE 6-10,logging,should,yes,no,
-Set notes,logging,could,yes,no,
-Plate calculator (bar weight from settings),logging,should,yes,no,
-Previous session sets for exercise,logging,must,yes,no,
-Today's sets for exercise with completion marks,logging,must,no,no,new in v2
-Suggested next set from real history,logging,must,yes,no,v1 = weight-only bump; v2 = double progression
-Rest timer auto-start / skip / default from settings,logging,must,yes,no,
-Rest timer +/-15s adjust,logging,could,no,no,new in v2
-Haptic on set logged,logging,should,yes,no,
-Set-logged confirmation,logging,should,yes,no,
-Set number auto-increment,logging,must,yes,no,
-Active workout overview (exercises in session),workout,must,no,no,new in v2
+Start empty workout now,workout,must,yes,yes,
+Log yesterday's workout,workout,should,yes,yes,start dialog option
+Resume active session,workout,must,yes,yes,
+Live session duration,workout,should,yes,yes,
+Finish session (empty sessions deleted),workout,must,yes,yes,SessionManager.endSession
+Stale session auto-close >12h,workout,must,yes,yes,SessionManager.initialize - untouched
+Choose exercise by muscle group,workout,must,yes,yes,merged into one picker
+Recent exercises first in picker,workout,should,no,yes,new in v2
+Add custom exercise (equipment/pattern/tracking),workout,must,yes,yes,
+Delete exercise,workout,should,yes,yes,long-press
+Weight and reps steppers,logging,must,yes,yes,
+Long-press manual weight/reps entry,logging,should,yes,yes,
+Assisted set flag,logging,should,yes,yes,
+RPE 6-10,logging,should,yes,yes,
+Set notes,logging,could,yes,yes,
+Plate calculator (bar weight from settings),logging,should,yes,yes,
+Previous session sets for exercise,logging,must,yes,yes,
+Today's sets for exercise with completion marks,logging,must,no,yes,new in v2
+Suggested next set from real history,logging,must,yes,yes,v1 = weight-only bump; v2 = double progression
+Rest timer auto-start / skip / default from settings,logging,must,yes,yes,
+Rest timer +/-15s adjust,logging,could,no,yes,new in v2
+Haptic on set logged,logging,should,yes,yes,
+Set-logged confirmation,logging,should,yes,yes,
+Set number auto-increment,logging,must,yes,yes,
+Active workout overview (exercises in session),workout,must,no,yes,new in v2
 Session list,history,must,yes,no,
 History grouped by month with day and split label,history,must,no,no,new in v2
 Rest days shown in timeline,history,could,no,no,new in v2
@@ -55,16 +55,16 @@ Body weight history list with delete,body,must,yes,no,
 Body weight chart (labeled) with range 7D/30D/3M/6M/1Y,body,must,yes,no,v1 unlabeled no range
 Current / change / period stats,body,must,yes,no,
 Muscle recovery overview,body,should,no,no,new in v2 - derived from set history
-Today's training recommendation from recovery,home,should,no,no,new in v2
-Home: primary action,home,must,yes,no,
-Home: weekly activity strip,home,must,yes,no,
-Home: streak,home,should,yes,no,compact
-Home: recent PR,home,should,no,no,new in v2
-Home: last workout,home,should,yes,no,
-Home: one insight,home,should,yes,no,v1 showed two verbose
+Today's training recommendation from recovery,home,should,no,yes,new in v2
+Home: primary action,home,must,yes,yes,
+Home: weekly activity strip,home,must,yes,yes,
+Home: streak,home,should,yes,yes,compact
+Home: recent PR,home,should,no,yes,new in v2
+Home: last workout,home,should,yes,yes,
+Home: one insight,home,should,yes,yes,v1 showed two verbose
 Home: lifetime stats tiles,home,could,yes,removed,moved to Progress overview line
 Home: body weight tile,home,could,yes,removed,lives in Body tab
-Settings reachable from Home,settings,must,yes,no,
+Settings reachable from Home,settings,must,yes,yes,
 Units kg/lbs,settings,must,yes,no,
 Default rest seconds,settings,must,yes,no,
 Bar weight,settings,should,yes,no,
@@ -77,8 +77,8 @@ Program session log (5x kg/reps),programs,should,yes,no,
 Animated atmosphere background,visual,could,yes,removed,constant motion - user asked to avoid
 Confetti particles,visual,could,yes,removed,excessive particles - user asked to avoid
 Staggered list entrance,visual,could,yes,removed,decorative; replaced by insert/remove animation
-Reduced-motion support,visual,must,yes,no,
-Screen transitions,visual,should,no,no,new in v2
-Archivo typeface,visual,must,yes,no,
+Reduced-motion support,visual,must,yes,partial,new screens honour it; legacy screens still pending
+Screen transitions,visual,should,no,yes,new in v2
+Archivo typeface,visual,must,yes,yes,
 Leaderboards / social feed,skip,could,no,skip,single-user offline app
 Wearable heart-rate,skip,could,no,skip,no hardware integration in scope

@@ -112,7 +112,7 @@ object RecoveryEngine {
         val detail = if (lastTrained == null) {
             "Not trained yet"
         } else {
-            val days = ((now - lastTrained) / DAY_MS).toInt()
+            val days = calendarDaysBetween(lastTrained, now)
             "Last trained " + when (days) {
                 0 -> "today"
                 1 -> "yesterday"
@@ -120,6 +120,16 @@ object RecoveryEngine {
             }
         }
         return TodayRecommendation(split, split.label, detail)
+    }
+
+    /** Calendar days, so "5 days ago" matches the date the user remembers. */
+    private fun calendarDaysBetween(earlier: Long, later: Long): Int {
+        fun midnight(t: Long) = java.util.Calendar.getInstance().apply {
+            timeInMillis = t
+            set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        return Math.round((midnight(later) - midnight(earlier)).toDouble() / DAY_MS).toInt()
     }
 
     private const val HOUR_MS = 60L * 60 * 1000
