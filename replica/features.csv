@@ -24,37 +24,37 @@ Haptic on set logged,logging,should,yes,yes,
 Set-logged confirmation,logging,should,yes,yes,
 Set number auto-increment,logging,must,yes,yes,
 Active workout overview (exercises in session),workout,must,no,yes,new in v2
-Session list,history,must,yes,no,
-History grouped by month with day and split label,history,must,no,no,new in v2
-Rest days shown in timeline,history,could,no,no,new in v2
-Delete session,history,must,yes,no,long-press
-Auto-clean empty sessions on open,history,should,yes,no,
-Session summary stats (sets/volume/time),summary,must,yes,no,
-Session notes shown,summary,could,yes,no,
-Per-exercise sets with RPE and notes,summary,must,yes,no,
-PR detection per exercise,summary,must,yes,no,
-PR celebration,summary,should,yes,no,v2 = inline row + haptic; confetti removed
-Volume by muscle,summary,should,yes,no,
-Share session as text,summary,should,yes,no,
-Share session as image,summary,should,yes,no,
-Insights from intelligence engine,progress,must,yes,no,v2 = concise rows from dataPoints
-Weekly volume vs last week,progress,must,yes,no,
-Weekly volume history chart (labeled),progress,should,yes,no,v1 unlabeled
-Workout consistency (sessions per week),progress,should,no,no,new in v2
-PR list,progress,should,no,no,new in v2
-Per-exercise progression status (progressing/stable/stalling/regressing),progress,must,no,no,new in v2
-Exercise detail: best weight / est 1RM / last session,analytics,must,yes,no,v1 had 1RM + total volume
-Exercise chart with axes units dates,analytics,must,no,no,new in v2
-Chart range selector 4W/8W/3M/6M/1Y/ALL,analytics,must,no,no,new in v2
-Chart tabs Strength/Volume/Reps,analytics,should,no,no,new in v2
-Tap chart point for detail,analytics,should,no,no,new in v2
-Change % over selected period,analytics,should,no,no,new in v2
-Next session recommendation,analytics,must,yes,no,v1 = generic sentence
-Log body weight (one per day),body,must,yes,no,
-Body weight history list with delete,body,must,yes,no,
-Body weight chart (labeled) with range 7D/30D/3M/6M/1Y,body,must,yes,no,v1 unlabeled no range
-Current / change / period stats,body,must,yes,no,
-Muscle recovery overview,body,should,no,no,new in v2 - derived from set history
+Session list,history,must,yes,yes,
+History grouped by month with day and split label,history,must,no,yes,new in v2
+Rest days shown in timeline,history,could,no,yes,new in v2
+Delete session,history,must,yes,yes,long-press
+Auto-clean empty sessions on open,history,should,yes,yes,
+Session summary stats (sets/volume/time),summary,must,yes,yes,
+Session notes shown,summary,could,yes,yes,
+Per-exercise sets with RPE and notes,summary,must,yes,yes,
+PR detection per exercise,summary,must,yes,yes,
+PR celebration,summary,should,yes,yes,v2 = inline row + haptic; confetti removed
+Volume by muscle,summary,should,yes,yes,
+Share session as text,summary,should,yes,yes,
+Share session as image,summary,should,yes,yes,
+Insights from intelligence engine,progress,must,yes,yes,v2 = concise rows from dataPoints
+Weekly volume vs last week,progress,must,yes,yes,
+Weekly volume history chart (labeled),progress,should,yes,yes,v1 unlabeled
+Workout consistency (sessions per week),progress,should,no,yes,new in v2
+PR list,progress,should,no,yes,new in v2
+Per-exercise progression status (progressing/stable/stalling/regressing),progress,must,no,yes,new in v2
+Exercise detail: best weight / est 1RM / last session,analytics,must,yes,yes,v1 had 1RM + total volume
+Exercise chart with axes units dates,analytics,must,no,yes,new in v2
+Chart range selector 4W/8W/3M/6M/1Y/ALL,analytics,must,no,yes,new in v2
+Chart tabs Strength/Volume/Reps,analytics,should,no,yes,new in v2
+Tap chart point for detail,analytics,should,no,yes,new in v2
+Change % over selected period,analytics,should,no,yes,new in v2
+Next session recommendation,analytics,must,yes,yes,v1 = generic sentence
+Log body weight (one per day),body,must,yes,yes,
+Body weight history list with delete,body,must,yes,yes,
+Body weight chart (labeled) with range 7D/30D/3M/6M/1Y,body,must,yes,yes,v1 unlabeled no range
+Current / change / period stats,body,must,yes,yes,
+Muscle recovery overview,body,should,no,yes,new in v2 - derived from set history
 Today's training recommendation from recovery,home,should,no,yes,new in v2
 Home: primary action,home,must,yes,yes,
 Home: weekly activity strip,home,must,yes,yes,
@@ -65,19 +65,19 @@ Home: one insight,home,should,yes,yes,v1 showed two verbose
 Home: lifetime stats tiles,home,could,yes,removed,moved to Progress overview line
 Home: body weight tile,home,could,yes,removed,lives in Body tab
 Settings reachable from Home,settings,must,yes,yes,
-Units kg/lbs,settings,must,yes,no,
-Default rest seconds,settings,must,yes,no,
-Bar weight,settings,should,yes,no,
-Export CSV,settings,must,yes,no,
-Backup JSON,settings,must,yes,no,
-Restore JSON (incl. extension-less),settings,must,yes,no,
-Program days list and scheduling,programs,should,yes,no,
-Program weekly calendar,programs,should,yes,no,
-Program session log (5x kg/reps),programs,should,yes,no,
+Units kg/lbs,settings,must,yes,yes,
+Default rest seconds,settings,must,yes,yes,
+Bar weight,settings,should,yes,yes,
+Export CSV,settings,must,yes,yes,
+Backup JSON,settings,must,yes,yes,
+Restore JSON (incl. extension-less),settings,must,yes,yes,
+Program days list and scheduling,programs,should,yes,yes,
+Program weekly calendar,programs,should,yes,yes,
+Program session log (5x kg/reps),programs,should,yes,yes,
 Animated atmosphere background,visual,could,yes,removed,constant motion - user asked to avoid
 Confetti particles,visual,could,yes,removed,excessive particles - user asked to avoid
 Staggered list entrance,visual,could,yes,removed,decorative; replaced by insert/remove animation
-Reduced-motion support,visual,must,yes,partial,new screens honour it; legacy screens still pending
+Reduced-motion support,visual,must,yes,yes,every animation checks LocalReducedMotion; legacy screens removed
 Screen transitions,visual,should,no,yes,new in v2
 Archivo typeface,visual,must,yes,yes,
 Leaderboards / social feed,skip,could,no,skip,single-user offline app

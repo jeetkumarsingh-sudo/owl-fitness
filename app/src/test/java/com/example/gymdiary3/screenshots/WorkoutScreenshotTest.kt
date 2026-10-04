@@ -29,27 +29,27 @@ class WorkoutScreenshotTest {
     private val noRest = RestUi(false, 0, 0)
 
     @Test
-    fun activeWorkout() = compose.snap("S04_workout") {
+    fun activeWorkout() = compose.snap("S13_workout") {
         val state = ActiveWorkoutStateBuilder.build(all, SampleData.ACTIVE_SESSION_ID, "kg", SampleData.now)
         ActiveWorkoutScreen(state, 32 * 60 + 8, RestUi(true, 74, 120), "kg", ActiveWorkoutActions())
     }
 
     @Test
-    fun workoutJustStarted() = compose.snap("S04_workout_empty") {
+    fun workoutJustStarted() = compose.snap("S13_workout_empty") {
         val history = SampleData.sessions
         val state = ActiveWorkoutStateBuilder.build(history, activeId = 1000, unit = "kg", now = SampleData.now)
         ActiveWorkoutScreen(state, 45, noRest, "kg", ActiveWorkoutActions())
     }
 
     @Test
-    fun loggerMidExercise() = compose.snap("S05_logger") {
+    fun loggerMidExercise() = compose.snap("S04_logger") {
         val sets = all.flatMap { it.sets }.filter { it.exercise == "Lat Pulldown" }
         val state = LoggerStateBuilder.build("Lat Pulldown", "Back", sets, SampleData.ACTIVE_SESSION_ID, "kg", SampleData.now)
         LoggerScreen(state, RestUi(true, 74, 120), "kg", 20.0, LoggerActions())
     }
 
     @Test
-    fun loggerFreshWithTarget() = compose.snap("S05_logger_target") {
+    fun loggerFreshWithTarget() = compose.snap("S04_logger_target") {
         val sets = all.flatMap { it.sets }.filter { it.exercise == "Face Pull" }
         val state = LoggerStateBuilder.build("Face Pull", "Back", sets, SampleData.ACTIVE_SESSION_ID, "kg", SampleData.now)
         LoggerScreen(state, noRest, "kg", 20.0, LoggerActions())
@@ -58,13 +58,13 @@ class WorkoutScreenshotTest {
     @Test
     fun loggerOptionsOpen() {
         val sets = all.flatMap { it.sets }.filter { it.exercise == "Seated Row" }
-        compose.snap("S05_logger_options") {
+        compose.snap("S04_logger_options") {
             val state = LoggerStateBuilder.build("Seated Row", "Back", sets, SampleData.ACTIVE_SESSION_ID, "kg", SampleData.now)
             LoggerScreen(state, noRest, "kg", 20.0, LoggerActions())
         }
         compose.onNodeWithText("RPE, notes and plates").performClick()
         compose.waitForIdle()
-        captureRoot(compose, "S05_logger_options")
+        captureRoot(compose, "S04_logger_options")
     }
 
     @Test

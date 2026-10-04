@@ -45,6 +45,16 @@ class ChartScaleTest {
         ticks.forEach { assertEquals(it, ChartScale.snapToMidnight(it)) }
     }
 
+    @Test fun `time ticks never fall outside the range`() {
+        val day = 24L * 60 * 60 * 1000
+        val end = java.util.Calendar.getInstance().apply {
+            set(2026, java.util.Calendar.OCTOBER, 4, 18, 30, 0) // evening: nearest midnight is tomorrow
+        }.timeInMillis
+        val start = end - 56 * day
+        val ticks = ChartScale.timeTicks(start, end, 4)
+        assertTrue(ticks.all { it in start..end })
+    }
+
     @Test fun `percent change handles a zero base`() {
         assertEquals(null, ChartScale.percentChange(0.0, 10.0))
         assertEquals(8.0, ChartScale.percentChange(50.0, 54.0)!!, 1e-9)

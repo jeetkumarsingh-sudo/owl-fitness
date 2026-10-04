@@ -46,7 +46,7 @@ object ActiveWorkoutStateBuilder {
 
         val rows = todaySets.groupBy { it.exercise }.map { (name, sets) ->
             val bestBefore = historySets.filter { it.exercise == name && it.weight > 0 }
-                .maxOfOrNull { WorkoutCalculations.calculate1RM(it.weight, it.reps) } ?: 0.0
+                .maxOfOrNull { it.weight } ?: 0.0
             SessionExerciseRow(
                 exercise = name,
                 muscle = sets.first().muscle,
@@ -122,7 +122,7 @@ data class LoggerUiState(
     val status: ProgressionStatus?,
     val prefillWeightKg: Double,
     val prefillReps: Int,
-    val bestE1rmKg: Double               // best so far including today, for live PR checks
+    val bestWeightKg: Double             // heaviest so far including today, for live PR checks
 )
 
 object LoggerStateBuilder {
@@ -141,11 +141,10 @@ object LoggerStateBuilder {
         val prev = progression.latest
         val prevSets = prev?.sets.orEmpty().sortedBy { it.timestamp }
 
-        var running = history.filter { it.weight > 0 }
-            .maxOfOrNull { WorkoutCalculations.calculate1RM(it.weight, it.reps) } ?: 0.0
+        var running = history.filter { it.weight > 0 }.maxOfOrNull { it.weight } ?: 0.0
         val rows = today.mapIndexed { i, s ->
             val pr = PrDetector.isPr(s, running)
-            running = maxOf(running, WorkoutCalculations.calculate1RM(s.weight, s.reps))
+            running = maxOf(running, s.weight)
             LoggedSetRow(
                 id = s.id, setNumber = i + 1, weightKg = s.weight, reps = s.reps, rpe = s.rpe,
                 previous = prevSets.getOrNull(i)?.let { Fmt.set(it.weight, it.reps, unit) },
@@ -193,7 +192,7 @@ object LoggerStateBuilder {
             status = progression.status.takeIf { it != ProgressionStatus.NEW },
             prefillWeightKg = weight,
             prefillReps = reps,
-            bestE1rmKg = running
+            bestWeightKg = running
         )
     }
 }

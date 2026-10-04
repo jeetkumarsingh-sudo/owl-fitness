@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.core.util.WorkoutCalculations
 import com.example.gymdiary3.domain.settings.WeightFormatter
 import com.example.gymdiary3.presentation.format.Fmt
 import com.example.gymdiary3.presentation.workout.LoggedSetRow
@@ -181,8 +180,7 @@ fun LoggerScreen(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             val kg = WeightFormatter.toKilograms(weight, unit)
-                            val isPr = kg > 0 && state.bestE1rmKg > 0 &&
-                                WorkoutCalculations.calculate1RM(kg, reps) > state.bestE1rmKg + 0.01
+                            val isPr = kg > 0 && state.bestWeightKg > 0 && kg > state.bestWeightKg + 0.01
                             haptic.performHapticFeedback(
                                 if (isPr) HapticFeedbackType.LongPress else HapticFeedbackType.Confirm
                             )
