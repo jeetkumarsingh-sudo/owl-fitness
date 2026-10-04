@@ -122,7 +122,9 @@ data class LoggerUiState(
     val status: ProgressionStatus?,
     val prefillWeightKg: Double,
     val prefillReps: Int,
-    val bestWeightKg: Double             // heaviest so far including today, for live PR checks
+    val bestWeightKg: Double,            // heaviest so far including today, for live PR checks
+    /** A set today beat the heaviest ever; the pre-session status (e.g. stalling) no longer applies. */
+    val prToday: Boolean = false
 )
 
 object LoggerStateBuilder {
@@ -192,7 +194,8 @@ object LoggerStateBuilder {
             status = progression.status.takeIf { it != ProgressionStatus.NEW },
             prefillWeightKg = weight,
             prefillReps = reps,
-            bestWeightKg = running
+            bestWeightKg = running,
+            prToday = rows.any { it.isPr }
         )
     }
 }

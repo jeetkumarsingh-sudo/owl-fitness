@@ -76,6 +76,28 @@ class ResponsiveScreenshotTest {
         )
     }
 
+    /** Edge case "very long input" (test plan X-E4): a 60-character custom exercise name. */
+    private val longName = "Single-arm half-kneeling landmine press with a 3-second pause"
+
+    private fun renamed() = all.map { s ->
+        s.copy(sets = s.sets.map { if (it.exercise == "Lat Pulldown") it.copy(exercise = longName) else it })
+    }
+
+    @Test fun longNameLogger() = compose.snap("R_long_name_logger") {
+        val sets = renamed().flatMap { it.sets }.filter { it.exercise == longName }
+        LoggerScreen(
+            LoggerStateBuilder.build(longName, "Shoulders", sets, SampleData.ACTIVE_SESSION_ID, "kg", SampleData.now),
+            RestUi(false, 0, 0), "kg", 20.0, LoggerActions()
+        )
+    }
+
+    @Test fun longNameWorkout() = compose.snap("R_long_name_workout") {
+        ActiveWorkoutScreen(
+            ActiveWorkoutStateBuilder.build(renamed(), SampleData.ACTIVE_SESSION_ID, "kg", SampleData.now),
+            32 * 60 + 8, RestUi(false, 0, 0), "kg", ActiveWorkoutActions()
+        )
+    }
+
     @Test @Config(qualifiers = WIDE)
     fun homeWide() = compose.snap("R_wide_home") {
         HomeScreen(HomeStateBuilder.build(SampleData.sessions, null, emptyList(), "kg", SampleData.now), 0, HomeActions())

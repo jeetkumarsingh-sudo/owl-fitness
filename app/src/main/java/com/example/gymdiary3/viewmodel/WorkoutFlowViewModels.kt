@@ -30,6 +30,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 /** Rest timer as the UI needs it. */
@@ -135,15 +137,18 @@ class LoggerViewModel @Inject constructor(
      * session auto-closed), one is started first instead of dropping the set.
      */
     fun log(weightKg: Double, reps: Int, setNumber: Int, rpe: Float?, assisted: Boolean, notes: String?) {
-        viewModelScope.launch {
+        // Serialised: two logs racing with no workout running would otherwise both start one.
+        viewModelScope.launch { logLock.withLock {
             if (sessionManager.currentSessionId.value == null) startSessionUseCase()
             val sessionId = sessionManager.currentSessionId.value ?: return@launch
             logSetUseCase(
                 sessionId = sessionId, muscle = muscle, exercise = exercise, setNumber = setNumber,
                 reps = reps, weight = weightKg, isAssisted = assisted, rpe = rpe, notes = notes
             )
-        }
+        } }
     }
+
+    private val logLock = Mutex()
 
     fun deleteSet(id: Int) { viewModelScope.launch { workoutRepository.deleteSetById(id) } }
     fun adjustRest(delta: Int) = restTimer.adjust(delta)
