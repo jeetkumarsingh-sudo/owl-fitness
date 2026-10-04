@@ -43,6 +43,20 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests {
+            // Needed so Robolectric screenshot tests can resolve fonts and other resources.
+            isIncludeAndroidResources = true
+            all { test ->
+                test.systemProperty("roborazzi.test.record", "true")
+                test.systemProperty(
+                    "screenshots.dir",
+                    layout.buildDirectory.dir("screenshots").get().asFile.absolutePath
+                )
+            }
+        }
+    }
 }
 
 ksp {
@@ -87,6 +101,14 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     testImplementation(libs.junit)
+    // Screenshot tests: render real Compose UI on the JVM (no emulator needed).
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit.rule)
+    testImplementation(libs.androidx.junit)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
