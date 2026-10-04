@@ -33,9 +33,11 @@ object InsightPresenter {
         val c = p.latest ?: return null
         val b = p.previous
         val rec = p.recommendation
-        val next = rec?.let {
-            if (it.weightKg > 0) "Next: ${Fmt.weight(it.weightKg, unit)} × ${it.repsLabel}" else "Next: ${it.repsLabel} reps"
+        // Every action is a set the lifter can perform, never an instruction to calculate.
+        val target = rec?.let {
+            if (it.weightKg > 0) "${Fmt.weightUnit(it.weightKg, unit)} × ${it.repsLabel}" else "${it.repsLabel} reps"
         }
+        val next = target?.let { "Next: $it" }
         val w = Fmt.weightUnit(c.topWeight, unit)
         return when (p.status) {
             ProgressionStatus.NEW -> null
@@ -53,13 +55,14 @@ object InsightPresenter {
                 InsightRow(
                     "Stalling", Tone.WARNING, p.exercise,
                     "$w · ${sessions(p.streakAtWeight)}",
-                    rec?.action, p.exercise, 80 + p.streakAtWeight
+                    if (rec != null && rec.weightKg > 0 && rec.weightKg < c.topWeight) "Deload: $target" else next,
+                    p.exercise, 80 + p.streakAtWeight
                 )
             ProgressionStatus.REGRESSING ->
                 InsightRow(
                     "Regressing", Tone.DANGER, p.exercise,
                     if (b != null) "${Fmt.weight(b.topWeight, unit)} → $w" else w,
-                    rec?.let { "Repeat ${Fmt.weightUnit(it.weightKg, unit)} × ${it.repsLabel}" },
+                    target?.let { "Back to $it" },
                     p.exercise, 75
                 )
         }

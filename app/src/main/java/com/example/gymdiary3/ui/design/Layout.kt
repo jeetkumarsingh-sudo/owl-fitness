@@ -158,6 +158,9 @@ fun ListRow(
     overline: String? = null,
     overlineColor: Color = Gd.TextMuted,
     titleStrong: Boolean = false,
+    /** Optional third line, e.g. the next action for a lift that needs one. */
+    detail: String? = null,
+    detailColor: Color = Gd.Text,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
@@ -195,6 +198,10 @@ fun ListRow(
             if (subtitle != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(subtitle, style = GdType.label, color = Gd.TextMuted)
+            }
+            if (detail != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(detail, style = GdType.label, color = detailColor)
             }
         }
         if (trailing != null) {

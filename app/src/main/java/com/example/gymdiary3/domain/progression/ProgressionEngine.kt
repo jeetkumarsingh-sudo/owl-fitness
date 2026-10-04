@@ -180,7 +180,15 @@ object ProgressionEngine {
                 }
 
             ProgressionStatus.STALLING ->
-                if (streak >= STALL_SESSIONS + 2) {
+                if (c.topReps >= range.last) {
+                    // Stuck at the top of the range is a missed weight jump, not a plateau.
+                    val next = c.topWeight + increment(c.topWeight, unit)
+                    Recommendation(
+                        next, range.first, range.last.coerceAtMost(range.first + 2), workingSets,
+                        "Add ${formatIncrement(next - c.topWeight, unit)}",
+                        reason = "${c.topReps} reps for $streak sessions"
+                    )
+                } else if (streak >= STALL_SESSIONS + 2) {
                     val drop = roundToStep(c.topWeight * 0.9, unit)
                     Recommendation(
                         drop, range.last - 1, range.last, workingSets,
