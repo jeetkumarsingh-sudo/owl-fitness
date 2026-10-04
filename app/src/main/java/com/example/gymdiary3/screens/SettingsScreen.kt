@@ -112,7 +112,7 @@ fun SettingsContent(settings: UserSettings, actions: SettingsActions, modifier: 
                 SectionHeader("Data")
                 ListRow("Export CSV", subtitle = "Workouts and body weight as a spreadsheet", trailing = { Chevron() }, onClick = actions.onExportCsv)
                 Hairline()
-                ListRow("Back up", subtitle = "Save everything to a JSON file", trailing = { Chevron() }, onClick = actions.onBackup)
+                ListRow("Back up", subtitle = "Workouts, body weight and exercises as a JSON file", trailing = { Chevron() }, onClick = actions.onBackup)
                 Hairline()
                 ListRow("Restore from backup", subtitle = "Import a JSON backup; existing data is kept", trailing = { Chevron() }, onClick = actions.onRestore)
             }

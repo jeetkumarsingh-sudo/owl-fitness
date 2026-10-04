@@ -85,13 +85,17 @@ fun LoggerScreen(
     val haptic = LocalHapticFeedback.current
 
     // The next set is pre-filled from the suggestion and re-filled after each logged set.
-    var weight by remember(state.exercise, state.nextSetNumber, unit) {
+    // Saveable, so an adjusted value survives rotation and the app being backgrounded.
+    var weight by rememberSaveable(state.exercise, state.nextSetNumber, unit) {
         mutableDoubleStateOf(WeightFormatter.fromKilograms(state.prefillWeightKg, unit))
     }
-    var reps by remember(state.exercise, state.nextSetNumber) { mutableIntStateOf(state.prefillReps) }
-    var rpe by remember(state.nextSetNumber) { mutableStateOf<Float?>(null) }
+    var reps by rememberSaveable(state.exercise, state.nextSetNumber) { mutableIntStateOf(state.prefillReps) }
+    var rpe by rememberSaveable(state.nextSetNumber) { mutableStateOf<Float?>(null) }
     var assisted by rememberSaveable { mutableStateOf(false) }
-    var notes by remember(state.nextSetNumber) { mutableStateOf("") }
+    var notes by rememberSaveable(state.nextSetNumber) { mutableStateOf("") }
+    // One log per set number: a second tap before the saved set advances the screen is ignored.
+    // Keyed on the set number, so it re-arms for the next set (or after deleting back to this one).
+    var submitted by remember(state.exercise, state.nextSetNumber) { mutableStateOf(false) }
     var showMore by rememberSaveable { mutableStateOf(false) }
     var editWeight by remember { mutableStateOf(false) }
     var editReps by remember { mutableStateOf(false) }
@@ -179,6 +183,8 @@ fun LoggerScreen(
                         enabled = reps > 0,
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
+                            if (submitted) return@PrimaryButton
+                            submitted = true
                             val kg = WeightFormatter.toKilograms(weight, unit)
                             val isPr = kg > 0 && state.bestWeightKg > 0 && kg > state.bestWeightKg + 0.01
                             haptic.performHapticFeedback(
@@ -232,7 +238,12 @@ fun LoggerScreen(
 @Composable
 private fun TargetBlock(state: LoggerUiState) {
     Column(Modifier.fillMaxWidth().gutter().padding(top = Gd.s1, bottom = Gd.s4)) {
-        state.status?.let {
+        // A PR today overrides the verdict from earlier sessions: "stalling, deload"
+        // above a set that just broke the record would contradict itself.
+        if (state.prToday) {
+            StatusLabel("PR today", Gd.AccentText)
+            Spacer(Modifier.height(Gd.s2))
+        } else state.status?.let {
             StatusLabel(it.label(), it.color())
             Spacer(Modifier.height(Gd.s2))
         }
@@ -244,8 +255,9 @@ private fun TargetBlock(state: LoggerUiState) {
                     StatusLabel("Met", Gd.Positive)
                 }
             }
-            Text(state.targetLine, style = GdType.metric, color = if (state.targetMet) Gd.TextMuted else Gd.Text)
-            if (!state.targetMet) state.targetReason?.let { Text(it, style = GdType.label, color = Gd.TextMuted) }
+            val done = state.targetMet || state.prToday
+            Text(state.targetLine, style = GdType.metric, color = if (done) Gd.TextMuted else Gd.Text)
+            if (!done) state.targetReason?.let { Text(it, style = GdType.label, color = Gd.TextMuted) }
         } else if (state.lastSessionLabel == null) {
             Text("First time logging this exercise", style = GdType.label, color = Gd.TextMuted)
         }
