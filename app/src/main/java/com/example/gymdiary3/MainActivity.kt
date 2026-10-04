@@ -14,6 +14,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -42,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gymdiary3.screens.*
+import com.example.gymdiary3.ui.design.ContentFrame
 import com.example.gymdiary3.ui.design.Gd
 import com.example.gymdiary3.ui.design.GdMotion
 import com.example.gymdiary3.ui.design.Hairline
@@ -79,7 +81,9 @@ class MainActivity : ComponentActivity() {
                     containerColor = Gd.Bg,
                     bottomBar = { if (route in TAB_ROUTES) BottomBar(nav, route) }
                 ) { padding ->
-                    AppNavHost(nav, Modifier.padding(padding).consumeWindowInsets(padding).imePadding())
+                    ContentFrame(Modifier.padding(padding).consumeWindowInsets(padding).imePadding()) {
+                        AppNavHost(nav, Modifier.fillMaxSize())
+                    }
                 }
             }
         }

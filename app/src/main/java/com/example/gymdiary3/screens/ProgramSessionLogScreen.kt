@@ -116,8 +116,8 @@ private fun ExerciseGrid(log: SessionExerciseLog, onSave: (SessionExerciseLog) -
 
 @Composable
 private fun GridRow(label: String, cell: @Composable (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Gd.s2)) {
-        Text(label, style = GdType.meta, color = Gd.TextMuted, modifier = Modifier.width(36.dp))
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = GdType.meta, color = Gd.TextMuted, modifier = Modifier.width(34.dp))
         for (n in 1..SETS) Box(Modifier.weight(1f)) { cell(n) }
     }
 }
@@ -129,7 +129,8 @@ private fun GridCell(value: String, onChange: (String) -> Unit, keyboard: Keyboa
         value = value,
         onValueChange = onChange,
         singleLine = true,
-        textStyle = GdType.bodyStrong.copy(color = Gd.Text, textAlign = TextAlign.Center),
+        // "102.5" must fit a ~50dp cell on a small phone at large text; long values step down a size.
+        textStyle = (if (value.length > 4) GdType.label else GdType.bodyStrong).copy(color = Gd.Text, textAlign = TextAlign.Center),
         cursorBrush = SolidColor(Gd.Accent),
         keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = ImeAction.Next),
         modifier = Modifier

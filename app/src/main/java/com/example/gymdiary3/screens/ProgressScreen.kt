@@ -178,16 +178,5 @@ fun ProgressContent(
 }
 
 @Composable
-private fun BalanceBar(muscle: String, sets: Int, fraction: Float) {
-    val reduced = LocalReducedMotion.current
-    var shown by remember { mutableStateOf(reduced) }
-    LaunchedEffect(Unit) { shown = true }
-    val f by animateFloatAsState(if (shown) fraction else 0f, tween(if (reduced) 0 else GdMotion.Chart, easing = GdMotion.Ease), label = "balance")
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(muscle, style = GdType.label, color = Gd.Text, modifier = Modifier.width(84.dp))
-        Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Gd.Surface)) {
-            Box(Modifier.fillMaxWidth(f).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(Gd.DataNeutral))
-        }
-        Text("$sets sets", style = GdType.labelNum, color = Gd.TextMuted, modifier = Modifier.width(72.dp).padding(start = Gd.s3))
-    }
-}
+private fun BalanceBar(muscle: String, sets: Int, fraction: Float) =
+    LabeledBar(muscle, fraction, "$sets\u00A0sets", valueWidth = 72.dp)

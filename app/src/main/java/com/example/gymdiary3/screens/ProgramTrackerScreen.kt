@@ -41,7 +41,7 @@ private const val PLANNED = "Planned"
 private const val DONE = "Done"
 
 /** "70 min" with a non-breaking space so the unit never wraps away from its number. */
-private fun minutes(m: Int) = "$m min"
+private fun minutes(m: Int) = "$m\u00A0min"
 
 @Composable
 fun ProgramTrackerScreen(nav: NavHostController, viewModel: ProgramViewModel = hiltViewModel()) {
