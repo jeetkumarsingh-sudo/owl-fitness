@@ -41,3 +41,8 @@ fun ComposeContentTestRule.snap(name: String, content: @Composable () -> Unit) {
     waitForIdle()
     onRoot().captureRoboImage(shotFile(name))
 }
+
+/** Re-capture after an interaction (e.g. expanding a section), overwriting [name]. */
+fun captureRoot(rule: ComposeContentTestRule, name: String) {
+    rule.onRoot().captureRoboImage(shotFile(name))
+}

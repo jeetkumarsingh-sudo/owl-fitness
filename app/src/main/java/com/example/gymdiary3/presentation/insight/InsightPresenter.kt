@@ -59,7 +59,8 @@ object InsightPresenter {
                 InsightRow(
                     "Regressing", Tone.DANGER, p.exercise,
                     if (b != null) "${Fmt.weight(b.topWeight, unit)} → $w" else w,
-                    rec?.action, p.exercise, 75
+                    rec?.let { "Repeat ${Fmt.weightUnit(it.weightKg, unit)} × ${it.repsLabel}" },
+                    p.exercise, 75
                 )
         }
     }

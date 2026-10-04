@@ -1,417 +1,381 @@
 package com.example.gymdiary3.screens
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.example.gymdiary3.core.util.WorkoutCalculations
 import com.example.gymdiary3.domain.settings.WeightFormatter
-import com.example.gymdiary3.ui.components.ApexCta
-import com.example.gymdiary3.ui.components.ApexPanel
-import com.example.gymdiary3.ui.components.ApexScaffold
-import com.example.gymdiary3.ui.theme.Apex
-import com.example.gymdiary3.viewmodel.WorkoutViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.gymdiary3.domain.settings.UserSettings
+import com.example.gymdiary3.presentation.format.Fmt
+import com.example.gymdiary3.presentation.workout.LoggedSetRow
+import com.example.gymdiary3.presentation.workout.LoggerUiState
+import com.example.gymdiary3.presentation.workout.PendingSetRow
+import com.example.gymdiary3.ui.design.*
+import com.example.gymdiary3.ui.theme.GdType
+import com.example.gymdiary3.ui.theme.LocalReducedMotion
+import com.example.gymdiary3.viewmodel.LoggerViewModel
+import com.example.gymdiary3.viewmodel.RestUi
+import kotlin.math.max
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun SetScreen(
-    nav: NavHostController,
-    muscle: String,
-    exercise: String,
-    viewModel: WorkoutViewModel = hiltViewModel()
-) {
-    var reps by remember { mutableIntStateOf(0) }
-    var weight by remember { mutableDoubleStateOf(0.0) }
-    var isAssisted by remember { mutableStateOf(false) }
-    var rpe by remember { mutableStateOf<Float?>(null) }
-    var setNotes by remember { mutableStateOf("") }
-    var showNotesInput by remember { mutableStateOf(false) }
-
-    val haptic = LocalHapticFeedback.current
-    val scrollState = rememberScrollState()
-
-    val lastSet by viewModel.lastSet.collectAsStateWithLifecycle()
-    val suggestedWeight by viewModel.suggestedWeight.collectAsStateWithLifecycle()
-    val currentSet by viewModel.currentSet.collectAsStateWithLifecycle()
-    val isTimerRunning by viewModel.isRestTimerRunning.collectAsStateWithLifecycle()
-    val timerSeconds by viewModel.restTimerSeconds.collectAsStateWithLifecycle()
-    val userSettings by viewModel.settingsRepository.userSettingsFlow.collectAsStateWithLifecycle(UserSettings())
-    val weightUnit = userSettings.weightUnit
-
-    var timerInitialSeconds by remember { mutableIntStateOf(userSettings.defaultRestSeconds) }
-    LaunchedEffect(isTimerRunning) { if (isTimerRunning) timerInitialSeconds = userSettings.defaultRestSeconds }
-
-    val canLogSet = remember(reps, weight) { reps > 0 && weight >= 0 }
-
-    LaunchedEffect(exercise) { viewModel.loadLastSet(exercise) }
-    LaunchedEffect(lastSet, weightUnit) {
-        lastSet?.let {
-            if (weight == 0.0) weight = WeightFormatter.fromKilograms(it.weight, weightUnit)
-            if (reps == 0) reps = it.reps
-            isAssisted = it.isAssisted
-        }
-    }
-
-    var showPlates by remember { mutableStateOf(false) }
-    var showWeightDialog by remember { mutableStateOf(false) }
-    var showRepsDialog by remember { mutableStateOf(false) }
-    var loggedFlash by remember { mutableStateOf(false) }
-
-    if (showWeightDialog) {
-        NumberDialog("Enter weight", weight.toString(), KeyboardType.Number, onConfirm = { it.toDoubleOrNull()?.let { v -> weight = v }; showWeightDialog = false }, onDismiss = { showWeightDialog = false })
-    }
-    if (showRepsDialog) {
-        NumberDialog("Enter reps", reps.toString(), KeyboardType.Number, onConfirm = { it.toIntOrNull()?.let { v -> reps = v }; showRepsDialog = false }, onDismiss = { showRepsDialog = false })
-    }
-
-    ApexScaffold(title = exercise, onBack = { nav.popBackStack() }) { padding ->
-        Box(Modifier.padding(padding).fillMaxSize()) {
-            Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(scrollState).imePadding().padding(horizontal = 20.dp)
-            ) {
-                LastSessionSection(exercise, viewModel, weightUnit)
-                Spacer(Modifier.height(16.dp))
-
-                ApexPanel {
-                    Column(Modifier.padding(24.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("SET $currentSet", style = MaterialTheme.typography.labelLarge, color = Apex.AccentSoft, letterSpacing = 1.sp)
-                            TextButton(onClick = { showPlates = !showPlates }, contentPadding = PaddingValues(0.dp)) {
-                                Text(if (showPlates) "HIDE PLATES" else "SHOW PLATES", style = MaterialTheme.typography.labelMedium, color = Apex.TextSecondary)
-                            }
-                        }
-
-                        if (showPlates) {
-                            PlateCalculatorCard(WeightFormatter.toKilograms(weight, weightUnit), userSettings.barWeight)
-                            Spacer(Modifier.height(16.dp))
-                        }
-
-                        WeightStepper(weight, { weight = it }, WeightFormatter.label(weightUnit), WeightFormatter.step(weightUnit)) { showWeightDialog = true }
-                        Spacer(Modifier.height(16.dp))
-                        RepsStepper(reps, { reps = it }) { showRepsDialog = true }
-
-                        Row(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            lastSet?.let {
-                                Text("Last: ${WeightFormatter.formatFromKilograms(it.weight, weightUnit)} x ${it.reps}", style = MaterialTheme.typography.bodyMedium, color = Apex.TextSecondary)
-                            }
-                            suggestedWeight?.let { suggestion ->
-                                val displaySuggestion = WeightFormatter.fromKilograms(suggestion, weightUnit)
-                                TextButton(onClick = { weight = displaySuggestion }, contentPadding = PaddingValues(0.dp)) {
-                                    Text("Next: ${WeightFormatter.formatFromKilograms(suggestion, weightUnit)}", style = MaterialTheme.typography.bodyMedium, color = Apex.AccentSoft, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-
-                        Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(isAssisted, { isAssisted = it }, colors = CheckboxDefaults.colors(checkedColor = Apex.Accent))
-                            Text("Support / Assisted", style = MaterialTheme.typography.bodyMedium, color = Apex.TextSecondary)
-                        }
-
-                        Spacer(Modifier.height(24.dp))
-                        Text("RPE (EFFORT: 1-10)", style = MaterialTheme.typography.labelMedium, color = Apex.AccentSoft, modifier = Modifier.padding(bottom = 12.dp))
-                        RpeSelector(rpe) { rpe = it }
-
-                        Spacer(Modifier.height(24.dp))
-                        if (!showNotesInput) {
-                            TextButton(onClick = { showNotesInput = true }, contentPadding = PaddingValues(0.dp)) {
-                                Icon(Icons.AutoMirrored.Filled.Notes, null, modifier = Modifier.size(16.dp), tint = Apex.AccentSoft)
-                                Spacer(Modifier.width(8.dp))
-                                Text("ADD SET NOTES", style = MaterialTheme.typography.labelLarge, color = Apex.AccentSoft)
-                            }
-                        } else {
-                            OutlinedTextField(
-                                value = setNotes,
-                                onValueChange = { setNotes = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Set notes...", color = Apex.TextMuted) },
-                                textStyle = TextStyle(color = Apex.TextPrimary),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Apex.Accent,
-                                    unfocusedBorderColor = Apex.Hairline,
-                                    cursorColor = Apex.Accent
-                                ),
-                                maxLines = 2,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(24.dp))
-
-                AnimatedVisibility(visible = isTimerRunning) {
-                    ApexPanel(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-                        Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("REST TIMER", style = MaterialTheme.typography.labelLarge, color = Apex.AccentSoft)
-                            Spacer(Modifier.height(8.dp))
-                            Text("%d:%02d".format(timerSeconds / 60, timerSeconds % 60), style = MaterialTheme.typography.displaySmall, color = Apex.TextPrimary)
-                            Spacer(Modifier.height(16.dp))
-                            val progress = when {
-                                timerInitialSeconds <= 0 -> 0f
-                                timerSeconds <= 0 -> 1f
-                                else -> timerSeconds.toFloat() / timerInitialSeconds.toFloat()
-                            }
-                            LinearProgressIndicator(
-                                progress = { progress },
-                                modifier = Modifier.fillMaxWidth().height(8.dp),
-                                color = Apex.Accent,
-                                trackColor = Apex.Surface4,
-                                strokeCap = StrokeCap.Round
-                            )
-                            Spacer(Modifier.height(12.dp))
-                            TextButton(onClick = { viewModel.skipRestTimer() }) {
-                                Text("SKIP TIMER", color = Apex.TextSecondary, style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
-                    }
-                }
-
-                ApexCta(
-                    text = "LOG SET",
-                    enabled = canLogSet,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        viewModel.insertWorkout(
-                            muscle = muscle,
-                            exercise = exercise,
-                            setNumber = currentSet,
-                            reps = reps,
-                            weight = WeightFormatter.toKilograms(weight, weightUnit),
-                            isAssisted = isAssisted,
-                            rpe = rpe,
-                            notes = setNotes.takeIf { it.isNotBlank() }
-                        )
-                        reps = 0
-                        rpe = null
-                        setNotes = ""
-                        showNotesInput = false
-                        loggedFlash = true
-                    }
-                )
-
-                Spacer(Modifier.height(16.dp))
-                OutlinedButton(
-                    onClick = { nav.popBackStack() },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(100),
-                    border = BorderStroke(1.dp, Apex.Hairline),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Apex.TextSecondary)
-                ) { Text("FINISH EXERCISE", style = MaterialTheme.typography.labelLarge) }
-
-                Spacer(Modifier.height(40.dp))
-            }
-
-            SetLoggedFlash(loggedFlash) { loggedFlash = false }
-        }
-    }
-}
+data class LoggerActions(
+    val onBack: () -> Unit = {},
+    val onDone: () -> Unit = {},
+    val onOpenHistory: () -> Unit = {},
+    val onLog: (weightKg: Double, reps: Int, rpe: Float?, assisted: Boolean, notes: String?) -> Unit = { _, _, _, _, _ -> },
+    val onDeleteSet: (Int) -> Unit = {},
+    val onAdjustRest: (Int) -> Unit = {},
+    val onSkipRest: () -> Unit = {}
+)
 
 @Composable
-private fun SetLoggedFlash(visible: Boolean, onDone: () -> Unit) {
-    val scale = remember { Animatable(0.6f) }
-    val alpha = remember { Animatable(0f) }
-    LaunchedEffect(visible) {
-        if (!visible) return@LaunchedEffect
-        scale.snapTo(0.6f); alpha.snapTo(0f)
-        alpha.animateTo(1f, tween(120))
-        scale.animateTo(1f, tween(160))
-        kotlinx.coroutines.delay(500)
-        alpha.animateTo(0f, tween(250))
-        onDone()
-    }
-    if (!visible) return
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Row(
-            modifier = Modifier
-                .scale(scale.value)
-                .background(Apex.GlassStrong, RoundedCornerShape(100))
-                .border(BorderStroke(1.dp, Apex.Positive.copy(alpha = 0.5f)), RoundedCornerShape(100))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(Modifier.size(22.dp).background(Apex.Positive, CircleShape), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Check, null, tint = Color.Black, modifier = Modifier.size(15.dp))
-            }
-            Spacer(Modifier.width(10.dp))
-            Text("SET LOGGED", style = MaterialTheme.typography.labelLarge, color = Apex.TextPrimary, letterSpacing = 1.sp)
-        }
-    }
-}
-
-@Composable
-private fun NumberDialog(title: String, initial: String, keyboard: KeyboardType, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
-    var textValue by remember { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Apex.Surface2,
-        title = { Text(title, color = Apex.TextPrimary) },
-        text = {
-            OutlinedTextField(
-                value = textValue,
-                onValueChange = { textValue = it },
-                keyboardOptions = KeyboardOptions(keyboardType = keyboard),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Apex.TextPrimary,
-                    unfocusedTextColor = Apex.TextPrimary,
-                    focusedBorderColor = Apex.Accent,
-                    unfocusedBorderColor = Apex.Hairline,
-                    cursorColor = Apex.Accent
-                )
-            )
-        },
-        confirmButton = { TextButton(onClick = { onConfirm(textValue) }) { Text("OK", color = Apex.AccentSoft) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("CANCEL", color = Apex.TextSecondary) } }
+fun LoggerRoute(nav: NavHostController, vm: LoggerViewModel = hiltViewModel()) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    val rest by vm.rest.collectAsStateWithLifecycle()
+    val settings by vm.settings.collectAsStateWithLifecycle()
+    val s = state ?: return
+    LoggerScreen(
+        state = s, rest = rest, unit = settings.weightUnit, barWeightKg = settings.barWeight,
+        actions = LoggerActions(
+            onBack = { nav.popBackStack() },
+            onDone = { nav.popBackStack() },
+            onOpenHistory = { nav.navigate("analytics/${android.net.Uri.encode(s.exercise)}") },
+            onLog = { w, r, rpe, assisted, notes -> vm.log(w, r, s.nextSetNumber, rpe, assisted, notes) },
+            onDeleteSet = vm::deleteSet,
+            onAdjustRest = vm::adjustRest,
+            onSkipRest = vm::skipRest
+        )
     )
 }
 
 @Composable
-private fun RpeSelector(selectedRpe: Float?, onRpeSelected: (Float?) -> Unit) {
-    val rpeValues = listOf(6.0f, 7.0f, 8.0f, 9.0f, 10.0f)
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        rpeValues.forEach { value ->
-            val isSelected = selectedRpe == value
-            Surface(
-                onClick = { onRpeSelected(if (isSelected) null else value) },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = if (isSelected) Apex.Accent else Apex.Surface4,
-                border = if (isSelected) null else BorderStroke(1.dp, Apex.Hairline)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(if (value == 10f) "10" else value.toString(), color = if (isSelected) Color.White else Apex.TextPrimary, style = MaterialTheme.typography.titleMedium)
+fun LoggerScreen(
+    state: LoggerUiState,
+    rest: RestUi,
+    unit: String,
+    barWeightKg: Double,
+    actions: LoggerActions,
+    modifier: Modifier = Modifier
+) {
+    val reduced = LocalReducedMotion.current
+    val haptic = LocalHapticFeedback.current
+
+    // The next set is pre-filled from the suggestion and re-filled after each logged set.
+    var weight by remember(state.exercise, state.nextSetNumber, unit) {
+        mutableDoubleStateOf(WeightFormatter.fromKilograms(state.prefillWeightKg, unit))
+    }
+    var reps by remember(state.exercise, state.nextSetNumber) { mutableIntStateOf(state.prefillReps) }
+    var rpe by remember(state.nextSetNumber) { mutableStateOf<Float?>(null) }
+    var assisted by rememberSaveable { mutableStateOf(false) }
+    var notes by remember(state.nextSetNumber) { mutableStateOf("") }
+    var showMore by rememberSaveable { mutableStateOf(false) }
+    var editWeight by remember { mutableStateOf(false) }
+    var editReps by remember { mutableStateOf(false) }
+    var deleteRow by remember { mutableStateOf<LoggedSetRow?>(null) }
+
+    // A distinct buzz when rest runs out on its own.
+    var restWasRunning by remember { mutableStateOf(rest.running) }
+    LaunchedEffect(rest.running) {
+        if (restWasRunning && !rest.running && rest.secondsLeft == 0) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        restWasRunning = rest.running
+    }
+
+    val step = WeightFormatter.step(unit)
+    val unitLabel = Fmt.unitLabel(unit)
+
+    Column(modifier.fillMaxSize()) {
+        DetailTopBar(
+            title = state.exercise,
+            onBack = actions.onBack,
+            actions = {
+                IconButton(onClick = actions.onOpenHistory) {
+                    Icon(Icons.AutoMirrored.Outlined.ShowChart, contentDescription = "Exercise history", tint = Gd.TextMuted)
+                }
+                TextAction("Done", onClick = actions.onDone, color = Gd.Text)
+            }
+        )
+
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = Gd.s6)) {
+            item(key = "target") { TargetBlock(state) }
+
+            if (state.todaySets.isNotEmpty() || state.pendingSets.isNotEmpty()) {
+                item(key = "tableHeader") { TableHeader() }
+                items(state.todaySets, key = { it.id }) { row ->
+                    LoggedRow(row, unit, onLongClick = { deleteRow = row }, modifier = Modifier.animateItem())
+                }
+                items(state.pendingSets, key = { "pending_${it.setNumber}" }) { row ->
+                    PendingRow(row, isNext = row.setNumber == state.nextSetNumber, modifier = Modifier.animateItem())
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun LastSessionSection(exerciseName: String, viewModel: WorkoutViewModel, unit: String) {
-    val currentSessionId by viewModel.currentSessionId.collectAsStateWithLifecycle()
-    val lastSessionSets by viewModel.getLastSessionSetsForExercise(exerciseName, currentSessionId ?: -1)
-        .collectAsStateWithLifecycle(initialValue = emptyList())
-
-    if (lastSessionSets.isNotEmpty()) {
-        ApexPanel(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), radius = Apex.radiusMd) {
-            Column(Modifier.padding(20.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.History, null, tint = Apex.AccentSoft, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("LAST SESSION", color = Apex.AccentSoft, style = MaterialTheme.typography.labelMedium)
-                }
-                Spacer(Modifier.height(16.dp))
-                lastSessionSets.forEachIndexed { idx, set ->
-                    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("SET ${idx + 1}", color = Apex.TextSecondary, style = MaterialTheme.typography.labelLarge)
-                        Text(
-                            if (set.weight > 0) "${WeightFormatter.formatFromKilograms(set.weight, unit)} × ${set.reps}" else "BW × ${set.reps}",
-                            color = Apex.TextPrimary,
-                            style = MaterialTheme.typography.titleMedium
+            item(key = "input") {
+                Column(Modifier.gutter().padding(top = Gd.s5)) {
+                    Text("Set ${state.nextSetNumber}", style = GdType.section, color = Gd.Text)
+                    Spacer(Modifier.height(Gd.s3))
+                    Row(horizontalArrangement = Arrangement.spacedBy(Gd.s3)) {
+                        ValueStepper(
+                            label = "Weight ($unitLabel)",
+                            value = Fmt.trim(weight),
+                            onMinus = { weight = max(0.0, weight - step) },
+                            onPlus = { weight += step },
+                            onEdit = { editWeight = true },
+                            modifier = Modifier.weight(1.15f)
+                        )
+                        ValueStepper(
+                            label = "Reps",
+                            value = "$reps",
+                            onMinus = { reps = max(0, reps - 1) },
+                            onPlus = { reps += 1 },
+                            onEdit = { editReps = true },
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                }
-            }
-        }
-    }
-}
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun WeightStepper(value: Double, onValueChange: (Double) -> Unit, unit: String, step: Double, onLongClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(88.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        StepperButton("−", Apex.TextPrimary) { onValueChange((value - step).coerceAtLeast(0.0)) }
-        Column(
-            Modifier.weight(1f).combinedClickable(onClick = onLongClick, onLongClick = onLongClick),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("%.1f".format(value), style = MaterialTheme.typography.headlineLarge, color = Apex.TextPrimary)
-            Text(unit.uppercase(), style = MaterialTheme.typography.labelMedium, color = Apex.TextSecondary)
-        }
-        StepperButton("+", Apex.AccentSoft) { onValueChange(value + step) }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun RepsStepper(value: Int, onValueChange: (Int) -> Unit, onLongClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(88.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        StepperButton("−", Apex.TextPrimary) { onValueChange((value - 1).coerceAtLeast(0)) }
-        Column(
-            Modifier.weight(1f).combinedClickable(onClick = onLongClick, onLongClick = onLongClick),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(value.toString(), style = MaterialTheme.typography.headlineLarge, color = Apex.TextPrimary)
-            Text("REPS", style = MaterialTheme.typography.labelMedium, color = Apex.TextSecondary)
-        }
-        StepperButton("+", Apex.AccentSoft) { onValueChange(value + 1) }
-    }
-}
-
-@Composable
-private fun StepperButton(symbol: String, tint: Color, onClick: () -> Unit) {
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = Modifier.size(72.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.filledTonalButtonColors(containerColor = Apex.Surface4)
-    ) {
-        Text(symbol, fontSize = 32.sp, fontWeight = FontWeight.Light, color = tint)
-    }
-}
-
-@Composable
-private fun PlateCalculatorCard(targetWeight: Double, barWeight: Double = 20.0) {
-    val plates = listOf(25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25)
-    val sideLoad = (targetWeight - barWeight) / 2.0
-    if (sideLoad > 0) {
-        Column(
-            Modifier.fillMaxWidth().background(Apex.Surface3, RoundedCornerShape(12.dp)).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("PLATES PER SIDE (${barWeight.toInt()}KG BAR)", color = Apex.AccentSoft, style = MaterialTheme.typography.labelSmall)
-            var remaining = sideLoad
-            for (plate in plates) {
-                val count = (remaining / plate).toInt()
-                if (count > 0) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("${plate}KG", color = Apex.TextSecondary, style = MaterialTheme.typography.labelLarge)
-                        Text("× $count", color = Apex.TextPrimary, style = MaterialTheme.typography.titleMedium)
+                    TextAction(
+                        if (showMore) "Hide RPE, notes and plates" else "RPE, notes and plates",
+                        onClick = { showMore = !showMore },
+                        contentPadding = PaddingValues(0.dp)
+                    )
+                    AnimatedVisibility(
+                        visible = showMore,
+                        enter = if (reduced) fadeIn() else expandVertically() + fadeIn(),
+                        exit = if (reduced) fadeOut() else shrinkVertically() + fadeOut()
+                    ) {
+                        MoreOptions(
+                            rpe = rpe, onRpe = { rpe = it },
+                            assisted = assisted, onAssisted = { assisted = it },
+                            notes = notes, onNotes = { notes = it },
+                            plates = plateLine(WeightFormatter.toKilograms(weight, unit), barWeightKg, unit)
+                        )
                     }
-                    remaining -= count * plate
+
+                    Spacer(Modifier.height(Gd.s3))
+                    PrimaryButton(
+                        text = "Log set ${state.nextSetNumber}",
+                        enabled = reps > 0,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            val kg = WeightFormatter.toKilograms(weight, unit)
+                            val isPr = kg > 0 && state.bestE1rmKg > 0 &&
+                                WorkoutCalculations.calculate1RM(kg, reps) > state.bestE1rmKg + 0.01
+                            haptic.performHapticFeedback(
+                                if (isPr) HapticFeedbackType.LongPress else HapticFeedbackType.Confirm
+                            )
+                            actions.onLog(kg, reps, rpe, assisted, notes.takeIf { it.isNotBlank() })
+                        }
+                    )
                 }
             }
         }
+
+        AnimatedVisibility(
+            visible = rest.running,
+            enter = if (reduced) fadeIn() else slideInVertically { it } + fadeIn(),
+            exit = if (reduced) fadeOut() else slideOutVertically { it } + fadeOut()
+        ) {
+            RestTimerBar(rest.secondsLeft, rest.totalSeconds, actions.onAdjustRest, actions.onSkipRest)
+        }
     }
+
+    if (editWeight) {
+        NumberEntryDialog("Weight ($unitLabel)", Fmt.trim(weight), decimal = true,
+            onConfirm = { v -> v.toDoubleOrNull()?.let { weight = max(0.0, it) }; editWeight = false },
+            onDismiss = { editWeight = false })
+    }
+    if (editReps) {
+        NumberEntryDialog("Reps", "$reps", decimal = false,
+            onConfirm = { v -> v.toIntOrNull()?.let { reps = max(0, it) }; editReps = false },
+            onDismiss = { editReps = false })
+    }
+    deleteRow?.let { row ->
+        AlertDialog(
+            onDismissRequest = { deleteRow = null },
+            containerColor = Gd.SurfaceRaised,
+            title = { Text("Delete set ${row.setNumber}?", style = GdType.section, color = Gd.Text) },
+            text = {
+                Text(
+                    "${Fmt.set(row.weightKg, row.reps, unit)} will be removed from this workout.",
+                    style = GdType.body, color = Gd.TextMuted
+                )
+            },
+            confirmButton = {
+                TextAction("Delete", onClick = { actions.onDeleteSet(row.id); deleteRow = null }, color = Gd.Danger)
+            },
+            dismissButton = { TextAction("Cancel", onClick = { deleteRow = null }) }
+        )
+    }
+}
+
+@Composable
+private fun TargetBlock(state: LoggerUiState) {
+    Column(Modifier.fillMaxWidth().gutter().padding(top = Gd.s1, bottom = Gd.s4)) {
+        state.status?.let {
+            StatusLabel(it.label(), it.color())
+            Spacer(Modifier.height(Gd.s2))
+        }
+        if (state.targetLine != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Target", style = GdType.meta, color = Gd.TextMuted)
+                if (state.targetMet) {
+                    Spacer(Modifier.width(Gd.s2))
+                    StatusLabel("Met", Gd.Positive)
+                }
+            }
+            Text(state.targetLine, style = GdType.metric, color = if (state.targetMet) Gd.TextMuted else Gd.Text)
+            if (!state.targetMet) state.targetReason?.let { Text(it, style = GdType.label, color = Gd.TextMuted) }
+        } else if (state.lastSessionLabel == null) {
+            Text("First time logging this exercise", style = GdType.label, color = Gd.TextMuted)
+        }
+        state.lastSessionLabel?.let {
+            Spacer(Modifier.height(Gd.s2))
+            Text(it, style = GdType.meta, color = Gd.TextFaint)
+        }
+    }
+}
+
+@Composable
+private fun PendingRow(row: PendingSetRow, isNext: Boolean, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(if (isNext) Gd.Surface else androidx.compose.ui.graphics.Color.Transparent)
+            .height(48.dp)
+            .gutter(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            "${row.setNumber}", style = GdType.labelNum,
+            color = if (isNext) Gd.Text else Gd.TextFaint, modifier = Modifier.width(40.dp)
+        )
+        Text(row.previous, style = GdType.labelNum, color = Gd.TextMuted, modifier = Modifier.weight(1f))
+        Text("—", style = GdType.labelNum, color = Gd.TextFaint, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(32.dp))
+    }
+}
+
+@Composable
+private fun TableHeader() {
+    Column {
+        Hairline(inset = 0.dp)
+        Row(Modifier.fillMaxWidth().gutter().padding(vertical = Gd.s2)) {
+            Text("Set", style = GdType.meta, color = Gd.TextFaint, modifier = Modifier.width(40.dp))
+            Text("Last time", style = GdType.meta, color = Gd.TextFaint, modifier = Modifier.weight(1f))
+            Text("Today", style = GdType.meta, color = Gd.TextFaint, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(32.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun LoggedRow(row: LoggedSetRow, unit: String, onLongClick: () -> Unit, modifier: Modifier = Modifier) {
+    val reduced = LocalReducedMotion.current
+    // A PR row starts lightly washed in the accent and settles to neutral.
+    val wash = remember(row.id) { Animatable(if (row.isPr && !reduced) 1f else 0f) }
+    LaunchedEffect(row.id) { if (row.isPr && !reduced) wash.animateTo(0f, tween(1600)) }
+    val check = remember(row.id) { Animatable(if (reduced) 1f else 0.4f) }
+    LaunchedEffect(row.id) { if (!reduced) check.animateTo(1f, tween(220)) }
+
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(Gd.AccentWash.copy(alpha = Gd.AccentWash.alpha * wash.value))
+            .combinedClickable(onClick = {}, onLongClick = onLongClick)
+            .height(48.dp)
+            .gutter(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("${row.setNumber}", style = GdType.labelNum, color = Gd.TextMuted, modifier = Modifier.width(40.dp))
+        Text(row.previous ?: "—", style = GdType.labelNum, color = Gd.TextMuted, modifier = Modifier.weight(1f))
+        Text(
+            Fmt.set(row.weightKg, row.reps, unit) + (row.rpe?.let { "  @${it.toInt()}" } ?: ""),
+            style = GdType.bodyStrong.copy(fontFeatureSettings = "tnum"),
+            color = Gd.Text,
+            modifier = Modifier.weight(1f)
+        )
+        Box(Modifier.width(32.dp), contentAlignment = Alignment.CenterEnd) {
+            if (row.isPr) {
+                StatusLabel("PR", Gd.AccentText, Modifier.scale(check.value))
+            } else {
+                Icon(
+                    Icons.Default.Check, contentDescription = "Done", tint = Gd.Positive,
+                    modifier = Modifier.size(18.dp).scale(check.value)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoreOptions(
+    rpe: Float?, onRpe: (Float?) -> Unit,
+    assisted: Boolean, onAssisted: (Boolean) -> Unit,
+    notes: String, onNotes: (String) -> Unit,
+    plates: String
+) {
+    Column(Modifier.fillMaxWidth().padding(top = Gd.s2), verticalArrangement = Arrangement.spacedBy(Gd.s3)) {
+        Column {
+            Text("RPE", style = GdType.meta, color = Gd.TextMuted)
+            Spacer(Modifier.height(6.dp))
+            RpePicker(rpe, onRpe)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = assisted, onCheckedChange = onAssisted,
+                colors = CheckboxDefaults.colors(checkedColor = Gd.Text, checkmarkColor = Gd.Bg, uncheckedColor = Gd.BorderInput)
+            )
+            Text("Assisted", style = GdType.label, color = Gd.Text)
+            Spacer(Modifier.weight(1f))
+            Text(plates, style = GdType.labelNum, color = Gd.TextMuted)
+        }
+        OutlinedTextField(
+            value = notes, onValueChange = onNotes, singleLine = true,
+            placeholder = { Text("Note for this set", style = GdType.label, color = Gd.TextFaint) },
+            textStyle = GdType.label.copy(color = Gd.Text),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Gd.Accent, unfocusedBorderColor = Gd.BorderInput, cursorColor = Gd.Accent
+            )
+        )
+    }
+}
+
+/** "Per side 20 · 5 · 1.25" for the entered weight, or "Bar only". */
+internal fun plateLine(totalKg: Double, barKg: Double, unit: String): String {
+    val lbs = WeightFormatter.label(unit) != "kg"
+    val total = WeightFormatter.fromKilograms(totalKg, unit)
+    val bar = WeightFormatter.fromKilograms(barKg, unit).let { if (lbs) Math.round(it).toDouble() else it }
+    val plates = if (lbs) listOf(45.0, 35.0, 25.0, 10.0, 5.0, 2.5) else listOf(25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25)
+    var side = (total - bar) / 2.0
+    if (side <= 0.01) return "Bar only"
+    val used = mutableListOf<String>()
+    for (p in plates) {
+        while (side >= p - 1e-6) { used += Fmt.trim(p); side -= p }
+    }
+    return "Per side " + used.joinToString(" · ")
 }

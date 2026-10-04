@@ -8,4 +8,5 @@ interface ExerciseRepository {
     fun getExercisesByMuscle(muscle: String): Flow<List<Exercise>>
     suspend fun deleteExercise(exercise: Exercise)
     suspend fun getAllExercises(): List<Exercise>
+    fun getAllExercisesFlow(): Flow<List<Exercise>>
 }

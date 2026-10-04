@@ -111,9 +111,10 @@ fun TextAction(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    color: Color = Gd.TextMuted
+    color: Color = Gd.TextMuted,
+    contentPadding: PaddingValues = PaddingValues(horizontal = Gd.s3)
 ) {
-    TextButton(onClick = onClick, modifier = modifier, contentPadding = PaddingValues(horizontal = Gd.s3)) {
+    TextButton(onClick = onClick, modifier = modifier, contentPadding = contentPadding) {
         Text(text, style = GdType.label.copy(fontWeight = FontWeight.SemiBold), color = color)
     }
 }

@@ -124,13 +124,14 @@ object ProgressionEngine {
             c.topWeight > b.topWeight -> ProgressionStatus.PROGRESSING
             c.topWeight == b.topWeight && c.topReps > b.topReps -> ProgressionStatus.PROGRESSING
             c.topWeight < b.topWeight && c.bestE1rm < b.bestE1rm * REGRESSION_DROP -> ProgressionStatus.REGRESSING
-            streak >= STALL_SESSIONS && noRepGain(history.takeLast(streak)) -> ProgressionStatus.STALLING
+            streak >= STALL_SESSIONS && noRepGain(history.takeLast(STALL_SESSIONS)) -> ProgressionStatus.STALLING
             else -> ProgressionStatus.STABLE
         }
     }
 
-    private fun noRepGain(streakSessions: List<SessionPerformance>): Boolean =
-        streakSessions.last().topReps <= streakSessions.first().topReps
+    /** No improvement across the recent window. A rep gain long ago does not excuse a current plateau. */
+    private fun noRepGain(window: List<SessionPerformance>): Boolean =
+        window.last().topReps <= window.first().topReps
 
     /** The user's working rep range, inferred from recent top-set reps. */
     fun repRange(history: List<SessionPerformance>): IntRange {
