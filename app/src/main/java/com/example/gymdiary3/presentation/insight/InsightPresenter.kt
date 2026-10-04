@@ -29,15 +29,26 @@ object InsightPresenter {
     /** Only exercises trained this recently produce insights. */
     const val RECENT_DAYS = 21
 
+    /**
+     * What to do next session, worded the same on every screen: "Next: 50 kg × 8",
+     * "Deload: 42.5 kg × 11–12", "Back to 90 kg × 5". Always a set the lifter can
+     * perform, never an instruction to calculate.
+     */
+    fun nextAction(p: ExerciseProgression, unit: String): String? {
+        val c = p.latest ?: return null
+        val rec = p.recommendation ?: return null
+        val target = if (rec.weightKg > 0) "${Fmt.weightUnit(rec.weightKg, unit)} × ${rec.repsLabel}" else "${rec.repsLabel} reps"
+        return when {
+            p.status == ProgressionStatus.REGRESSING -> "Back to $target"
+            p.status == ProgressionStatus.STALLING && rec.weightKg > 0 && rec.weightKg < c.topWeight -> "Deload: $target"
+            else -> "Next: $target"
+        }
+    }
+
     fun fromProgression(p: ExerciseProgression, unit: String): InsightRow? {
         val c = p.latest ?: return null
         val b = p.previous
-        val rec = p.recommendation
-        // Every action is a set the lifter can perform, never an instruction to calculate.
-        val target = rec?.let {
-            if (it.weightKg > 0) "${Fmt.weightUnit(it.weightKg, unit)} × ${it.repsLabel}" else "${it.repsLabel} reps"
-        }
-        val next = target?.let { "Next: $it" }
+        val next = nextAction(p, unit)
         val w = Fmt.weightUnit(c.topWeight, unit)
         return when (p.status) {
             ProgressionStatus.NEW -> null
@@ -55,15 +66,13 @@ object InsightPresenter {
                 InsightRow(
                     "Stalling", Tone.WARNING, p.exercise,
                     "$w · ${sessions(p.streakAtWeight)}",
-                    if (rec != null && rec.weightKg > 0 && rec.weightKg < c.topWeight) "Deload: $target" else next,
-                    p.exercise, 80 + p.streakAtWeight
+                    next, p.exercise, 80 + p.streakAtWeight
                 )
             ProgressionStatus.REGRESSING ->
                 InsightRow(
                     "Regressing", Tone.DANGER, p.exercise,
                     if (b != null) "${Fmt.weight(b.topWeight, unit)} → $w" else w,
-                    target?.let { "Back to $it" },
-                    p.exercise, 75
+                    next, p.exercise, 75
                 )
         }
     }

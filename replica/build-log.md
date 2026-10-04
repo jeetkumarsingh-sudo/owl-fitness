@@ -10,7 +10,7 @@ Screenshots: `replica/clone-screens/` (rendered by the Roborazzi tests in `app/s
 | S03 Picker (replaces S02 + S03) | 2026-10-04 | done | — | Library and history disagree after imports; picker lists the union |
 | S13 Active workout (new) | 2026-10-04 | done | — | "Up next" needs the split the session is turning into, not only today's recommendation |
 | S04 Logger | 2026-10-04 | done | Edit a logged set in place (delete + re-log works) | Pre-fill mixed today's weight with the plan's reps; a deload target showed "met" |
-| S05 History | 2026-10-04 | done | — | Month timeline needs calendar-day gaps (not 24h blocks) for the "N rest days" lines between sessions |
+| S05 History | 2026-10-04 | done | — | Month timeline needs calendar-day gaps (not 24h blocks); P14 critique: a line only for breaks of 2+ days, since "1 rest day" on every other row was noise |
 | S06 Summary | 2026-10-04 | done | — | e1RM PRs fired on most sessions; PR redefined as a new heaviest weight |
 | S07 Progress | 2026-10-04 | done | — | Colour noise from status colours on every row; status moved to a single overline |
 | S08 Exercise detail | 2026-10-04 | done | — | Date ticks ran past "now"; minimum y-span needed so a flat lift does not look like a cliff |

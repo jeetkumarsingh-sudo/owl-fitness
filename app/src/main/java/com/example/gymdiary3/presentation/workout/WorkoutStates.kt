@@ -11,6 +11,7 @@ import com.example.gymdiary3.domain.progression.ProgressionStatus
 import com.example.gymdiary3.domain.recovery.RecoveryEngine
 import com.example.gymdiary3.presentation.common.TrainingCalendar
 import com.example.gymdiary3.presentation.format.Fmt
+import com.example.gymdiary3.presentation.insight.InsightPresenter
 
 /* ======================================================= active workout */
 
@@ -71,12 +72,9 @@ object ActiveWorkoutStateBuilder {
                 .take(MAX_UP_NEXT)
                 .map { (name, muscle) ->
                     val p = ProgressionEngine.analyze(name, historySets.filter { it.exercise == name }, unit)
-                    val rec = p.recommendation
-                    val detail = when {
-                        rec != null && rec.weightKg > 0 -> "Next ${Fmt.weight(rec.weightKg, unit)} × ${rec.repsLabel}"
-                        p.latest != null -> "Last ${Fmt.set(p.latest!!.topWeight, p.latest!!.topReps, unit)}"
-                        else -> muscle
-                    }
+                    val detail = InsightPresenter.nextAction(p, unit)
+                        ?: p.latest?.let { "Last ${Fmt.set(it.topWeight, it.topReps, unit)}" }
+                        ?: muscle
                     UpNextRow(name, muscle, detail)
                 }
         }

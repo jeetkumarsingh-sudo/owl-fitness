@@ -119,7 +119,7 @@ fun HomeScreen(
 
             state.insight?.let { insight ->
                 item(key = "insight") {
-                    SectionHeader("Worth knowing", action = "All insights", onAction = actions.onAllInsights)
+                    SectionHeader("Worth knowing", action = "Progress", onAction = actions.onAllInsights)
                     InsightItem(insight, onClick = { actions.onOpenInsight(insight) })
                 }
             }
