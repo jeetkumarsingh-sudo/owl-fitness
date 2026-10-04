@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
@@ -35,10 +36,13 @@ val ApexShapes = Shapes(
 
 @Composable
 fun OwlFitnessTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = DarkColorScheme,
-        typography = Typography,
-        shapes = ApexShapes,
-        content = content
-    )
+    val reducedMotion = reducedMotionFromSystem()
+    CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
+        MaterialTheme(
+            colorScheme = DarkColorScheme,
+            typography = Typography,
+            shapes = ApexShapes,
+            content = content
+        )
+    }
 }
