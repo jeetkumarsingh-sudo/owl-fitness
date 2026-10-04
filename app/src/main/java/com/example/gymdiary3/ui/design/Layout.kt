@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -37,6 +39,18 @@ import com.example.gymdiary3.ui.theme.GdType
 
 /** Horizontal page gutter. */
 fun Modifier.gutter(): Modifier = this.padding(horizontal = Gd.Gutter)
+
+/**
+ * Centres screen content in a column no wider than [Gd.ContentMax]. On a tablet
+ * or in landscape, rows, steppers and charts keep phone proportions instead of
+ * stretching a label and its value 800dp apart.
+ */
+@Composable
+fun ContentFrame(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Box(Modifier.widthIn(max = Gd.ContentMax).fillMaxSize()) { content() }
+    }
+}
 
 /**
  * Large screen title for tab roots. Typography carries it — no bar, no container.
@@ -251,10 +265,12 @@ fun Metric(
     Column(modifier) {
         Text(value, style = GdType.metric, color = valueColor, maxLines = 1)
         Spacer(Modifier.height(2.dp))
-        Text(label, style = GdType.meta, color = Gd.TextMuted, maxLines = 1)
+        // Two lines, then an ellipsis: a clipped single line ("Triceps" for
+        // "Triceps Pushdown") reads as complete when it is not.
+        Text(label, style = GdType.meta, color = Gd.TextMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         if (detail != null) {
             Spacer(Modifier.height(2.dp))
-            Text(detail, style = GdType.metaNum, color = detailColor, maxLines = 1)
+            Text(detail, style = GdType.metaNum, color = detailColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

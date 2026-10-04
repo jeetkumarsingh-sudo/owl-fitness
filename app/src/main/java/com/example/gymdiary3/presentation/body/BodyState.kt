@@ -73,8 +73,8 @@ object BodyStateBuilder {
                     status = r.status,
                     label = when (r.status) {
                         RecoveryStatus.READY -> "Ready"
-                        RecoveryStatus.NEARLY -> "Ready in ${r.hoursUntilReady} h"
-                        RecoveryStatus.RECOVERING -> "Ready in ${r.hoursUntilReady} h"
+                        RecoveryStatus.NEARLY -> "Ready in ${r.hoursUntilReady}\u00A0h"
+                        RecoveryStatus.RECOVERING -> "Ready in ${r.hoursUntilReady}\u00A0h"
                         RecoveryStatus.UNTRAINED -> "Not trained yet"
                     },
                     fraction = r.recovered

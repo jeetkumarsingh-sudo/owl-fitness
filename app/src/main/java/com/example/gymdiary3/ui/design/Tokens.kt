@@ -61,6 +61,8 @@ object Gd {
     val RowMin = 56.dp
     val TouchMin = 48.dp
     val ButtonHeight = 52.dp
+    /** Reading width cap on tablets and landscape; phones never reach it. */
+    val ContentMax = 600.dp
 
     // Radius
     val RadiusSm = 6.dp

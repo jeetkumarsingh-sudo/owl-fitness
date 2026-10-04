@@ -186,21 +186,11 @@ fun BodyScreen(
 
 @Composable
 private fun RecoveryBar(row: MuscleRecoveryRow) {
-    val reduced = LocalReducedMotion.current
-    var shown by remember { mutableStateOf(reduced) }
-    LaunchedEffect(Unit) { shown = true }
-    val f by animateFloatAsState(if (shown) row.fraction else 0f, tween(if (reduced) 0 else GdMotion.Chart, easing = GdMotion.Ease), label = "rec")
     val (fill, labelColor) = when (row.status) {
         RecoveryStatus.READY -> Gd.Positive to Gd.Positive
         RecoveryStatus.NEARLY -> Gd.DataNeutral to Gd.TextMuted
         RecoveryStatus.RECOVERING -> Gd.DataNeutral to Gd.Warning
         RecoveryStatus.UNTRAINED -> Gd.Surface to Gd.TextFaint
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(row.muscle, style = GdType.label, color = Gd.Text, modifier = Modifier.width(84.dp))
-        Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Gd.Surface)) {
-            Box(Modifier.fillMaxWidth(f).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(fill))
-        }
-        Text(row.label, style = GdType.labelNum, color = labelColor, modifier = Modifier.width(104.dp).padding(start = Gd.s3))
-    }
+    LabeledBar(row.muscle, row.fraction, row.label, fill = fill, valueColor = labelColor, valueWidth = 104.dp)
 }
