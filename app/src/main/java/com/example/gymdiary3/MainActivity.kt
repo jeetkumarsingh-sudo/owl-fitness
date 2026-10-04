@@ -27,6 +27,7 @@ import androidx.navigation.*
 import androidx.navigation.compose.*
 import com.example.gymdiary3.screens.*
 import com.example.gymdiary3.viewmodel.WorkoutViewModel
+import com.example.gymdiary3.ui.theme.Apex
 import com.example.gymdiary3.ui.theme.OwlColors
 import com.example.gymdiary3.ui.theme.OwlFitnessTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -57,15 +58,15 @@ class MainActivity : ComponentActivity() {
                         val currentRoute = navBackStackEntry?.destination?.route
                         if (currentRoute in rootRoutes) {
                             NavigationBar(
-                                containerColor = Color.Black,
-                                contentColor = OwlColors.TextSecondary,
+                                containerColor = Apex.Surface1,
+                                contentColor = Apex.TextSecondary,
                                 tonalElevation = 0.dp
                             ) {
                                 bottomNavItems.forEach { item ->
                                     val selected = currentRoute == item.route
                                     NavigationBarItem(
                                         selected = selected,
-                                        onClick = { 
+                                        onClick = {
                                             nav.navigate(item.route) {
                                                 popUpTo(nav.graph.startDestinationId) { saveState = true }
                                                 launchSingleTop = true
@@ -73,13 +74,13 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         icon = { Icon(item.icon, contentDescription = item.label) },
-                                        label = { Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                                        label = { Text(item.label, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp) },
                                         colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = OwlColors.Purple,
-                                            selectedTextColor = OwlColors.Purple,
-                                            unselectedIconColor = OwlColors.TextSecondary,
-                                            unselectedTextColor = OwlColors.TextSecondary,
-                                            indicatorColor = OwlColors.Purple.copy(alpha = 0.15f)
+                                            selectedIconColor = Apex.AccentSoft,
+                                            selectedTextColor = Apex.AccentSoft,
+                                            unselectedIconColor = Apex.TextMuted,
+                                            unselectedTextColor = Apex.TextMuted,
+                                            indicatorColor = Apex.AccentWash
                                         )
                                     )
                                 }

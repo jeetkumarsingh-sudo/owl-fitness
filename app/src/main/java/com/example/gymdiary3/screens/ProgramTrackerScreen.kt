@@ -1,6 +1,5 @@
 package com.example.gymdiary3.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,8 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,18 +17,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.gymdiary3.domain.model.ProgramDay
 import com.example.gymdiary3.domain.model.SessionSchedule
-import com.example.gymdiary3.ui.theme.OwlColors
+import com.example.gymdiary3.ui.components.ApexPanel
+import com.example.gymdiary3.ui.components.ApexScaffold
+import com.example.gymdiary3.ui.components.SectionLabel
+import com.example.gymdiary3.ui.theme.Apex
 import com.example.gymdiary3.viewmodel.ProgramViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProgramTrackerScreen(
     nav: NavHostController,
@@ -37,77 +38,39 @@ fun ProgramTrackerScreen(
     val programDays by viewModel.allProgramDays.collectAsStateWithLifecycle()
     val scheduledSessions by viewModel.scheduledSessions.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("GYM TRACKER", fontWeight = FontWeight.Black) },
-                navigationIcon = {
-                    IconButton(onClick = { nav.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = OwlColors.DeepBg,
-                    titleContentColor = OwlColors.TextPrimary,
-                    navigationIconContentColor = OwlColors.TextPrimary
-                )
-            )
-        },
-        containerColor = OwlColors.DeepBg
-    ) { padding ->
+    ApexScaffold(title = "Gym Tracker", onBack = { nav.navigateUp() }) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)
         ) {
             item {
-                SectionHeader("THIS WEEK")
+                SectionLabel("This week")
+                Spacer(Modifier.height(12.dp))
                 WeeklyCalendarView(scheduledSessions) { session ->
-                    // Handle session click
                     if (session.status == "Planned") {
-                        viewModel.logScheduledSession(session) { id ->
-                            nav.navigate("program_log/$id")
-                        }
+                        viewModel.logScheduledSession(session) { id -> nav.navigate("program_log/$id") }
                     }
                 }
             }
-
             item {
-                SectionHeader("PROGRAM DAYS")
+                Spacer(Modifier.height(4.dp))
+                SectionLabel("Program days")
             }
-
             items(programDays) { day ->
-                ProgramDayCard(day) {
-                    // Logic to schedule or quick log
-                    viewModel.scheduleSession(day, System.currentTimeMillis())
-                }
+                ProgramDayCard(day) { viewModel.scheduleSession(day, System.currentTimeMillis()) }
             }
         }
     }
 }
 
 @Composable
-fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelMedium,
-        color = OwlColors.TextSecondary,
-        letterSpacing = 1.sp,
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
-}
-
-@Composable
-fun WeeklyCalendarView(
+private fun WeeklyCalendarView(
     sessions: List<SessionSchedule>,
     onSessionClick: (SessionSchedule) -> Unit
 ) {
     val dateFormat = SimpleDateFormat("EEE", Locale.getDefault())
     val dayOfMonthFormat = SimpleDateFormat("d", Locale.getDefault())
-    
     val today = Calendar.getInstance()
     val days = (0..6).map { i ->
         val cal = Calendar.getInstance()
@@ -116,20 +79,11 @@ fun WeeklyCalendarView(
         cal.time
     }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+    ApexPanel(radius = Apex.radiusMd) {
+        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             days.forEach { date ->
                 val isToday = isSameDay(date, today.time)
                 val session = sessions.find { isSameDay(Date(it.date), date) }
-
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
@@ -137,26 +91,26 @@ fun WeeklyCalendarView(
                         .padding(4.dp)
                 ) {
                     Text(
-                        text = dateFormat.format(date).uppercase(),
+                        dateFormat.format(date).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isToday) OwlColors.Purple else OwlColors.TextMuted
+                        color = if (isToday) Apex.AccentSoft else Apex.TextMuted
                     )
                     Spacer(Modifier.height(4.dp))
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = when {
-                            session?.status == "Done" -> OwlColors.GreenBulk.copy(alpha = 0.2f)
-                            session?.status == "Planned" -> OwlColors.Purple.copy(alpha = 0.2f)
-                            isToday -> OwlColors.Purple
+                            session?.status == "Done" -> Apex.Positive.copy(alpha = 0.2f)
+                            session?.status == "Planned" -> Apex.AccentWash
+                            isToday -> Apex.Accent
                             else -> Color.Transparent
                         },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(34.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = dayOfMonthFormat.format(date),
+                                dayOfMonthFormat.format(date),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isToday && session == null) Color.White else OwlColors.TextPrimary,
+                                color = if (isToday && session == null) Color.White else Apex.TextPrimary,
                                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -165,7 +119,7 @@ fun WeeklyCalendarView(
                         Icon(
                             imageVector = if (session.status == "Done") Icons.Default.CheckCircle else Icons.Default.Circle,
                             contentDescription = null,
-                            tint = if (session.status == "Done") OwlColors.GreenBulk else OwlColors.Purple,
+                            tint = if (session.status == "Done") Apex.Positive else Apex.AccentSoft,
                             modifier = Modifier.size(8.dp).padding(top = 2.dp)
                         )
                     }
@@ -176,29 +130,19 @@ fun WeeklyCalendarView(
 }
 
 @Composable
-fun ProgramDayCard(day: ProgramDay, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        color = OwlColors.CardBg,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-    ) {
-        Row(
-            Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+private fun ProgramDayCard(day: ProgramDay, onClick: () -> Unit) {
+    ApexPanel(onClick = onClick, radius = Apex.radiusMd) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Column(Modifier.weight(1f)) {
-                Text(day.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OwlColors.TextPrimary)
-                Text(
-                    "${day.sessionType} · ${day.plannedDuration} min",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OwlColors.TextSecondary
-                )
+                Text(day.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Apex.TextPrimary)
+                Text("${day.sessionType} · ${day.plannedDuration} min", style = MaterialTheme.typography.bodySmall, color = Apex.TextSecondary)
             }
-            Icon(Icons.Default.Add, contentDescription = "Schedule", tint = OwlColors.Purple)
+            Box(
+                Modifier.size(36.dp).background(Apex.AccentWash, RoundedCornerShape(100)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Schedule", tint = Apex.AccentSoft, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }

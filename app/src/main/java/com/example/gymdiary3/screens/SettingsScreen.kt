@@ -5,14 +5,10 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,15 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.gymdiary3.ui.theme.OwlColors
+import com.example.gymdiary3.ui.components.ApexPanel
+import com.example.gymdiary3.ui.components.ApexScaffold
+import com.example.gymdiary3.ui.components.SectionLabel
+import com.example.gymdiary3.ui.theme.Apex
 import com.example.gymdiary3.viewmodel.SettingsViewModel
-
 import androidx.hilt.navigation.compose.hiltViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     nav: NavHostController,
@@ -55,110 +52,49 @@ fun SettingsScreen(
         }
     )
 
-    Scaffold(
-        containerColor = OwlColors.DeepBg,
-        topBar = {
-            TopAppBar(
-                title = { Text("SETTINGS", fontWeight = FontWeight.Black, fontSize = 20.sp, letterSpacing = 1.sp) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = OwlColors.DeepBg,
-                    titleContentColor = OwlColors.TextPrimary
-                ),
-                navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OwlColors.TextPrimary)
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    ApexScaffold(title = "Settings", onBack = { nav.popBackStack() }) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(20.dp),
+            modifier = Modifier.padding(padding).fillMaxSize(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
             item {
-                Text(
-                    text = "UNITS",
-                    color = OwlColors.PurpleSoft,
-                    style = MaterialTheme.typography.labelMedium,
-                    letterSpacing = 1.2.sp
-                )
-                Spacer(Modifier.height(16.dp))
-                Surface(
-                    color = OwlColors.CardBg,
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        UnitButton(
-                            label = "kg",
-                            isSelected = settings.weightUnit == "kg",
-                            modifier = Modifier.weight(1f),
-                            onClick = { viewModel.updateWeightUnit("kg") }
-                        )
-                        UnitButton(
-                            label = "lbs",
-                            isSelected = settings.weightUnit == "lbs",
-                            modifier = Modifier.weight(1f),
-                            onClick = { viewModel.updateWeightUnit("lbs") }
-                        )
+                SectionLabel("Units")
+                Spacer(Modifier.height(14.dp))
+                ApexPanel(radius = Apex.radiusSm) {
+                    Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        UnitButton("kg", settings.weightUnit == "kg", Modifier.weight(1f)) { viewModel.updateWeightUnit("kg") }
+                        UnitButton("lbs", settings.weightUnit == "lbs", Modifier.weight(1f)) { viewModel.updateWeightUnit("lbs") }
                     }
                 }
             }
 
             item {
-                Text(
-                    text = "REST TIMER DEFAULTS",
-                    color = OwlColors.PurpleSoft,
-                    style = MaterialTheme.typography.labelMedium,
-                    letterSpacing = 1.2.sp
-                )
-                Spacer(Modifier.height(16.dp))
-                Surface(
-                    color = OwlColors.CardBg,
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    ) {
+                SectionLabel("Rest timer default")
+                Spacer(Modifier.height(14.dp))
+                ApexPanel(radius = Apex.radiusSm) {
+                    Column(Modifier.padding(vertical = 8.dp)) {
                         val timerOptions = listOf(30, 60, 90, 120, 180)
                         timerOptions.forEachIndexed { index, seconds ->
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
+                                Modifier.fillMaxWidth()
                                     .clickable { viewModel.updateDefaultRestSeconds(seconds) }
-                                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 RadioButton(
                                     selected = settings.defaultRestSeconds == seconds,
                                     onClick = { viewModel.updateDefaultRestSeconds(seconds) },
                                     colors = RadioButtonDefaults.colors(
-                                        selectedColor = OwlColors.Purple,
-                                        unselectedColor = OwlColors.TextMuted
+                                        selectedColor = Apex.Accent,
+                                        unselectedColor = Apex.TextMuted
                                     )
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = "$seconds seconds",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = OwlColors.TextPrimary
-                                )
+                                Text("$seconds seconds", style = MaterialTheme.typography.bodyLarge, color = Apex.TextPrimary)
                             }
-                            if (index < (timerOptions.size - 1)) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = OwlColors.BorderSubtle
-                                )
+                            if (index < timerOptions.size - 1) {
+                                HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = Apex.Hairline)
                             }
                         }
                     }
@@ -166,98 +102,78 @@ fun SettingsScreen(
             }
 
             item {
-                Text(
-                    text = "BAR WEIGHT",
-                    color = OwlColors.PurpleSoft,
-                    style = MaterialTheme.typography.labelMedium,
-                    letterSpacing = 1.2.sp
-                )
-                Spacer(Modifier.height(16.dp))
-                Surface(
-                    color = OwlColors.CardBg,
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, OwlColors.BorderSubtle)
-                ) {
-                    val barOptions = listOf(10.0, 15.0, 20.0)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        barOptions.forEach { weight ->
-                            UnitButton(
-                                label = "${weight.toInt()}kg",
-                                isSelected = settings.barWeight == weight,
-                                modifier = Modifier.weight(1f),
-                                onClick = { viewModel.updateBarWeight(weight) }
-                            )
+                SectionLabel("Bar weight")
+                Spacer(Modifier.height(14.dp))
+                ApexPanel(radius = Apex.radiusSm) {
+                    Row(Modifier.fillMaxWidth().padding(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(10.0, 15.0, 20.0).forEach { weight ->
+                            UnitButton("${weight.toInt()}kg", settings.barWeight == weight, Modifier.weight(1f)) {
+                                viewModel.updateBarWeight(weight)
+                            }
                         }
                     }
                 }
             }
 
             item {
-                Text("DATA", color = OwlColors.PurpleSoft, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.2.sp)
-                Spacer(Modifier.height(16.dp))
+                SectionLabel("Data")
+                Spacer(Modifier.height(14.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(
-                        onClick = { onExportClick() },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
-                    ) {
-                        Text("EXPORT ALL DATA (CSV)", style = MaterialTheme.typography.labelLarge)
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            scope.launch {
-                                val uri = viewModel.exportJson(context)
-                                if (uri != null) {
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "application/json"
-                                        putExtra(Intent.EXTRA_STREAM, uri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    context.startActivity(Intent.createChooser(intent, "Export JSON Backup"))
+                    DataButton("EXPORT ALL DATA (CSV)") { onExportClick() }
+                    DataButton("BACKUP DATA (JSON)") {
+                        scope.launch {
+                            val uri = viewModel.exportJson(context)
+                            if (uri != null) {
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/json"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
+                                context.startActivity(Intent.createChooser(intent, "Export JSON Backup"))
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
-                    ) {
-                        Text("BACKUP DATA (JSON)", style = MaterialTheme.typography.labelLarge)
+                        }
                     }
-
-                    OutlinedButton(
-                        onClick = {
-                            importLauncher.launch(arrayOf("application/json"))
-                        },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, OwlColors.BorderSubtle),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = OwlColors.TextSecondary)
-                    ) {
-                        Text("RESTORE FROM BACKUP", style = MaterialTheme.typography.labelLarge)
+                    DataButton("RESTORE FROM BACKUP") {
+                        importLauncher.launch(arrayOf("application/json"))
                     }
                 }
+            }
+
+            item {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "APEX FITNESS",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Apex.TextFaint,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
         }
     }
 }
 
 @Composable
-fun UnitButton(label: String, isSelected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun DataButton(label: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape = RoundedCornerShape(Apex.radiusSm),
+        border = BorderStroke(1.dp, Apex.Hairline),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Apex.TextSecondary)
+    ) {
+        Text(label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun UnitButton(label: String, isSelected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = modifier.height(44.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) OwlColors.Purple else Color.Transparent,
-            contentColor = if (isSelected) Color.White else OwlColors.TextSecondary
+            containerColor = if (isSelected) Apex.Accent else Color.Transparent,
+            contentColor = if (isSelected) Color.White else Apex.TextSecondary
         ),
         shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(0.dp)
