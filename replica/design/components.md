@@ -66,3 +66,19 @@ EmptyMessage      left-aligned title + one line + optional action
 Removed from v1: ApexPanel (rounded card everywhere), ApexCta (gradient pill),
 ApexBackground (animated glow), PrCelebration (confetti), `appear()` stagger,
 SectionLabel caps style, ApexChip.
+
+Motion inventory (P11 audit, 2026-10-04)
+  rule            every animation explains a change of state; none loops or plays on idle.
+                  Each one reads LocalReducedMotion (instant or fade-only), and the system
+                  "remove animations" setting also zeroes Compose durations.
+  tokens          Fast 120 · Base 200 · Slow 300 · Chart 450 · Highlight 1600 · Ease (0.2,0,0,1)
+  navigation      tabs cross-fade (Base); drill-downs fade + 1/12-width nudge (Slow)
+  selection       SegmentedControl pill and UnderlineTabs underline slide (Base)
+  lists           itemMotion(): row insert fade (Base), reflow (Base), remove fade (Fast)
+  data            chart draw-in (Chart); recovery / balance / muscle bars fill (Chart);
+                  AnimatedNumber tweens a changed value (Slow), never counts up on entry
+  logging         logged-set check scales in (Base); a PR row's accent wash fades (Highlight);
+                  rest-timer bar slides in from the bottom (fade only when reduced) and
+                  drains linearly, one step per second; week-strip day fills (Slow)
+  haptics         set logged = Confirm, PR = LongPress, rest finished = LongPress
+  removed in v2   ambient background, confetti, staggered list entrances, count-up stats

@@ -165,7 +165,7 @@ fun BodyScreen(
                     subtitle = e.date,
                     trailing = { e.delta?.let { Text(it, style = GdType.labelNum, color = Gd.TextMuted) } },
                     onLongClick = { deleting = e },
-                    modifier = Modifier.animateItem()
+                    modifier = itemMotion()
                 )
                 if (i < entries.lastIndex) Hairline()
             }
@@ -189,7 +189,7 @@ private fun RecoveryBar(row: MuscleRecoveryRow) {
     val reduced = LocalReducedMotion.current
     var shown by remember { mutableStateOf(reduced) }
     LaunchedEffect(Unit) { shown = true }
-    val f by animateFloatAsState(if (shown) row.fraction else 0f, tween(if (reduced) 0 else 500, easing = GdMotion.Ease), label = "rec")
+    val f by animateFloatAsState(if (shown) row.fraction else 0f, tween(if (reduced) 0 else GdMotion.Chart, easing = GdMotion.Ease), label = "rec")
     val (fill, labelColor) = when (row.status) {
         RecoveryStatus.READY -> Gd.Positive to Gd.Positive
         RecoveryStatus.NEARLY -> Gd.DataNeutral to Gd.TextMuted
