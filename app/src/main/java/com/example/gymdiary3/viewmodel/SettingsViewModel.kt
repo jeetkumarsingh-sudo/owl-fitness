@@ -41,7 +41,8 @@ class SettingsViewModel @Inject constructor(
     suspend fun exportCsv(context: Context): Uri? = withContext(Dispatchers.IO) {
         val sessions = WorkoutAnalyzer.filterValidSessions(workoutRepository.getSessionsWithSets().first())
         if (sessions.isEmpty()) return@withContext null
-        val csv = ExportFormatter.buildCsv(sessions, bodyWeightRepository.getAllWeights(), userSettings.value.weightUnit)
+        val unit = repository.userSettingsFlow.first().weightUnit // the stored value, not the UI's possibly-initial copy
+        val csv = ExportFormatter.buildCsv(sessions, bodyWeightRepository.getAllWeights(), unit)
         FileHandler.writeToCache(context, csv)
     }
 
