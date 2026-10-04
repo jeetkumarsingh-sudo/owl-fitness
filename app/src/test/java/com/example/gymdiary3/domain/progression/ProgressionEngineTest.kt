@@ -37,10 +37,22 @@ class ProgressionEngineTest {
     }
 
     @Test fun `same weight and reps for three sessions is stalling`() {
-        val p = analyze(session(1, 50.0, 8), session(2, 50.0, 8), session(3, 50.0, 8))
+        val p = analyze(session(1, 50.0, 7), session(2, 50.0, 7), session(3, 50.0, 7))
         assertEquals(ProgressionStatus.STALLING, p.status)
         assertEquals(3, p.streakAtWeight)
-        assertEquals("Try +1 rep before adding weight", p.recommendation?.action)
+        val rec = p.recommendation!!
+        assertEquals("Try +1 rep before adding weight", rec.action)
+        assertEquals(50.0, rec.weightKg, 0.0)
+        assertEquals(8, rec.repsLow)
+    }
+
+    @Test fun `stalling at the top of the rep range adds weight instead of repeating the set`() {
+        // 3 x 8 three times: 8 is the top of the inferred 6–8 range, so "+1 rep" would repeat 50 x 8.
+        val p = analyze(session(1, 50.0, 8), session(2, 50.0, 8), session(3, 50.0, 8))
+        assertEquals(ProgressionStatus.STALLING, p.status)
+        val rec = p.recommendation!!
+        assertEquals(52.5, rec.weightKg, 1e-9)
+        assertEquals("Add 2.5 kg", rec.action)
     }
 
     @Test fun `a plateau after an early rep gain is still stalling`() {
@@ -82,8 +94,8 @@ class ProgressionEngineTest {
         assertNull(rec.reason)
     }
 
-    @Test fun `five stalled sessions recommends a ten percent drop`() {
-        val p = analyze(*(1..5).map { session(it, 50.0, 8) }.toTypedArray())
+    @Test fun `five stalled sessions below the top of the range recommends a ten percent drop`() {
+        val p = analyze(*(1..5).map { session(it, 50.0, 7) }.toTypedArray())
         assertEquals(ProgressionStatus.STALLING, p.status)
         assertEquals(45.0, p.recommendation!!.weightKg, 1e-9)
     }

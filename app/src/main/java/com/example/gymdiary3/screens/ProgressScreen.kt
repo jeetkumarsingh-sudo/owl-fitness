@@ -126,6 +126,7 @@ fun ProgressContent(
                     overline = lift.status.label(),
                     overlineColor = lift.status.color(),
                     titleStrong = true,
+                    detail = lift.action,
                     trailing = {
                         // The status label already carries direction in colour; only a real drop repeats it.
                         lift.change?.let {

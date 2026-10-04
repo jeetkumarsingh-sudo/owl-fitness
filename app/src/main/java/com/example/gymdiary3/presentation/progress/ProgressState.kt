@@ -1,6 +1,7 @@
 package com.example.gymdiary3.presentation.progress
 
 import com.example.gymdiary3.domain.model.SessionWithSets
+import com.example.gymdiary3.domain.progression.ExerciseProgression
 import com.example.gymdiary3.domain.progression.PrDetector
 import com.example.gymdiary3.domain.progression.ProgressionEngine
 import com.example.gymdiary3.domain.progression.ProgressionStatus
@@ -38,7 +39,9 @@ data class LiftRow(
     val status: ProgressionStatus,
     val state: String,
     val change: String?,
-    val changeTone: Tone
+    val changeTone: Tone,
+    /** What to do next session; set only when the lift needs a change (stalling or regressing). */
+    val action: String? = null
 )
 
 data class RecordRow(val exercise: String, val set: String, val whenLabel: String)
@@ -48,6 +51,8 @@ object ProgressStateBuilder {
 
     private const val TREND_DAYS = 56
     private const val BALANCE_DAYS = 28
+    /** A stalling or regressing lift trained within this window is listed first, with its next action. */
+    private const val ATTENTION_DAYS = 21
 
     fun build(
         sessions: List<SessionWithSets>,
@@ -86,9 +91,13 @@ object ProgressStateBuilder {
         val prs = PrDetector.events(allSets)
 
         val progressions = allSets.groupBy { it.exercise }.map { (name, sets) -> ProgressionEngine.analyze(name, sets, unit) }
+        fun needsAttention(p: ExerciseProgression) =
+            (p.status == ProgressionStatus.STALLING || p.status == ProgressionStatus.REGRESSING) &&
+                p.latest!!.date >= now - ATTENTION_DAYS * day
         val lifts = progressions
             .filter { it.latest != null }
-            .sortedByDescending { it.latest!!.date }
+            .sortedWith(compareByDescending<ExerciseProgression> { needsAttention(it) }
+                .thenByDescending { it.latest!!.date })
             .map { p ->
                 val window = p.sessions.filter { it.date >= now - TREND_DAYS * day }
                 val pct = if (window.size >= 2 && window.first().bestE1rm > 0) {
@@ -105,7 +114,8 @@ object ProgressStateBuilder {
                         pct >= 1.0 -> Tone.POSITIVE
                         pct <= -3.0 -> Tone.DANGER
                         else -> Tone.NEUTRAL
-                    }
+                    },
+                    action = row?.action?.takeIf { needsAttention(p) }
                 )
             }
 
