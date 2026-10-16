@@ -129,9 +129,18 @@ every screen. See [docs/testing.md](docs/testing.md).
 
 ## Credits
 
-The [Archivo](https://github.com/Omnibus-Type/Archivo) typeface is © The Archivo Project
-Authors, used under the SIL Open Font License 1.1 (see
-[`app/licenses/Archivo-OFL.txt`](app/licenses/Archivo-OFL.txt)).
+**Typeface: [Archivo](https://github.com/Omnibus-Type/Archivo)**
+
+Archivo is a grotesque sans-serif reminiscent of late-19th-century type, designed for both
+print and screen. It was designed by **Héctor Gatti** and published by the type foundry
+**[Omnibus-Type](https://www.omnibus-type.com)**, with typeface development by
+**Yorlmar Campos**. "The Archivo Project Authors" in its copyright notice refers to these
+contributors.
+
+The app bundles the variable version of Archivo (v2.0), using its normal width for text
+and its expanded width for headline numbers. Archivo is free to use under the
+[SIL Open Font License 1.1](https://openfontlicense.org); the full licence text ships with
+the source in [`app/licenses/Archivo-OFL.txt`](app/licenses/Archivo-OFL.txt).
 
 ## Author
 
